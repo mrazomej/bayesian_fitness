@@ -4,6 +4,7 @@ authors = ["mrazomej <manuel.razo.m@gmail.com>"]
 version = "0.1.0"
 
 [deps]
+BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
@@ -21,5 +22,6 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
+Suppressor = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
