@@ -32,6 +32,20 @@ Random.seed!(42)
 
 ##
 
+# Define boolean on whether to suppress output
+suppress_output = false
+# Define Boolean on whether to remove T0
+rm_T0 = false
+# Define boolean indicating if specific datasets should be fit
+specific_fit = true
+
+# Define parameters to run specific datasets
+batch = ["Batch2"]
+hub = ["1Day"]
+perturbation = ["1.5"]
+rep = ["R1", "R2"]
+
+
 ## Define run parameters
 
 # Number of steps
@@ -41,14 +55,14 @@ n_walkers = Threads.nthreads()
 
 # Mutant fitness prior
 # s̲ₘ ~ Normal(0, σ_sm)
-σ_sm = Float32(5.0)
+σ_sm = Float32(1.5)
 # Nuance parameter for mutant fitness likelihood
 # σ̲ₘ ~ Half-Normal(σ_σm)
 σ_σm = Float32(1.0)
 
 # Mean fitness prior
 # s̲ₜ ~ Normal(0, σ_st)
-σ_st = Float32(5.0)
+σ_st = Float32(1.5)
 # Nuance parameter for mean fitness likelihood
 # σ̲ₘ ~ Half-Normal(σ_σt)
 σ_σt = Float32(1.0)
@@ -59,6 +73,20 @@ println("Loading data...")
 
 # Load data
 df = CSV.read("$(git_root())/data/big_batch/tidy_counts.csv", DF.DataFrame)
+
+# Remove T0 if indicated
+if rm_T0
+    println("Deleting T0 as requested...")
+    df = df[.!(df.timepoint .== "T0"), :]
+end # if
+
+# Keep specified data
+if specific_fit
+    println("Filtering data as requested...")
+    df = df[
+        ([x ∈ batch for x in df.batch]).&([x ∈ hub for x in df.hub]).&([x ∈ perturbation for x in df.perturbation]).&([x ∈ rep for x in df.rep]),
+        :]
+end # if
 
 ##
 
@@ -128,7 +156,7 @@ Turing.@model function fitness_mutants(
     s̲ₘ ~ Turing.filldist(Turing.Normal(0, σ_sm), size(logf_mut, 2))
     # Prior on variance for adaptive mutants fitness likelihood
     σ̲ₘ ~ Turing.filldist(
-        Turing.truncated(Turing.Normal(0, σ_σm); lower=0.0 + eps()),
+        Turing.truncated(Turing.Cauchy(0, σ_σm); lower=0.0 + eps()),
         size(logf_mut, 2)
     )
 
@@ -136,7 +164,7 @@ Turing.@model function fitness_mutants(
     s̲ₜ ~ Turing.filldist(Turing.Normal(0, σ_st), length(t))
     # Prior on error 
     σ̲ₜ ~ Turing.filldist(
-        Turing.truncated(Turing.Normal(0, σ_σt); lower=0.0 + eps()),
+        Turing.truncated(Turing.Cauchy(0, σ_σt); lower=0.0 + eps()),
         length(t)
     )
 
@@ -187,7 +215,7 @@ for (i, d) in enumerate(df_group)
 
 
     # Define output file name
-    fname = "$(hub)_$(batch)_$(perturbation)_$(rep)"
+    fname = "$(batch)_$(hub)_$(perturbation)_$(rep)"
 
     # Check if this dataset has been ran before
     if isfile("$(out_dir)/$(fname)_mcmcchains.jld2")
@@ -253,19 +281,33 @@ for (i, d) in enumerate(df_group)
         σ_σt
     )
 
+    # Initialize object where to save chains
+    chain = Vector{MCMCChains.Chains}(undef, 1)
+
     println("Sampling $(fname)...")
-    # Suppress warning outputs
-    Suppressor.@suppress begin
-        # Sample
-        global chain = Turing.sample(
+    if suppress_output
+        # Suppress warning outputs
+        Suppressor.@suppress begin
+            # Sample
+            chain[1] = Turing.sample(
+                model,
+                Turing.NUTS(0.65),
+                Turing.MCMCThreads(),
+                n_steps,
+                n_walkers,
+                progress=false
+            )
+        end # suppress
+    else
+        chain[1] = Turing.sample(
             model,
             Turing.NUTS(0.65),
             Turing.MCMCThreads(),
             n_steps,
             n_walkers,
-            progress=false
+            progress=true
         )
-    end # suppress
+    end # if
 
     println("Saving $(fname) chains...")
     # Write output into memory
