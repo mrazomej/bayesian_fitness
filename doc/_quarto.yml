@@ -1,0 +1,24 @@
+project:
+  type: book
+  # title: "Bayesian inference of relative fitness on high-throughput pooled competition assays"
+  # render:
+    # - intro.qmd
+    # - bayesian_mean_fitness.ipynb
+
+book:
+  title: "Bayesian inference of relative fitness on high-throughput pooled competition assays"
+  author: "Manuel Razo-Mejia"
+  page-navigation: true
+  chapters:
+    - index.qmd
+    - intro.qmd
+    - results.qmd
+
+format:
+  html:
+    theme: cosmo
+    default-image-extension: png
+  # pdf:
+  #   documentclass: scrreprt
+  #   default-image-extension: pdf
+  #   pdf-engine: pdflatex

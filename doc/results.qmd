@@ -1,0 +1,13 @@
+---
+title: "Results"
+---
+
+{{< include _experiment.qmd >}}
+
+{{< include _fitness_model.qmd >}}
+
+{{< include _bayesian_inference.qmd >}}
+
+{{< include _bayes_freq.qmd >}}
+
+{{< include _bayes_meanfit.qmd >}}

@@ -1,0 +1,102 @@
+---
+editor:
+    render-on-save: true
+---
+
+### Frequency uncertainty $\pi(\underline{\underline{F}} \mid \underline{\underline{R}})$ {#sec-bayes_freq}
+
+We begin with the probability of the frequency values given the raw barcode
+reads. The first assumption we make is that the inference of the frequency
+values for time $t$ is independent of any other time. Therefore, we can write
+the joint probability distribution as a product of independent distributions of
+the form
+$$
+\pi(\underline{\underline{F}} \mid \underline{\underline{R}}) =
+\prod_{t=1}^T \pi(\underline{f}_t \mid \underline{r}_t).
+$${#eq-freq_indep}
+
+Writing Bayes' theorem for this series of independent terms results in
+$$
+\pi(\underline{f}_t \mid \underline{r}_t) \propto
+\pi(\underline{r}_t \mid \underline{f}_t)
+\pi(\underline{f}_t).
+$${#eq-bayes_freq}
+To model the prior uncertainty in the value of the frequencies, we assume a very
+simple model. Notice that the frequencies at any time point must satisfy the
+normalization constraint
+$$
+\sum_{b = 1}^B f_t^{(b)} = 1, \;\; \forall \; f_t^{(b)} \in [0, 1].
+$${#eq-freq_norm}
+This means that the probability distribution of the $B$ frequency values lies on
+the $B$-simplex, i.e., the $B$ dimensional space constrained such that the sum
+of all the dimensions must add up to one. A natural selection for a probability
+that satisfies the constraint in @eq-freq_norm is the so-called Dirichlet 
+distribution. The Dirichlet distribution is parametrized by a vector
+$$
+\underline{\alpha}_t = (\alpha^{(1)}_t, \cdots, \alpha^{(B)}_t)^\dagger, 
+\;\; \alpha_t^{(k)} \geq 0 \;\; \forall \; k.
+$${#eq-alpha_dir}
+Given these parameters, we choose as a prior distribution for the barcode
+frequency values $\pi(\underline{f}_t)$ a Dirichlet distribution of the form
+$$
+\pi(\underline{f}_t) = \frac{
+    \Gamma\left(\sum_{b=1}^B\alpha_t^{(b)}\right)
+}{
+    \prod_{b=1}^B\Gamma(\alpha_t^{(b)})
+} 
+\prod_{b=1}^B (f_t^{(b)})^{\alpha_t^{(b)}-1}.
+$${#eq-dirichlet}
+@eq-dirichlet can be much more compactly written as
+$$
+\underline{f}_t \sim \operatorname{Dirichlet}(\underline{\alpha}_t),
+$${#eq-freq_prior}
+where the symbol "$\sim$" is read "distributed as". We are free to choose the
+value of the parameters $\underline{\alpha}_t$ according to our prior
+information. A reasonable choice is to assume that before observing any data at
+all, we have no reason to believe any barcode is in higher abundance compared to
+any other. This might not be entirely true at the beginning of the experiment,
+where we expect the neutral barcodes to be in much higher frequency compared to
+the mutant barcodes. Nevertheless, this might not be true for the following time
+points, making our "uniform prior over the simplex" a reasonable choice. 
+Therefore, we define
+$$
+\alpha_t^{(b)} = 1 \;\; \forall \; b.
+$${#eq-alpha_choice}
+
+For the likelihood term $\pi(\underline{r}_t \mid \underline{f}_t)$, we assume a
+very simple multinomial model. The story behind this choice goes as follows:
+Given a "true" underlying barcode frequency, when the sequencing machine reads a
+particular barcode, this is equivalent to having thrown a $B$-sided die, where
+the face of the die indicates the barcode that is read. This die is then rolled
+$R_t = \sum_b r_t^{(b)}$ times, giving the values of the reads we observe at
+time $t$. Notice that this model does not account for noise that might come from
+sources such as genetic drift, DNA extraction, and PCR amplification. Although
+these sources of noise are obviously important, it is not clear that we have
+enough statistical power to make meaningful statements about them given our data
+(more on this later on). We can then compactly write the likelihood function as
+$$
+\underline{r}_t \mid \underline{f}_t \sim
+\operatorname{Multinomial}(\underline{f}_t).
+$${#eq-freq_likelihood}
+
+This simple Multinomial-Dirichlet model for the probability of the frequency
+values is analytically tractable. Specifically, the Dirichlet distribution is
+the so-called *conjugate prior* to the multinomial distribution. This means the
+posterior distribution $\pi(\underline{f}_t \mid \underline{r}_t)$ has a
+closed-form solution of the same form as the prior $\pi(\underline{f}_t)$, but
+with updated parameters. In other words, we can write (without proof) the
+posterior distribution as
+$$
+\underline{f}_t \mid \underline{r}_t \sim
+\operatorname{Dirichlet}(\underline{\beta}_t),
+$${#eq-freq_posterior}
+where the new parameters are of the form
+$$
+\beta_t^{(b)} = \alpha_t^{(b)} + r_t^{(b)}.
+$$
+Simply put, when the likelihood function is multinomial, and the prior 
+distribution is Dirichlet, the posterior distribution is also Dirichlet, where
+the parameters of the posterior are the parameters of the prior plus the number
+of observations of the corresponding output. This fact will become handy
+as we build the entire posterior distribution for our inference as defined in
+@eq-split_posterior.

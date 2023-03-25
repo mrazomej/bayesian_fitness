@@ -1,0 +1,6 @@
+---
+editor:
+    render-on-save: true
+---
+
+### Population mean fitness uncertainty $\pi(\underline{\bar{s}}_T \mid \underline{\underline{F}}, \underline{\underline{R}})$ {#sec-bayes_meanfit}

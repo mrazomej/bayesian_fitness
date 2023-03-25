@@ -1,0 +1,54 @@
+---
+editor:
+    render-on-save: true
+---
+
+## Preliminaries on mathematical notation
+Before jumping directly into what concerns us here, let us establish the
+mathematical notation to be used throughout this document. We define (column)
+vectors as underlined lowercase symbols such as
+$$
+\underline{x} = \begin{bmatrix}
+    x_1\\
+    x_2\\
+    \vdots\\
+    x_N
+\end{bmatrix}.
+$${#eq-vec_def}
+
+In the same way, we define matrices as double-underline uppercase symbols such
+as $\underline{\underline{A}}$.
+
+## Fitness model {#sec-fitness_model}
+
+Empirically, we have seen that the barcode trajectories follow an exponential
+function of the form
+$$
+f_{t+1}^{(m)} = f_{t}^{(m)} \mathrm{e}^{(s^{(m)} - \bar{s}_t)\tau},
+$${#eq-fitness}
+where $f_{t}^{(m)}$ is the frequency of barcode $m$ at time $t$, $s^{(m)}$ is
+the relative fitness with respect to the ancestral strain---the quantity we want
+to infer from the data---$\bar{s}_t$ is the mean fitness of the culture at time
+$t$, and $\tau$ is the time pass between time $t$ and $t+1$. It is important to
+notice that the frequencies $f_{t}^{(m)}$ are not the allele frequencies in the
+population (most of the culture is not sequenced since it is not barcoded), but
+rather the inferred frequencies from the total number of reads.
+
+Our ultimate objective is to infer the relative fitness $s^{(m)}$ for each of
+the $M$ mutants in the experiment. To do so, we must take into account the three
+main sources of uncertainty in our model:
+
+1. Uncertainty in the determination of frequencies. Our model relates
+frequencies between adjacent time points to the fitness of the corresponding
+strain. However, we do not measure frequencies directly. Instead, our data
+consists of a vector of barcode counts $\underline{r}_t$ for each of the $T$
+time points in which the measurements were taken.
+2. Uncertainty in the value of the population mean fitness. As we will see later
+on, we use neutral lineages barcodes, which, by definition have mean fitness
+$s^{(n)}$ to determine the value of the population mean fitness $\bar{s}_t$.
+This inference will come with its own uncertainty that must be propagated to the
+value of the relative fitness for the mutants.
+3. Uncertainty in each of the mutant's fitness values. 
+
+To account for all these sources of uncertainty in a principled way, we develop
+a Bayesian inference pipeline.
