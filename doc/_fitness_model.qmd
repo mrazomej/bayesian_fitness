@@ -24,15 +24,36 @@ as $\underline{\underline{A}}$.
 Empirically, we have seen that the barcode trajectories follow an exponential
 function of the form
 $$
-f_{t+1}^{(m)} = f_{t}^{(m)} \mathrm{e}^{(s^{(m)} - \bar{s}_t)\tau},
+f_{t+1}^{(b)} = f_{t}^{(b)} \mathrm{e}^{(s^{(b)} - \bar{s}_t)\tau},
 $${#eq-fitness}
-where $f_{t}^{(m)}$ is the frequency of barcode $m$ at time $t$, $s^{(m)}$ is
+where $f_{t}^{(b)}$ is the frequency of barcode $b$ at time $t$, $s^{(b)}$ is
 the relative fitness with respect to the ancestral strain---the quantity we want
 to infer from the data---$\bar{s}_t$ is the mean fitness of the culture at time
 $t$, and $\tau$ is the time pass between time $t$ and $t+1$. It is important to
-notice that the frequencies $f_{t}^{(m)}$ are not the allele frequencies in the
+notice that the frequencies $f_{t}^{(b)}$ are not the allele frequencies in the
 population (most of the culture is not sequenced since it is not barcoded), but
-rather the inferred frequencies from the total number of reads.
+rather the inferred frequencies from the total number of reads. A way to 
+conceptualize this is that we assume exponential growth in the *number of cells*
+$N_t^{(b)}$ of the form
+$$
+N_{t+1}^{(b)} = N_{t}^{(b)} \mathrm{e}^{(s^{(b)} - \bar{s}_t)\tau},
+$${#eq-ncells}
+for every barcode $b$. However, when we sequence barcodes, we do not directly
+measure the number of cells, but some number of reads $r_t^{(b)}$ that map to
+barcode $b$. In the simplest possible scenario, we assume
+$$
+r_{t}^{(b)} \propto N_{t}^{(b)},
+$${#eq-r_to_n}
+where, importantly, the proportionality constant depends on the total number of
+reads for the time $t$ library, which might vary from library to library.
+Therefore, to compare the number of reads between libraries at different time
+points, we must somehow normalize them to the same scale. The simplest form is
+to define a relative abundance, i.e., a frequency with respect to the total
+number of reads,
+$$
+f_{t}^{(b)} \equiv \frac{r_{t}^{(b)}}{\sum_{b'} r_{t}^{(b')}}.
+$${#eq-r_to_n_norm}
+This is the frequency @eq-fitness describes.
 
 Our ultimate objective is to infer the relative fitness $s^{(m)}$ for each of
 the $M$ mutants in the experiment. To do so, we must take into account the three
