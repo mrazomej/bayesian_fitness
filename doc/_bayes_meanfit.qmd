@@ -116,10 +116,10 @@ $\bar{s}_t$. From @eq-fitness_ratio_neutral and @eq-gamma_def, we can write
 $$
 \ln \gamma_t^{(n)} = - \bar{s}_t + \varepsilon_t^{(n)},
 $${#eq-log_ratio_neutral}
-where we added an extra term, $\varepsilon_t^{(n)}$, characterizing the 
-deviations of the measurements from the theoretical model. It is common to 
-assume that these errors are normally distributed with mean zero and some 
-standard deviation $\sigma_t$, implying that
+where, for simplicity, we set $\tau = 1$. Note that we added an extra term,
+$\varepsilon_t^{(n)}$, characterizing the deviations of the measurements from
+the theoretical model. It is common to assume that these errors are normally
+distributed with mean zero and some standard deviation $\sigma_t$, implying that
 $$
 \ln \gamma_t^{(n)} \mid \bar{s}_t, \sigma_t  \sim 
 \mathcal{N}\left(-\bar{s}_t, \sigma_t \right),
@@ -142,6 +142,10 @@ where we assume the prior for each parameter is independent, i.e.,
 $$
 \pi(\bar{s}_t, \sigma_t) = \pi(\bar{s}_t) \pi(\sigma_t).
 $${#eq-meanfit_indep_prior}
+For numerical stability, we will select weakly-informative priors for both of
+these parameters. In the case of the nuisance parameter $\sigma_t$, the prior
+must be restricted to positive values only, since standard deviations cannot be
+negative.
 
 For the first term on the right-hand side of @eq-joint_to_prod_gamma,
 $\pi(f_t^{(n)} \mid \gamma_{t}^{(n)}, \bar{s}_t)$, we remove the conditioning
@@ -157,9 +161,11 @@ ratio $\gamma_{t}^{(n)}$. If the ratio happened to be $\gamma_{t}^{(n)} = 2$,
 we could have $f_{t+1}^{(n)} = 1$ and $f_{t+1}^{(n)} = 0.5$, for example.
 Although, it would be equally likely that $f_{t+1}^{(n)} = 0.6$ and
 $f_{t+1}^{(n)} = 0.3$ or $f_{t+1}^{(n)} = 0.1$ and $f_{t+1}^{(n)} = 0.05$ for
-that matter. As a matter of fact, given that we only get to observe the
-frequency ratio $\gamma_t^{(n)}$, we can only restrict the values of the
-frequency $f_{t}^{(n)}$ to be
+that matter. If we only get to observe the frequency ratio $\gamma_t^{(n)}$, we
+know that the numerator $f_{t+1}^{(n)}$ can only take values between zero and
+one, all of them being equally likely given only the information on the ratio.
+As a consequence, the value of the frequency in the denominator $f_{t}^{(n)}$ is
+restricted to fall in the range
 $$
 f_{t}^{(n)} \in \left(0, \frac{1}{\gamma_t^{(n)}} \right].
 $${#eq-freq_given_gamma_range}
@@ -195,10 +201,10 @@ $$
 $${#eq-meanfit_eq2}
 $$
 \bar{s}_t \sim \mathcal{N}(0, \sigma_{\bar{s}_t}),
-$$
+$${#eq-meanfit_eq3}
 and
 $$
-sigma_t \sim \operatorname{Half}-\mathcal{N}(0, \sigma_{\sigma_t}),
-$$
+\sigma_t \sim \operatorname{Half}-\mathcal{N}(0, \sigma_{\sigma_t}),
+$${#eq-meanfit_eq4}
 where $\sigma_{\bar{s}_t}$ and $\sigma_{\sigma_t}$ are free parameters we can
 choose.

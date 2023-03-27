@@ -11,3 +11,5 @@ title: "Results"
 {{< include _bayes_freq.qmd >}}
 
 {{< include _bayes_meanfit.qmd >}}
+
+{{< include _bayes_mutfit.qmd >}}

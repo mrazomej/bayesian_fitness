@@ -1,0 +1,190 @@
+---
+editor:
+    render-on-save: true
+---
+
+### Mutant relative fitness uncertainty $\pi(\underline{s}^M \mid \underline{\bar{s}}_T, \underline{\underline{F}}, \underline{\underline{R}})$ {#seq-bayes_mutfit}
+
+The last piece of our inference is the piece that we care about the most: the
+probability distribution of all the mutants' relative fitness, given the
+inferred population mean fitness and the frequencies. First, we assume that all
+fitness values are independent of each other. This allows us to write
+$$
+\pi(
+    \underline{s}^M \mid 
+    \underline{\bar{s}}_T, \underline{\underline{F}}, \underline{\underline{R}}
+) = 
+\prod_{m=1}^M \pi(
+    s^{(m)} \mid
+    \underline{\bar{s}}_T, \underline{\underline{F}}, \underline{\underline{R}}
+).
+$${#eq-mutfit_indep}
+Furthermore, as was the case with the population mean fitness, our fitness
+model relates frequencies, not raw reads. Moreover, the fitness value of mutant
+$m$ only depends on the frequencies of such mutant. Therefore, we can simplify
+the conditioning to
+$$
+\pi(
+    s^{(m)} \mid
+    \underline{\bar{s}}_T, \underline{\underline{F}}, \underline{\underline{R}}
+) = 
+\pi(s^{(m)} \mid \underline{\bar{s}}_T, \underline{f}^{(m)}),
+$${#eq-mutfit_cond_simple}
+where
+$$
+\underline{f}^{(m)} = (f_0^{(m)}, f_1^{(m)}, \ldots, f_T^{(m)})^\dagger,
+$${#eq-mutfit_timeseries_def}
+is the vector containing the frequency time series for mutant $m$. Writing 
+Bayes' theorem for the right-hand side of @eq-mutfit_cond_simple results in
+$$
+\pi(s^{(m)} \mid \underline{\bar{s}}_T, \underline{f}^{(m)}) \propto
+\pi(\underline{f}^{(m)} \mid \underline{\bar{s}}_T, s^{(m)})
+\pi(s^{(m)} \mid \underline{\bar{s}}_T).
+$${#eq-mutfit_bayes}
+Notice the conditioning on the mean fitness values $\underline{\bar{s}}_T$ is 
+not inverted since we already inferred these values.
+
+Following the logic used in @sec-bayes_meanfit, let us define
+$$
+\underline{\gamma}^{(m)} = 
+(\gamma_0^{(m)}, \gamma_1^{(m)}, \ldots, \gamma_{T-1}^{m})^\dagger,
+$${#eq-gamma_vec_def}
+where each entry $\gamma_t^{(m)}$ is defined by @eq-gamma_def. In the same way
+we rewrote the joint distribution between two adjacent time point frequencies 
+to the joint distribution between one of the frequencies and the ratio of both 
+frequencies in @eq-joint_freq_gamma, we can rewrite the joint distribution of
+the frequency time series for mutant $m$ as
+$$
+\pi(\underline{f}^{(m)} \mid \underline{\bar{s}}_T, s^{(m)}) =
+\pi(f_0^{(m)}, \underline{\gamma}^{(m)} \mid \underline{\bar{s}}_T, s^{(m)}).
+$${#eq-joint_freq_gammas_mutfit}
+One can think about @eq-joint_freq_gammas_mutfit as saying that knowing the
+individual frequencies at each time point contain equivalent information as
+knowing the initial frequency and the subsequent ratios of frequencies. This is
+because if we want to know the value of $f_1^{(m)}$ given the ratios, we only
+need to compute
+$$
+f_1^{(m)} = \gamma_0^{(m)} f_0^{(m)}.
+$${#eq-f1_from_ratio}
+Moreover, if we want to know $f_2^{(m)}$, we have
+$$
+f_2^{(m)} = \gamma_1^{(m)} f_1^{(m)} =
+\gamma_1^{(m)} \left(\gamma_0^{(m)} f_0^{(m)}\right),
+$${#eq-f2_from_ratio}
+and so on. We can then write the joint distribution on the right-hand side of
+@eq-joint_freq_gammas_mutfit as a product of conditional distributions of the
+form
+$$
+\begin{aligned}
+\pi(f_0^{(m)}, \underline{\gamma}^{(m)} \mid \underline{\bar{s}}_T, s^{(m)}) =
+&\pi(
+    f_0^{(m)} \mid 
+    \gamma_0^{(m)}, \ldots, \gamma_{T-1}^{(m)}, \underline{\bar{s}}_T, s^{(m)}
+) \times \\
+&\pi(
+    \gamma_0^{(m)} \mid 
+    \gamma_1^{(m)}, \ldots, \gamma_{T-1}^{(m)}, \underline{\bar{s}}_T, s^{(m)}
+) \times \\
+&\pi(
+    \gamma_1^{(m)} \mid 
+    \gamma_2^{(m)}, \ldots, \gamma_{T-1}^{(m)}, \underline{\bar{s}}_T, s^{(m)}
+) \times \\
+&\vdots \\
+&\pi(
+    \gamma_{T-2}^{(m)} \mid \gamma_{T-1}^{(m)}, \underline{\bar{s}}_T, s^{(m)}
+) \times \\
+&\pi(\gamma_{T-1}^{(m)} \mid \underline{\bar{s}}_T, s^{(m)}).
+\end{aligned}
+$${#eq-mutfit_joint_to_cond}
+Writing the fitness model in @eq-fitness as
+$$
+\gamma_t^{(m)} = \frac{f_{t+1}^{(m)}}{f_t^{(m)}} = 
+\mathrm{e}^{(s^{(m)} - s_t)\tau},
+$$
+reveals that the value of each of the ratios $\gamma_t^{(m)}$ only depends on
+the corresponding fitness value $\bar{s}_t$ and the relative fitness $s^{(m)}$.
+Therefore, we can remove most of the conditioning on the right-hand side of 
+@eq-mutfit_joint_to_cond, resulting in a much simpler joint distribution of the
+form
+$$
+\begin{aligned}
+\pi(f_0^{(m)}, \underline{\gamma}^{(m)} \mid \underline{\bar{s}}_T, s^{(m)}) =
+&\pi(f_0^{(m)} \mid \gamma_0^{(m)}) \times \\
+&\pi(\gamma_0^{(m)} \mid \bar{s}_0, s^{(m)}) \times \\
+&\pi(\gamma_1^{(m)} \mid \bar{s}_1, s^{(m)}) \times \\
+&\vdots \\
+&\pi(\gamma_{T-2}^{(m)} \mid \bar{s}_{T-2}, s^{(m)}) \times \\
+&\pi(\gamma_{T-1}^{(m)} \mid \bar{s}_{T-1}, s^{(m)}),
+\end{aligned}
+$${#eq-mutfit_joint_to_cond_simple}
+where for the first term on the right-hand side of
+@eq-mutfit_joint_to_cond_simple we apply the same logic as in
+@eq-freq_cond_gamma to remove all other dependencies. We emphasize that although
+@eq-mutfit_joint_to_cond_simple looks like a series of independent inferences,
+the value of the relative fitness $s^{(m)}$ is shared among all of them. This
+means that the parameter is not inferred individually for each time point,
+resulting in different estimates of the parameter, but each time point
+contributes independently to the inference of a single estimate of $s^{(m)}$.
+
+Using equivalent arguments to those in @sec-bayes_meanfit, we assume
+$$
+f_0^{(m)} \mid \gamma_0^{(m)} \sim 
+\operatorname{Uniform}\left(0, \frac{1}{\gamma_0^{(m)}} \right),
+$$
+and
+$$
+\gamma_t^{(m)} \mid \bar{s}_t, s^{(m)}, \sigma^{(m)} \sim 
+\log\mathcal{N}\left(s^{(m)} - \bar{s}_t, \sigma^{(m)} \right),
+$${#eq-mutfit_lognormal}
+where we add the nuisance parameter $\sigma^{(m)}$ to the inference. Notice that
+this parameter is not indexed by time. This means that we assume the deviations
+from the theoretical prediction do not depend on time, but only on the mutant.
+Adding the nuisance parameter demands us to update @eq-mutfit_bayes to
+$$
+\pi(
+    s^{(m)}, \sigma^{(m)} \mid \underline{\bar{s}}_T, \underline{f}^{(m)}
+) \propto
+\pi(\underline{f}^{(m)} \mid \underline{\bar{s}}_T, s^{(m)}, \sigma^{(m)})
+\pi(s^{(m)}) \pi(\sigma^{(m)}),
+$${#eq-mutfit_bayes_full}
+where we assume independent priors for both parameters. We also removed the
+conditioning on the values of the mean fitness as knowing such values does not
+change our prior information about the possible range of values that the
+parameters can take. As with the priors on @sec-bayes_meanfit, we will assign
+weakly-informative priors to these parameters.
+
+#### Summary
+
+With all pieces in place, we write the full inference of the relative fitness
+values as
+$$
+\pi(
+    \underline{s}^M ,\underline{\sigma}^M \mid 
+    \underline{\bar{s}}_T, \underline{\underline{F}}
+) \propto
+\prod_{m=1}^M \left\{ 
+    \pi(f_0^{(m)} \mid \gamma_0^{(m)})
+    \prod_{t=0}^{T-1} \left[
+        \pi(\gamma_t^{(m)} \mid \bar{s}_t, s^{(m)}, \sigma^{(m)})
+    \right]
+    \pi(s^{(m)}) \pi(\sigma^{(m)})
+\right\},
+$${#eq-mutfit_full_inference}
+where
+$$
+f_0^{(m)} \mid \gamma_0^{(m)} \sim 
+\operatorname{Uniform}\left(0, \frac{1}{\gamma_0^{(m)}} \right),
+$${#eq-mutfit_eq1}
+$$
+\gamma_t^{(m)} \mid \bar{s}_t, s^{(m)}, \sigma^{(m)} \sim 
+\log\mathcal{N}\left(s^{(m)} - \bar{s}_t, \sigma^{(m)} \right),
+$${#eq-mutfit_eq2}
+$$
+s^{(m)} \sim \mathcal{N}(0, \sigma_{s^{(m)}}),
+$${#eq-mutfit_eq3}
+and
+$$
+\sigma^{(m)} \sim \operatorname{Half}-\mathcal{N}(0, \sigma_{\sigma^{(m)}}),
+$${#eq-mutfit_eq4}
+where $\sigma_{s^{(m)}}$ and $\sigma_{\sigma^{(m)}}$ are free parameters we can
+choose.
