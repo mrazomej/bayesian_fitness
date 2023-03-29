@@ -1,6 +1,6 @@
-name = "BayesFitness"
-uuid = "627057dc-946e-4ae6-95bf-6f30ee736d2e"
-authors = ["mrazomej <manuel.razo.m@gmail.com>"]
+name = "BayesFitUtils"
+uuid = "7f823f5a-8c47-4093-addf-bf37948c4a1d"
+authors = ["mrazomej <mrazo@stanford.edu>"]
 version = "0.1.0"
 
 [deps]
