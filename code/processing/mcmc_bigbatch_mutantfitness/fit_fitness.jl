@@ -2,12 +2,12 @@
 println("Loading packages...")
 
 # Load project package
-@load_pkg BayesFitness
+@load_pkg BayesFitUtils
 
 import Revise
 import Suppressor
 # Import project package
-import BayesFitness
+import BayesFitUtils
 # Import library to list files
 import Glob
 # Import library to save output
