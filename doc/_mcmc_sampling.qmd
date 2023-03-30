@@ -1,0 +1,5 @@
+---
+editor:
+    render-on-save: true
+---
+## Markov Chain Monte Carlo sampling of posterior {#sec-mcmc_sampling}

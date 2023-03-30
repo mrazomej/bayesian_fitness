@@ -29,8 +29,8 @@ $$
 $${#eq-freq_norm}
 This means that the probability distribution of the $B$ frequency values lies on
 the $B$-simplex, i.e., the $B$ dimensional space constrained such that the sum
-of all the dimensions must add up to one. A natural selection for a probability
-that satisfies the constraint in @eq-freq_norm is the so-called Dirichlet 
+of all the dimensions must add up to one. A natural choice for a probability
+that satisfies the constraint in @eq-freq_norm is the so-called Dirichlet
 distribution. The Dirichlet distribution is parametrized by a vector
 $$
 \underline{\alpha}_t = (\alpha^{(1)}_t, \cdots, \alpha^{(B)}_t)^\dagger, 
@@ -79,8 +79,12 @@ statistical power to make meaningful statements about them given our data (more
 on this later on). We can then compactly write the likelihood function as
 $$
 \underline{r}_t \mid \underline{f}_t \sim
-\operatorname{Multinomial}(R_t, \underline{f}_t).
+\operatorname{Multinomial}(R_t, \underline{f}_t),
 $${#eq-freq_likelihood}
+which again is simply read as the number of reads at time $t$ $\underline{r}_t$
+given the frequencies at the same time $\underline{f}_t$ is distributed with
+a multinomial distribution parametrized by $R_t$, the total number of reads, and
+the frequency vector.
 
 This simple Multinomial-Dirichlet model for the probability of the frequency
 values is convenient because it is analytically tractable. Specifically, the
@@ -93,7 +97,7 @@ $$
 \underline{f}_t \mid \underline{r}_t \sim
 \operatorname{Dirichlet}(\underline{\beta}_t),
 $${#eq-freq_posterior}
-where the $\underline{\alpha}_t$ parameters are updated to $\underline{\beta}$
+where the $\underline{\alpha}_t$ parameters are updated to $\underline{\beta}_t$
 after observing the data. These updated parameters are of the form
 $$
 \beta_t^{(b)} = \alpha_t^{(b)} + r_t^{(b)}.

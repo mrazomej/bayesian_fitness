@@ -66,7 +66,7 @@ consists of a vector of barcode counts $\underline{r}_t$ for each of the $T$
 time points in which the measurements were taken.
 2. Uncertainty in the value of the population mean fitness. As we will see later
 on, we use neutral lineages barcodes, which, by definition have mean fitness
-$s^{(n)}$ to determine the value of the population mean fitness $\bar{s}_t$.
+$s^{(n)} = 0$ to determine the value of the population mean fitness $\bar{s}_t$.
 This inference will come with its own uncertainty that must be propagated to the
 value of the relative fitness for the mutants.
 3. Uncertainty in each of the mutant's fitness values. 

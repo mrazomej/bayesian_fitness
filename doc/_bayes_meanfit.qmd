@@ -25,8 +25,8 @@ $${#eq-meanfit_noreads}
 Moreover, our fitness model does not directly explain how the population mean
 fitness evolves over time. In other words, our model cannot explicitly compute
 the population mean fitness at time $t+1$ from the information we have about
-time $t$. Given this model limitation, we are led to assume that we must need
-to infer each $\bar{s}_t$ independently. Expressing this for our inference
+time $t$. Given this model limitation, we are led to assume that we must infer
+each $\bar{s}_t$ independently. Expressing this for our inference
 results in
 $$
 \pi(
@@ -52,7 +52,7 @@ $${#eq-meanfit_indep_neutral}
 Recall that in @sec-fitness_model we emphasized that the frequencies $f_t^{(n)}$
 do not represent the true frequency of a particular lineage in the population
 but rather a "normalized number of cells." Therefore, it is safe to assume each
-of the $N$ neutral lineages' frequencies is changing independently. Their
+of the $N$ neutral lineages' frequencies is changing independently. The
 correlation of how increasing the frequency of one lineage will decrease the
 frequency of others is already captured in the model presented in
 @sec-bayes_freq. Thus, we write
@@ -70,9 +70,9 @@ $${#eq-meanfit_bayes}
 Notice the likelihood defines the joint distribution of neutral barcode
 frequencies conditioned on the population mean fitness. However, rewriting our
 fitness model in @eq-fitness for a neutral lineage to leave frequencies on one
-hand and fitness on the other results in
+side and fitness on the other results in
 $$
-\frac{f_{t+1}^{(n)}}{f_t^{(n)}} = \mathrm{e}^{- \bar{s}_t}.
+\frac{f_{t+1}^{(n)}}{f_t^{(n)}} = \mathrm{e}^{- \bar{s}_t}\tau.
 $${#eq-fitness_ratio_neutral}
 @eq-fitness_ratio_neutral implies that our fitness model only relates **the
 ratio** of frequencies and not the individual values. To get around this 
@@ -93,12 +93,19 @@ part of the inference problem: our series of independence assumptions lead us to
 $\bar{s}_t$ to the frequency of a neutral barcode at times $t$ and $t+1$. 
 However, as shown in @eq-fitness_ratio_neutral, our model functionally relates
 the ratio of frequencies---that we defined as $\gamma_t^{(n)}$---and not the
-independent frequencies to the mean fitness. Therefore, instead of writing the
-joint distribution of the frequency values at times $t$ and $t+1$ conditioned on
-the mean fitness for the likelihood, we write the joint distribution of the
+independent frequencies to the mean fitness. Therefore, instead of writing for
+the likelihood the joint distribution of the frequency values at times $t$ and
+$t+1$ conditioned on the mean fitness, we write the joint distribution of the
 barcode frequency at time $t$ and the ratio of the frequencies. These **must
 be** equivalent joint distributions since there is a one-to-one mapping between
-$\gamma_t^{(n)}$ and $f_{t+1}^{(n)}$ for a given value of $f_t^{(n)}$.
+$\gamma_t^{(n)}$ and $f_{t+1}^{(n)}$ for a given value of $f_t^{(n)}$. Another
+way to phrase this is to say that knowing the frequency at time $t$ and at time
+$t+1$ provides the same amount of information as knowing the frequency at time
+$t$ and the ratio of the frequencies. This is because if we want to obtain
+$f_{t+1}^{(n)}$ given this information, we simply compute
+$$
+f_{t+1}^{(n)} = \gamma_t^{(n)} f_t^{(n)}.
+$${#eq-meanfit_ft+1_gamma}
 
 The real advantage of rewriting the joint distribution as in
 @eq-joint_freq_gamma comes from splitting this joint distribution as a product
@@ -181,7 +188,9 @@ $${#eq-f_given_gamma_uniform}
 Putting all the pieces we have developed in this section together results in an
 inference for the population mean fitness values of the form
 $$
-\pi(\underline{\bar{s}}_T \mid \underline{\underline{F}}) \propto
+\pi(
+    \underline{\bar{s}}_T, \underline{\sigma}_T \mid \underline{\underline{F}}
+) \propto
 \prod_{t=1}^{T-1} \left\{
     \prod_{n=1}^N \left[
         \pi(f_t^{(n)} \mid \gamma_t^{(n)}) 
