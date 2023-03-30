@@ -39,7 +39,7 @@ julia
 where `x` is the version of `Julia`. Note: The `REPL` `Pkg` mode is the native
 package manager for the `Julia` language.
 
-0. **Extra steps**: Since the `BayesFitness.jl` package is note yet registered,
+0. **Extra steps**: Since the `BayesFitness.jl` package is not yet registered,
    this might give an error when trying to install all dependencies for the
    `BayesFitUtils` package. Therefore, add the package directly by typing
 ```
@@ -76,8 +76,6 @@ to load the package for that particular project.
 These functions are part of the `~/.julia/config/startup.jl` file. To add these
 functions to your main Julia installation, follow the instructions in the
 `README.md` file in the `miscellaneous/` directory.
-
-
 
 ## License
 ![](https://licensebuttons.net/l/by/3.0/88x31.png)
