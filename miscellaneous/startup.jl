@@ -25,7 +25,7 @@ for that particular project.
 - `pkg::String`: Name of the folder within the `GitHub` repository where the
   package is located.
 """
-function load_pkg(pkg::String)
+function load_pkg(pkg)
     # Suppress warning
     Suppressor.@suppress begin
         # Save current directory
@@ -33,7 +33,7 @@ function load_pkg(pkg::String)
         dir = dir[1:end-1]
 
         # Change directories
-        cd(git_root() * "/" * string(pkg))
+        cd(git_root() * "/" * String(pkg))
 
         # Activate environment
         Pkg.pkg"activate ."
