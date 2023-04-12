@@ -3,3 +3,119 @@ editor:
     render-on-save: true
 ---
 ## Markov Chain Monte Carlo sampling of posterior {#sec-mcmc_sampling}
+
+The model proposed in @sec-bayesian_inference presents a daunting computational
+task as it demands the simultaneous inference of > $10^4$ parameters. Sampling
+such high-dimensional posterior distribution can be extremely slow, even for
+state-of-the-art Markov Chain Monte Carlo samplers. Nevertheless, given the
+structure of our problem, we can get around this issue by focusing on the
+marginal individual mutants' relative fitness posterior distributions. This is
+perfectly justified as we are only interested in these marginal distributions
+$\pi(s^{(m)} \mid \underline{\underline{R}})$, rather than the full joint
+posterior distribution.
+
+To make the inference task computationally feasible, we divide the process into
+two steps:
+
+1. Sample out of the posterior distribution of the population mean fitness using
+the information of the neutral lineages only.
+2. Sample out of each mutant's relative fitness posterior distribution given the
+knowledge acquired in step 1.
+
+In what follows, we describe the modification of the model presented in
+@eq-mutfit_full_inference to make Markov Chain Monte Carlo sampling of the
+posterior distribution computationally feasible.
+
+### Sample population mean fitness posterior distribution
+
+The full joint posterior distribution for our experiment $\pi(\underline{s}^M,
+\underline{\sigma}^M, \underline{\bar{s}}_T, \underline{\sigma}_T,
+\underline{\underline{F}} \mid \underline{\underline{R}})$ demands the
+simultaneous inference of all of the frequencies $\underline{\underline{F}}$,
+the population mean fitness values for every pair of time points
+$\underline{\bar{s}}_T$, the mutants relative fitness $\underline{s}^M$, and the
+nuisance parameters inherited from the likelihood functions
+$\underline{\sigma}^M$ and $\underline{\sigma}_T$. Throughout
+@sec-bayesian_inference, we describe a series of independence assumptions that
+enormously simplified the problem. Nevertheless, these assumptions do not remove
+all of the computational complexity, as we still need to infer all of the
+frequency values for each of the $~ 10^3-10^4$ unique barcodes.
+
+The first step towards beating the full posterior distribution to a
+computationally tractable form is to focus on the inference of the population
+mean fitness, ignoring the mutants' relative fitness values. This is
+mathematically sound, given the structure of our problem, as described in
+@sec-bayesian_inference. More specifically, @eq-split_posterior shows that we
+can split the posterior into the product of three terms, where the term
+involving the mean fitness values $\underline{\bar{s}}_T$ do not depend on the
+mutants relative fitness. Thus, we are left with the challenge of sampling from
+a "simpler" posterior distribution with less parameters,
+$$
+\pi(
+    \underline{\bar{s}}_T, \underline{\sigma}_T, \underline{\underline{F}} \mid
+    \underline{\underline{R}}
+) = 
+\pi(\underline{\bar{s}}_T, \underline{\sigma}_T \mid \underline{\underline{F}})
+\pi(\underline{\underline{F}} \mid \underline{\underline{R}}),
+$${#eq-simpler_meanfit_posterior}
+where the right-hand side splits the joint distribution into the product of
+conditional distributions, as in @eq-split_posterior.
+@eq-simpler_meanfit_posterior already removed ~$10^3$ parameters from the 
+inference problem, but we still have the simultaneous inference of all 
+frequencies $\underline{\underline{F}}$. To make further progress, we can follow
+the independence assumptions described in @sec-bayes_meanfit, which led to
+@eq-meanfit_indep, to write the posterior distribution as a product of the form
+$$
+\pi(\underline{\bar{s}}_T, \underline{\sigma}_T \mid \underline{\underline{F}})
+\pi(\underline{\underline{F}} \mid \underline{\underline{R}}) 
+= \prod_{t=1}^{T-1} 
+\pi(\bar{s}_t, \sigma_t, \mid \underline{f}_t, \underline{f}_{t+1})
+\pi(
+    \underline{f}_t, \underline{f}_{t+1} \mid 
+    \underline{r}_t, \underline{r}_{t+1}
+).
+$${#eq-meanfit_posterior_indep}
+If we sample from the posterior distribution of one of the $T-1$ terms on the
+right-hand side of @eq-meanfit_posterior_indep, we again enormously reduce the
+number of parameters that need to be inferred simultaneously, as we only focus
+on the frequencies $\underline{f}_t$, and $\underline{f}_{t+1}$, relevant for a
+single mean fitness value $\bar{s}_t$ rather than all frequencies
+$\underline{\underline{F}}$. Nevertheless, the large number of unique barcodes
+makes this still a challenging inference problem.
+
+However, the frequencies $\underline{f}_t$, and $\underline{f}_{t+1}$, and the
+standard deviation $\sigma_t$ represent nuisance parameters we ignore at the end
+of the inference procedure. In other words, what we care about is the marginal
+distribution of the mean fitness given the data, i.e.,
+$$
+\pi(\bar{s}_t \mid \underline{r}_t, \underline{r}_{t+1}) =
+\int d\sigma_t\;
+\int d^B \underline{f}_t\;
+\int d^B \underline{f}_{t+1}\;
+\pi(\bar{s}_t, \sigma_t, \mid \underline{f}_t, \underline{f}_{t+1})
+\pi(
+    \underline{f}_t, \underline{f}_{t+1} \mid 
+    \underline{r}_t, \underline{r}_{t+1}
+),
+$${#eq-meanfit_posterior_marginal}
+where we remind the reader that $B$ is the total number of unique barcodes. 
+These integrals with respect to all barcode frequencies pose the ultimate
+computational challenge we must overcome.
+
+
+Since the
+inference of the mean fitness $\bar{s}_t$ makes use only of the neutral lineages
+frequencies, it is convenient to split the $\underline{f}_t$ vectors into the
+neutral and mutant-only frequency arrays and write
+$$
+\pi(
+    \bar{s}_t, \sigma_t, \underline{f}_t, \underline{f}_{t+1} \mid
+    \underline{r}_t, \underline{r}_{t+1}
+) =
+\pi(
+    \bar{s}_t, \sigma_t, 
+    \underline{f}_t^N, \underline{f}_t^M, 
+    \underline{f}_{t+1}^N, \underline{f}_{t+1}^M \mid
+    \underline{r}_t, \underline{r}_{t+1}
+)
+$${#eq-meanfit_split_f}
