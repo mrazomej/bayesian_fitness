@@ -70,10 +70,8 @@ $$
 \pi(\underline{\underline{F}} \mid \underline{\underline{R}}) 
 = \prod_{t=1}^{T-1} 
 \pi(\bar{s}_t, \sigma_t, \mid \underline{f}_t, \underline{f}_{t+1})
-\pi(
-    \underline{f}_t, \underline{f}_{t+1} \mid 
-    \underline{r}_t, \underline{r}_{t+1}
-).
+\pi(\underline{f}_t \mid \underline{r}_t)
+\pi(\underline{f}_{t+1} \mid \underline{r}_{t+1}).
 $${#eq-meanfit_posterior_indep}
 If we sample from the posterior distribution of one of the $T-1$ terms on the
 right-hand side of @eq-meanfit_posterior_indep, we again enormously reduce the
@@ -81,11 +79,11 @@ number of parameters that need to be inferred simultaneously, as we only focus
 on the frequencies $\underline{f}_t$, and $\underline{f}_{t+1}$, relevant for a
 single mean fitness value $\bar{s}_t$ rather than all frequencies
 $\underline{\underline{F}}$. Nevertheless, the large number of unique barcodes
-makes this still a challenging inference problem.
+makes this still a challenging inference problem. 
 
-However, the frequencies $\underline{f}_t$, and $\underline{f}_{t+1}$, and the
-standard deviation $\sigma_t$ represent nuisance parameters we ignore at the end
-of the inference procedure. In other words, what we care about is the marginal
+The frequencies $\underline{f}_t$, and $\underline{f}_{t+1}$, and the standard
+deviation $\sigma_t$ represent nuisance parameters we ignore at the end of the
+inference procedure. In other words, what we care about is the marginal
 distribution of the mean fitness given the data, i.e.,
 $$
 \pi(\bar{s}_t \mid \underline{r}_t, \underline{r}_{t+1}) =
@@ -93,29 +91,76 @@ $$
 \int d^B \underline{f}_t\;
 \int d^B \underline{f}_{t+1}\;
 \pi(\bar{s}_t, \sigma_t, \mid \underline{f}_t, \underline{f}_{t+1})
-\pi(
-    \underline{f}_t, \underline{f}_{t+1} \mid 
-    \underline{r}_t, \underline{r}_{t+1}
-),
+\pi(\underline{f}_t \mid \underline{r}_t)
+\pi(\underline{f}_{t+1} \mid \underline{r}_{t+1}),
 $${#eq-meanfit_posterior_marginal}
 where we remind the reader that $B$ is the total number of unique barcodes. 
 These integrals with respect to all barcode frequencies pose the ultimate
-computational challenge we must overcome.
-
-
-Since the
+computational challenge we must overcome. To this goal, notice that the
 inference of the mean fitness $\bar{s}_t$ makes use only of the neutral lineages
-frequencies, it is convenient to split the $\underline{f}_t$ vectors into the
-neutral and mutant-only frequency arrays and write
+frequencies. Thus, it is convenient to split the $\underline{f}_t$ vectors into
+the neutral and mutant-only frequency arrays and write
 $$
+\pi(\bar{s}_t, \sigma_t, \mid \underline{f}_t, \underline{f}_{t+1})
+\pi(\underline{f}_t \mid \underline{r}_t)
+\pi(\underline{f}_{t+1} \mid \underline{r}_{t+1}) = 
 \pi(
-    \bar{s}_t, \sigma_t, \underline{f}_t, \underline{f}_{t+1} \mid
-    \underline{r}_t, \underline{r}_{t+1}
-) =
-\pi(
-    \bar{s}_t, \sigma_t, 
-    \underline{f}_t^N, \underline{f}_t^M, 
-    \underline{f}_{t+1}^N, \underline{f}_{t+1}^M \mid
-    \underline{r}_t, \underline{r}_{t+1}
+    \bar{s}_t, \sigma_t, \mid 
+    \underline{f}_t^N, \underline{f}_{t+1}^N
 )
+\pi(
+    \underline{f}_t^N, \underline{f}_t^M \mid \underline{r}_t
+)
+\pi(
+    \underline{f}_{t+1}^N, \underline{f}_{t+1}^M \mid \underline{r}_{t+1}
+),
 $${#eq-meanfit_split_f}
+where the first term on the right-hand side of @eq-meanfit_split_f only includes
+the neutral frequencies needed to infer the population mean fitness. The
+integral in @eq-meanfit_posterior_marginal can then be split for neutral and
+mutant lineages, resulting in a rather convoluted equation of the form 
+$$
+\begin{aligned}
+\pi(\bar{s}_t \mid \underline{r}_t, \underline{r}_{t+1}) =
+&\int d\sigma_t\;
+\int d^N \underline{f}_t^N \;
+\int d^N \underline{f}_{t+1}^N 
+\int d^M \underline{f}_t^M \;
+\int d^M \underline{f}_{t+1}^M \times \\
+&\pi(
+    \bar{s}_t, \sigma_t, \mid 
+    \underline{f}_t^N, \underline{f}_{t+1}^N
+)
+\pi(
+    \underline{f}_t^N, \underline{f}_t^M \mid \underline{r}_t
+)
+\pi(
+    \underline{f}_{t+1}^N, \underline{f}_{t+1}^M \mid \underline{r}_{t+1}
+),
+\end{aligned}
+$${#eq-meanfit_split_f_integral}
+where, again, we remind the reader that $N$ is the number of neutral barcodes
+and $M$ the number of mutant barcodes. Despite the convoluted form, we can
+rewrite @eq-meanfit_split_f_integral to get clarity on how to reduce the
+dimensionality of the problem even further. Distributing terms in
+@eq-meanfit_split_f_integral results in
+$$
+\begin{aligned}
+\pi(\bar{s}_t \mid \underline{r}_t, \underline{r}_{t+1}) =
+&\int d\sigma_t\;
+\int d^N \underline{f}_t^N \;
+\int d^N \underline{f}_{t+1}^N 
+\pi(
+    \bar{s}_t, \sigma_t, \mid 
+    \underline{f}_t^N, \underline{f}_{t+1}^N
+) \times \\
+&\int d^M \underline{f}_t^M \;
+\pi(
+    \underline{f}_t^N, \underline{f}_t^M \mid \underline{r}_t
+) \times \\
+&\int d^M \underline{f}_{t+1}^M \;
+\pi(
+    \underline{f}_{t+1}^N, \underline{f}_{t+1}^M \mid \underline{r}_{t+1}
+).
+\end{aligned}
+$$
