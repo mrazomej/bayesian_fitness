@@ -43,8 +43,62 @@ println("Loading data...")
 # Import data
 df = CSV.read("$(git_root())/data/kinsler_2020/tidy_counts.csv", DF.DataFrame)
 
-# Group data by environment
+##
+
+# NOTE: For the multithread to run when some files have already been processed,
+# we need to avoid the "continue" condition when checking if a file was already
+# processed (I honestly don't know why). Therefore, we must list all datasets to
+# be processed, see which ones are complete, and remove them from the data fed
+# to the sampler. This allows Threads.@threads to actually work.
+
+# Group data by env, rep
 df_group = DF.groupby(df, [:env, :rep])
+
+# Extract keys
+df_keys = collect(keys(df_group))
+
+# Initialize array indicating if dataset has been completely processed or not
+complete_bool = Vector{Bool}(undef, length(df_keys))
+
+# Loop through groups
+for (i, data) in enumerate(df_group)
+    # Extract group info
+    env, rep = [df_keys[i]...]
+
+    # Define output directory
+    outdir = "./output/$(env)_$(rep)"
+
+    # Check if output doesn't exist
+    if !isdir(outdir)
+        # Idicate file is not complete
+        complete_bool[i] = false
+
+        # Check number of files in directory matches number of time points
+    elseif length(readdir(outdir)) != length(unique(data.time)) - 1
+        # Idicate file is not complete
+        complete_bool[i] = false
+
+        # Check file number matches
+    elseif length(readdir(outdir)) == length(unique(data.time)) - 1
+        # Idicate file is complete
+        complete_bool[i] = true
+    end # if
+end # for
+
+println("Number of datasets previously processed: $(sum(complete_bool))")
+
+# Initialize dataframe to use
+df_filt = DF.DataFrame()
+
+# Loop through groups
+for data in df_group[.!complete_bool]
+    DF.append!(df_filt, data)
+end # for
+
+##
+
+# Group data by environment
+df_group = DF.groupby(df_filt, [:env, :rep])
 
 ##
 
@@ -63,6 +117,9 @@ Threads.@threads for i = 1:length(df_group)
 
     # define outputdir
     outdir = "./output/$(env)_$(rep)"
+    # Remove existing directory
+    rm(outdir, recursive=true, force=true)
+
     # Make output dir if necessary
     if !isdir(outdir)
         mkdir(outdir)
