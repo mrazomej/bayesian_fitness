@@ -138,7 +138,7 @@ Threads.@threads for i = 1:length(df_group)
         :model => BayesFitness.model.mean_fitness_neutrals_lognormal,
         :model_kwargs => Dict(
             :α => BayesFitness.stats.dirichlet_prior_neutral(
-                data[data.time.==0, :neutral],
+                data[data.time.==minimum(data.time), :neutral],
             )
         ),
         :id_col => :barcode,
