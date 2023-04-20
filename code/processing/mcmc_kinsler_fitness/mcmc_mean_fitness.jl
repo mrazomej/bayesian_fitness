@@ -26,6 +26,13 @@ import Glob
 # Import plotting libraries
 using CairoMakie
 import ColorSchemes
+import PDFmerger
+
+# Activate backend
+CairoMakie.activate!()
+
+# Set PBoC Plotting style
+BayesFitUtils.viz.pboc_makie!()
 
 import Random
 
@@ -153,3 +160,36 @@ Threads.@threads for i = 1:length(df_group)
 end # for
 
 ##
+
+# List all output directories
+out_dirs = Glob.glob("./output/*_R*")
+
+# Loop through directories
+for (i, od) in enumerate(out_dirs)
+    if i % 10 == 0
+        println("Generating plot #$(i) out of $(length(out_dirs))")
+    end # if
+
+    # Concatenate population mean fitness chains into single chain
+    chains = BayesFitness.utils.var_jld2_concat(od, "meanfitness", :sₜ)
+
+    # Initialize figure
+    fig = Figure(resolution=(800, 800))
+
+    # Generate mcmc_trace_density! plot
+    BayesFitness.viz.mcmc_trace_density!(
+        fig, chains; alpha=0.5, title=String(split(od, "/")[end])
+    )
+
+    # Save figure into pdf
+    save("./output/temp.pdf", fig)
+
+    # Append pdf
+    PDFmerger.append_pdf!(
+        "./output/meanfitness_trace_density.pdf",
+        "./output/temp.pdf",
+        cleanup=true
+    )
+end # for
+
+println("Done printing population mean fitness trace/density plots!")

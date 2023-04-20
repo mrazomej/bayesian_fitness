@@ -43,6 +43,9 @@ println("Loading data...")
 # Import data
 df = CSV.read("$(git_root())/data/kinsler_2020/tidy_counts.csv", DF.DataFrame)
 
+# Remove T0 data
+df = df[df.time.!=0, :]
+
 # Group data by environment
 df_group = DF.groupby(df, [:env, :rep])
 
@@ -70,6 +73,9 @@ for i = 1:length(df_group)
     # Extract meanfitness files
     mean_files = Glob.glob("$(outdir)/$(meanfit_pattern)*")
 
+    # Remove T0 file
+    mean_files = mean_files[.!occursin.("0-1.jld", mean_files)]
+
     # Check that there are mean_fitness files
     if length(mean_files) == 0
         println("$(meanfit_pattern) files cannot be found")
@@ -83,7 +89,7 @@ for i = 1:length(df_group)
 
     # Infer mean fitness distributions
     mean_fitness_dist = BayesFitness.stats.gaussian_prior_mean_fitness(
-        BayesFitness.utils.var_jld2_to_df(outdir, meanfit_pattern, :sₜ)
+        BayesFitness.utils.var_jld2_to_df(sort!(mean_files), :sₜ)
     )
 
     println("Processing $(env)-$(rep) mutant fitness ($i / $(length(df_group))) \n")
@@ -94,7 +100,7 @@ for i = 1:length(df_group)
         :n_walkers => 4,
         :n_steps => 4_000,
         :outputdir => outdir,
-        :outputname => "$(env)_$(rep)_mutantfitness",
+        :outputname => "$(env)_$(rep)_mutantfitness_rmT0",
         :model => BayesFitness.model.mutant_fitness_lognormal,
         :model_kwargs => Dict(
             :α => BayesFitness.stats.beta_prior_mutant(
