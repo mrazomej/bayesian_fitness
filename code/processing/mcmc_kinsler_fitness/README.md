@@ -26,15 +26,44 @@
   ```
   ./output/$(env)_R$(rep)/$(env)_R$(rep)_mutantfitness_$(mutant_id).jld
   ```
-- `mcmc_mutant_fitness.jl`: Script using the `BayesFitness.jl` inference
-  pipeline to sample out of the mutants relative fitness posterior distribution
-  for all environments in the Kinsler et al., 2020 dataset ignoring all
-  measurements defined as `t=0`. The output of this script is stored in
-  `./output/`, with subdirectories of the form
+- `mcmc_joint_inference_multiprocess.jl`: Script using the `BayesFitness.jl`
+  inference pipeline to infer the **full** joint distribution for all neutral
+  and mutant lineages at all time points for a set of manually-selected
+  environments in the Kinsler et al., 2020 dataset. The inference is performed
+  using the `Distributed.jl` package for multiprocessing, meaning that the
+  sampling ensemble for `Turing.jl` is `Turing.Distributed()`. The output of
+  this script is stored in `./output/` as
   ```
-  ./output/$(env)_R$(rep)/
+  ./output/kinsler_$(env)env_$(rep)rep_$(rmT0)rmT0.jld2
   ```
-  The files on each of the subdirectories are stored as
+  where the last entry indicates if `T0` was removed from the dataset when
+  performing the inference.
+- `mcmc_joint_inference_multithread.jl`: Script using the `BayesFitness.jl`
+  inference pipeline to infer the **full** joint distribution for all neutral
+  and mutant lineages at all time points for a set of manually-selected
+  environments in the Kinsler et al., 2020 dataset. The inference is performed
+  using the `Threads.jl` package for multithreading, meaning that the sampling
+  ensemble for `Turing.jl` is `Turing.Threads()`. The output of this script is
+  stored in `./output/` as
   ```
-  ./output/$(env)_R$(rep)/$(env)_R$(rep)_mutantfitness_rmT0_$(mutant_id).jld
+  ./output/kinsler_$(env)env_$(rep)rep_$(rmT0)rmT0.jld2
   ```
+  where the last entry indicates if `T0` was removed from the dataset when
+  performing the inference.
+- `mcmc_joint_inference_multiprocess_multithread.jl`: Script using the
+  `BayesFitness.jl` inference pipeline to infer the **full** joint distribution
+  for all neutral and mutant lineages at all time points for a set of
+  manually-selected environments in the Kinsler et al., 2020 dataset. The
+  inference is performed in a hybrid format where multiple datasets are
+  processed using the `Distributed.@distribured` macro on a for-loop, with each
+  of them sampled in a multithread fashion using `Turing.Threads()` as the
+  sampling ensemble. The output of this script is stored in `./output/` as
+  ```
+  ./output/kinsler_$(env)env_$(rep)rep_$(rmT0)rmT0.jld2
+  ```
+  where the last entry indicates if `T0` was removed from the dataset when
+  performing the inference.
+- `viz_joint_inference.jl`: Script to generate visualizations for the inferences
+  from the "`_joint_`" scripts. This script plots the posterior predictive
+  checks for the neutral lineages as well as a selected group of mutant
+  lineages.

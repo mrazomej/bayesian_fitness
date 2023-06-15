@@ -171,3 +171,105 @@ for env in envs
     end #for
 end # for
 ##
+
+# Extract unique environments
+envs = unique(df.env)
+
+# Loop through environments
+for env in envs
+    println("Generating log frequency ratio trajectory plot for $(env)")
+
+    # Extract and group data by replicate
+    data_group = DF.groupby(df[df.env.==env, :], :rep)
+    # Define number of plots to generate
+    n_plots = ceil(Int64, length(data_group) / 2)
+    # Initialize rep counter
+    rep_count = 1
+    # Loop through plots
+    for n = 1:n_plots
+        # Initialize figure
+        fig = Figure(resolution=(1000, 400))
+        # Add axis
+        ax1 = Axis(
+            fig[1, 1],
+            xlabel="time point",
+            ylabel="ln(fₜ₊₁/fₜ)",
+            title="$(env) | R$(rep_count)"
+        )
+
+        # Plot Mutant barcode trajectories
+        BayesFitness.viz.logfreq_ratio_time_series!(
+            ax1,
+            data_group[rep_count][.!data_group[rep_count].neutral, :];
+            freq_col=:freq,
+            alpha=0.25,
+            linewidth=2
+        )
+
+        # Plot Neutral barcode trajectories
+        BayesFitness.viz.logfreq_ratio_time_series!(
+            ax1,
+            data_group[rep_count][data_group[rep_count].neutral, :];
+            freq_col=:freq,
+            color=ColorSchemes.Blues_9[end],
+            alpha=0.9,
+            linewidth=2
+        )
+
+        # Update counter
+        rep_count += 1
+
+        # Add second axis
+        ax2 = Axis(
+            fig[1, 2],
+            xlabel="time point",
+            ylabel="ln(fₜ₊₁/fₜ)",
+            title="$(env) | R$(rep_count)"
+        )
+        # Check that counter is within number of reps
+        if rep_count > length(data_group)
+            # Save figure into pdf
+            save("./output/figs/temp.pdf", fig)
+
+            # Append pdf
+            PDFmerger.append_pdf!(
+                "./output/figs/logfreqratio_trajectories.pdf",
+                "./output/figs/temp.pdf",
+                cleanup=true
+            )
+            continue
+        end # if
+
+        # Plot Mutant barcode trajectories
+        BayesFitness.viz.logfreq_ratio_time_series!(
+            ax2,
+            data_group[rep_count][.!data_group[rep_count].neutral, :];
+            freq_col=:freq,
+            alpha=0.25,
+            linewidth=2
+        )
+
+        # Plot Neutral barcode trajectories
+        BayesFitness.viz.logfreq_ratio_time_series!(
+            ax2,
+            data_group[rep_count][data_group[rep_count].neutral, :];
+            freq_col=:freq,
+            color=ColorSchemes.Blues_9[end],
+            alpha=0.9,
+            linewidth=2
+        )
+
+        # Update counter
+        rep_count += 1
+
+        # Save figure into pdf
+        save("./output/figs/temp.pdf", fig)
+
+        # Append pdf
+        PDFmerger.append_pdf!(
+            "./output/figs/logfreqratio_trajectories.pdf",
+            "./output/figs/temp.pdf",
+            cleanup=true
+        )
+    end #for
+end # for

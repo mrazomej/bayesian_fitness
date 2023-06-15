@@ -58,7 +58,7 @@ df = CSV.read("$(git_root())/data/kinsler_2020/tidy_counts.csv", DF.DataFrame)
 # Read datasets visual evaluation info
 df_include = CSV.read(
     "$(git_root())/data/kinsler_2020/exp_include.csv", DF.DataFrame
-)
+)[end:1]
 
 # Upload dataset to all processes
 @eval Distributed.@everywhere df = $df
