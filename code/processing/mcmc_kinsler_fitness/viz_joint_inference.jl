@@ -60,7 +60,9 @@ end # if
 println("Loading data...")
 
 # Import data
-df = CSV.read("$(git_root())/data/kinsler_2020/tidy_counts.csv", DF.DataFrame)
+df = CSV.read(
+    "$(git_root())/data/kinsler_2020/tidy_counts_no_anc.csv", DF.DataFrame
+)
 
 ##
 
@@ -114,6 +116,8 @@ qs = [0.68, 0.95, 0.997]
 # Define colors
 colors = get(ColorSchemes.Blues_9, LinRange(0.25, 0.75, length(qs)))
 
+# Remove old version of file
+rm("./output/figs/logfreqratio_ppc_neutral.pdf", force=true)
 # Loop through files
 for d in eachrow(df_files)
     # Select data
@@ -197,6 +201,9 @@ q = 0.68
 
 # Define colors
 colors = get(ColorSchemes.Blues_9, LinRange(0.25, 0.75, length(qs)))
+
+# Remove old version of file
+rm("./output/figs/logfreqratio_ppc_mutant.pdf", force=true)
 
 # Loop through files
 for d in eachrow(df_files)
