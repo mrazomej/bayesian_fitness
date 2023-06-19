@@ -37,7 +37,9 @@ n_steps = 1000
 ##
 
 # Import data
-df = CSV.read("$(git_root())/data/kinsler_2020/tidy_counts.csv", DF.DataFrame)
+df = CSV.read(
+    "$(git_root())/data/kinsler_2020/tidy_counts_no_anc.csv", DF.DataFrame
+)
 
 # Read datasets visual evaluation info
 df_include = CSV.read(
@@ -45,7 +47,7 @@ df_include = CSV.read(
 )
 
 # Loop through datasets
-@async Threads.@threads for i = 1:size(df_include, 1)
+for i = 1:size(df_include, 1)
     # Extract info
     env, rep, rm_T0 = collect(df_include[i, :])
     # Extract data
@@ -59,7 +61,7 @@ df_include = CSV.read(
         :outputname => "./output/kinsler_$(env)env_$(rep)rep_$(rm_T0)rmT0",
         :model => BayesFitness.model.fitness_lognormal,
         :sampler => Turing.NUTS(0.65),
-        :ensemble => Turing.MCMCSerial(),
+        :ensemble => Turing.MCMCThreads(),
         :rm_T0 => rm_T0,
     )
 
@@ -71,5 +73,4 @@ df_include = CSV.read(
     catch
         @warn "Group $(i) was already processed"
     end
-
 end # for

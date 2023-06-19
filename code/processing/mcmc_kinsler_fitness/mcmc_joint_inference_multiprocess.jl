@@ -53,12 +53,14 @@ end # @everywhere
 ##
 
 # Import data
-df = CSV.read("$(git_root())/data/kinsler_2020/tidy_counts.csv", DF.DataFrame)
+df = CSV.read(
+    "$(git_root())/data/kinsler_2020/tidy_counts_no_anc.csv", DF.DataFrame
+)
 
 # Read datasets visual evaluation info
 df_include = CSV.read(
     "$(git_root())/data/kinsler_2020/exp_include.csv", DF.DataFrame
-)[end:1]
+)
 
 # Upload dataset to all processes
 @eval Distributed.@everywhere df = $df
@@ -67,7 +69,6 @@ df_include = CSV.read(
 ##
 
 # Loop through datasets
-# @async Distributed.@distributed 
 for i = 1:size(df_include, 1)
     # Extract info
     env, rep, rm_T0 = collect(df_include[i, :])
@@ -84,7 +85,6 @@ for i = 1:size(df_include, 1)
         :outputname => "./output/kinsler_$(env)env_$(rep)rep_$(rm_T0)rmT0",
         :model => BayesFitness.model.fitness_lognormal,
         :sampler => Turing.NUTS(0.65),
-        # :ensemble => Turing.MCMCSerial(),
         :ensemble => Turing.MCMCDistributed(),
         :rm_T0 => rm_T0,
         :verbose => true,
