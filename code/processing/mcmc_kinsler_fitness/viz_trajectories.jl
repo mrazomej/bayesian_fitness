@@ -54,7 +54,10 @@ df = CSV.read("$(git_root())/data/kinsler_2020/tidy_counts.csv", DF.DataFrame)
 ##
 
 # Extract unique environments
-envs = unique(df.env)
+envs = sort(unique(df.env))
+
+# Remove old version of file
+rm("./output/figs/freq_trajectories.pdf", force=true)
 
 # Loop through environments
 for env in envs
@@ -173,7 +176,10 @@ end # for
 ##
 
 # Extract unique environments
-envs = unique(df.env)
+envs = sort(unique(df.env))
+
+# Remove old version of file
+rm("./output/figs/logfreqratio_trajectories.pdf", force=true)
 
 # Loop through environments
 for env in envs
