@@ -108,49 +108,30 @@ df_include = CSV.read(
 # be processed, see which ones are complete, and remove them from the data fed
 # to the sampler. This allows Threads.@threads to actually work.
 
-# Group data by env, rep
-df_group = DF.groupby(df_include, [:env, :rep])
-
-# Extract keys
-df_keys = collect(keys(df_group))
-
 # Initialize array indicating if dataset has been completely processed or not
-complete_bool = Vector{Bool}(undef, length(df_keys))
+complete_bool = repeat([false], size(df_include, 1))
 
 # Loop through groups
-for (i, data) in enumerate(df_group)
-    # Extract group info
-    env, rep = [df_keys[i]...]
+for i in axes(df_include, 1)
+    # Extract info
+    env, rep, rm_T0 = collect(df_include[i, :])
 
     # Define output directory
-    outdir = "$(outdir)/$(env)_$(rep)"
+    fname = "$(outdir)/kinsler_$(env)env_$(rep)rep_$(rm_T0)rmT0.jld2"
 
     # Check if output doesn't exist
-    if !isdir(outdir)
+    if isfile(fname)
         # Idicate file is not complete
-        complete_bool[i] = false
-
-        # Check number of files in directory matches number of time points
-    elseif length(readdir(outdir)) != length(unique(data.time)) - 1
-        # Idicate file is not complete
-        complete_bool[i] = false
-
-        # Check file number matches
-    elseif length(readdir(outdir)) == length(unique(data.time)) - 1
-        # Idicate file is complete
         complete_bool[i] = true
     end # if
 end # for
 
 println("Number of datasets previously processed: $(sum(complete_bool))")
 
-# Initialize dataframe to use
-df_include = DF.DataFrame()
+# filtered datasets to process
+df_include = df_include[.!(complete_bool), :]
 
-# Loop through groups
-for data in df_group[.!complete_bool]
-    DF.append!(df_include, data)
-end # for
+println("$(size(df_include, 1)) datasets to process...\n")
 
 ##
 
@@ -158,10 +139,15 @@ end # for
 # Initialize MCMC sampling
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Initializing MCMC sampling...\n")
+
 # Loop through datasets
 Threads.@threads for i in axes(df_include, 1)
     # Extract info
     env, rep, rm_T0 = collect(df_include[i, :])
+
+    println("Processing $(env) | $(rep)")
+
     # Extract data
     data = df[(df.env.==env).&(df.rep.==rep), :]
 
@@ -181,7 +167,7 @@ Threads.@threads for i in axes(df_include, 1)
     println("Running Inference for group $(i)...")
 
     try
-        @time BayesFitness.mcmc.mcmc_joint_fitness(; param...)
+        @time BayesFitness.mcmc.mcmc_popmean_fitness(; param...)
     catch
         @warn "Group $(i) was already processed"
     end
