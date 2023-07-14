@@ -62,11 +62,8 @@ Turing.setrdcache(true)
 ##
 
 # Define sampling hyperparameters
-n_steps = 1000
-n_walkers = 4
-
-# Define if plots should be generated
-gen_plots = false
+n_steps = 100
+n_walkers = 3
 
 ##
 
@@ -75,7 +72,7 @@ gen_plots = false
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Define output directory
-outdir = "./output/popmean_fitness"
+outdir = "./output/bc_freq"
 
 # Generate output directory 
 if !isdir("./output/")
@@ -157,7 +154,7 @@ for i in axes(df_include, 1)
         :n_walkers => n_walkers,
         :n_steps => n_steps,
         :outputname => "$(outdir)/kinsler_$(env)env_$(rep)rep_$(rm_T0)rmT0",
-        :model => BayesFitness.model.neutrals_lognormal,
+        :model => BayesFitness.model.freq_lognormal,
         :sampler => Turing.DynamicNUTS(),
         :ensemble => Turing.MCMCThreads(),
         :rm_T0 => rm_T0,
@@ -167,49 +164,8 @@ for i in axes(df_include, 1)
     println("Running Inference for group $(i)...")
 
     try
-        @time BayesFitness.mcmc.mcmc_popmean_fitness(; param...)
+        @time BayesFitness.mcmc.mcmc_joint_fitness(; param...)
     catch
         @warn "Group $(i) was already processed"
     end
 end # for
-
-##
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Generate diagnostic plots
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-
-if gen_plots
-    # List all output directories
-    out_dirs = Glob.glob("./output/*_R*")
-
-    # Loop through directories
-    for (i, od) in enumerate(out_dirs)
-        if i % 10 == 0
-            println("Generating plot #$(i) out of $(length(out_dirs))")
-        end # if
-
-        # Concatenate population mean fitness chains into single chain
-        chains = BayesFitness.utils.var_jld2_concat(od, "meanfitness", :sₜ)
-
-        # Initialize figure
-        fig = Figure(resolution=(800, 800))
-
-        # Generate mcmc_trace_density! plot
-        BayesFitness.viz.mcmc_trace_density!(
-            fig, chains; alpha=0.5, title=String(split(od, "/")[end])
-        )
-
-        # Save figure into pdf
-        save("./output/temp.pdf", fig)
-
-        # Append pdf
-        PDFmerger.append_pdf!(
-            "./output/meanfitness_trace_density.pdf",
-            "./output/temp.pdf",
-            cleanup=true
-        )
-    end # for
-
-    println("Done printing population mean fitness trace/density plots!")
-end # if
