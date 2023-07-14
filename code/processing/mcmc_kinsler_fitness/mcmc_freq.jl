@@ -153,7 +153,7 @@ for i in axes(df_include, 1)
         :data => data,
         :n_walkers => n_walkers,
         :n_steps => n_steps,
-        :outputname => "$(outdir)/kinsler_$(env)env_$(rep)rep_$(rm_T0)rmT0",
+        :outputname => "$(outdir)/kinsler_$(env)env_$(rep)rep_$(rm_T0)rmT0_$(n_steps)steps_$(lpad(2, n_walkers, "0")walkers)",
         :model => BayesFitness.model.freq_lognormal,
         :sampler => Turing.DynamicNUTS(),
         :ensemble => Turing.MCMCThreads(),

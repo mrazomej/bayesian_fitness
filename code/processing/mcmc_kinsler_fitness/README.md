@@ -4,16 +4,21 @@
   well as the log-frequency ratio trajectories for all the environments in the
   Kinsler et al., 2020 dataset. The output of this script are PDF files saved in
   the `./output/figs/` directory.
-- `mcmc_mean_fitness.jl`: Script using the `BayesFitness.jl` inference pipeline
-  to sample out of the population mean fitness posterior distribution for all
-  the environments in the Kinsler et al., 2020 dataset. The output of this
-  script is stored in `./output/`, with subdirectories of the form
+- `mcmc_popmean_fitness.jl`: Script using the `BayesFitness.jl` inference
+  pipeline to sample out of the joint population mean fitness posterior
+  distribution for all the environments in the Kinsler et al., 2020 dataset
+  using only the neutral lineages. The output of this script is stored in
+  `./output/popmean_fitness`, with filenames of the form
   ```
-  ./output/$(env)_R$(rep)/
+  kinsler_$(env)env_$(rep)rep_$(rmT0)rmT0_$(n_steps)steps_$(n_walkers)walkers.jld2
   ```
-  The files on each of the subdirectories are stored as
+- `mcmc_freq.jl`: Script using the `BayesFitness.jl` inference pipeline to
+  sample out of the joint barcode frequency posterior distribution for all the
+  environments in the Kinsler et al., 2020 dataset using only the neutral
+  lineages. The output of this script is stored in `./output/bc_freq`,
+  with filenames of the form
   ```
-  ./output/$(env)_R$(rep)/$(env)_R$(rep)_meanfitness_$(t)-$(t+1).jld
+  kinsler_$(env)env_$(rep)rep_$(rmT0)rmT0_$(n_steps)steps_$(n_walkers)walkers.jld2
   ```
 - `mcmc_mutant_fitness.jl`: Script using the `BayesFitness.jl` inference
   pipeline to sample out of the mutants relative fitness posterior distribution
