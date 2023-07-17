@@ -83,8 +83,8 @@ and a Poisson sampling at each dilution step.
   trajectories for all genotypes.
 """
 function logistic_fitness_measurement(
-    λ̲::Vector{Float64},
-    n̲₀::Vector{Int64};
+    λ̲::AbstractVector{Float64},
+    n̲₀::AbstractVector{Int64};
     n_cycles::Int64=4,
     n_gen::Int64=8,
     exp_frac::Float64=1 / 3,
