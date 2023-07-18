@@ -273,6 +273,11 @@ if !isdir("./output/")
     mkdir("./output/")
 end # if
 
+if !isdir("./output/figs")
+    mkdir("./output/figs")
+end # if
+
+
 if gen_plots
     # Initialize figure
     fig = Figure(resolution=(800, 600))
