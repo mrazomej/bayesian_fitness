@@ -114,12 +114,12 @@ for (i, file) in enumerate(files)
     t = vec(collect(axes(ppc_mat, 2)) .+ 1)
 
     # Plot posterior predictive checks
-    BayesFitness.viz.ppc_time_series!(
+    BayesFitUtils.viz.ppc_time_series!(
         ax[i], qs, ppc_mat; colors=colors, time=t
     )
 
     # Plot log-frequency ratio of neutrals
-    BayesFitness.viz.logfreq_ratio_time_series!(
+    BayesFitUtils.viz.logfreq_ratio_time_series!(
         ax[i],
         data[(data.neutral).&(data.rep.==unique(data.rep)[i]), :];
         freq_col=:freq,
@@ -252,12 +252,12 @@ for rep = 1:n_rep
     t = vec(collect(axes(ppc_mat, 2)) .+ 1)
 
     # Plot posterior predictive checks
-    BayesFitness.viz.ppc_time_series!(
+    BayesFitUtils.viz.ppc_time_series!(
         ax[rep], qs, ppc_mat; colors=colors, time=t
     )
 
     # Plot log-frequency ratio of neutrals
-    BayesFitness.viz.logfreq_ratio_time_series!(
+    BayesFitUtils.viz.logfreq_ratio_time_series!(
         ax[rep],
         data[(data.neutral).&(data.rep.=="R$rep"), :];
         freq_col=:freq,
@@ -637,13 +637,13 @@ for row in 1:n_row
                 df_chn, n_ppc; param=param
             )
             # Plot posterior predictive checks
-            BayesFitness.viz.ppc_time_series!(
+            BayesFitUtils.viz.ppc_time_series!(
                 ax[rep], qs, ppc_mat; colors=colors[rep]
             )
 
             # Add plot for median (we use the 5 percentile to have a "thicker"
             # line showing the median)
-            BayesFitness.viz.ppc_time_series!(
+            BayesFitUtils.viz.ppc_time_series!(
                 ax[rep], [0.05], ppc_mat; colors=[colors[rep][end]]
             )
 

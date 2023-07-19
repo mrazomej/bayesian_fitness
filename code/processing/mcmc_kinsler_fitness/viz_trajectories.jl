@@ -49,7 +49,7 @@ end # if
 println("Loading data...")
 
 # Import data
-df = CSV.read("$(git_root())/data/kinsler_2020/tidy_counts.csv", DF.DataFrame)
+df = CSV.read("$(git_root())/data/kinsler_2020/tidy_counts_no_anc.csv", DF.DataFrame)
 
 ##
 
@@ -86,7 +86,7 @@ for env in envs
             data_group[rep_count][data_group[rep_count][:, :freq].>0, :freq]
         ) / 10
         # Plot Mutant barcode trajectories
-        BayesFitness.viz.bc_time_series!(
+        BayesFitUtils.viz.bc_time_series!(
             ax1,
             data_group[rep_count][.!data_group[rep_count].neutral, :];
             quant_col=:freq,
@@ -97,7 +97,7 @@ for env in envs
         )
 
         # Plot Neutral barcode trajectories
-        BayesFitness.viz.bc_time_series!(
+        BayesFitUtils.viz.bc_time_series!(
             ax1,
             data_group[rep_count][data_group[rep_count].neutral, :];
             quant_col=:freq,
@@ -138,7 +138,7 @@ for env in envs
         ) / 10
 
         # Plot Mutant barcode trajectories
-        BayesFitness.viz.bc_time_series!(
+        BayesFitUtils.viz.bc_time_series!(
             ax2,
             data_group[rep_count][.!data_group[rep_count].neutral, :];
             quant_col=:freq,
@@ -149,7 +149,7 @@ for env in envs
         )
 
         # Plot Neutral barcode trajectories
-        BayesFitness.viz.bc_time_series!(
+        BayesFitUtils.viz.bc_time_series!(
             ax2,
             data_group[rep_count][data_group[rep_count].neutral, :];
             quant_col=:freq,
@@ -204,7 +204,7 @@ for env in envs
         )
 
         # Plot Mutant barcode trajectories
-        BayesFitness.viz.logfreq_ratio_time_series!(
+        BayesFitUtils.viz.logfreq_ratio_time_series!(
             ax1,
             data_group[rep_count][.!data_group[rep_count].neutral, :];
             freq_col=:freq,
@@ -213,7 +213,7 @@ for env in envs
         )
 
         # Plot Neutral barcode trajectories
-        BayesFitness.viz.logfreq_ratio_time_series!(
+        BayesFitUtils.viz.logfreq_ratio_time_series!(
             ax1,
             data_group[rep_count][data_group[rep_count].neutral, :];
             freq_col=:freq,
@@ -247,7 +247,7 @@ for env in envs
         end # if
 
         # Plot Mutant barcode trajectories
-        BayesFitness.viz.logfreq_ratio_time_series!(
+        BayesFitUtils.viz.logfreq_ratio_time_series!(
             ax2,
             data_group[rep_count][.!data_group[rep_count].neutral, :];
             freq_col=:freq,
@@ -256,7 +256,7 @@ for env in envs
         )
 
         # Plot Neutral barcode trajectories
-        BayesFitness.viz.logfreq_ratio_time_series!(
+        BayesFitUtils.viz.logfreq_ratio_time_series!(
             ax2,
             data_group[rep_count][data_group[rep_count].neutral, :];
             freq_col=:freq,

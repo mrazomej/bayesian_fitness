@@ -59,7 +59,7 @@ println("Loading data...")
 
 # Import data
 data = CSV.read(
-    "$(git_root())/data/logistic_growth/data_001/tidy_data.csv", DF.DataFrame
+    "$(git_root())/data/logistic_growth/data_004/tidy_data.csv", DF.DataFrame
 )
 
 ##
@@ -160,7 +160,7 @@ param = Dict(
 )
 
 # Define number of posterior predictive check samples
-n_ppc = 500
+n_ppc = 5000
 
 # Define quantiles to compute
 qs = [0.05, 0.68, 0.95]
@@ -331,7 +331,6 @@ scatter!(ax, df_summary.fitness, df_summary.median, markersize=8)
 
 save("./output/figs/fitness_comparison.pdf", fig)
 
-fig
 ##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -346,8 +345,6 @@ ax = Axis(fig[1, 1], xlabel="|median - true value|", ylabel="ECDF")
 ecdfplot!(ax, abs.(df_summary.median .- df_summary.fitness))
 
 save("./output/figs/median_true_ecdf.pdf", fig)
-
-fig
 
 ##
 
@@ -371,8 +368,6 @@ ax = Axis(fig[1, 1], xlabel="|z-score|", ylabel="ECDF")
 ecdfplot!(ax, abs.(fitness_zscore))
 
 save("./output/figs/zscore_ecdf.pdf", fig)
-
-fig
 
 ##
 
@@ -450,7 +445,5 @@ end # for
 Label(fig[end, :, Bottom()], "time points", fontsize=22)
 # Add y-axis label
 Label(fig[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=22)
-
-fig
 
 save("./output/figs/logfreqratio_ppc_mutant.pdf", fig)
