@@ -1,5 +1,6 @@
 ---
 title: "Introduction"
+bibliography: references.bib
 ---
 
-`[add intro section]`
+{{< include _intro.qmd >}}

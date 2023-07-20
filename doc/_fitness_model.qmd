@@ -1,12 +1,14 @@
 ---
 editor:
     render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
 ---
 
 ## Preliminaries on mathematical notation
-Before jumping directly into what concerns us here, let us establish the
-mathematical notation to be used throughout this document. We define (column)
-vectors as underlined lowercase symbols such as
+Before jumping directly into the Bayesian inference pipeline, let us establish
+the mathematical notation to be used throughout this paper. We define
+(column) vectors as underlined lowercase symbols such as
 $$
 \underline{x} = \begin{bmatrix}
     x_1\\
@@ -21,55 +23,71 @@ as $\underline{\underline{A}}$.
 
 ## Fitness model {#sec-fitness_model}
 
-Empirically, we have seen that the barcode trajectories follow an exponential
+Empirically, the barcode relative frequency trajectories follow an exponential
 function of the form
 $$
 f_{t+1}^{(b)} = f_{t}^{(b)} \mathrm{e}^{(s^{(b)} - \bar{s}_t)\tau},
 $${#eq-fitness}
 where $f_{t}^{(b)}$ is the frequency of barcode $b$ at time $t$, $s^{(b)}$ is
-the relative fitness with respect to the ancestral strain---the quantity we want
+the relative fitness with respect to the reference strain---the quantity we want
 to infer from the data---$\bar{s}_t$ is the mean fitness of the culture at time
-$t$, and $\tau$ is the time pass between time $t$ and $t+1$. It is important to
-notice that the frequencies $f_{t}^{(b)}$ are not the allele frequencies in the
-population (most of the culture is not sequenced since it is not barcoded), but
-rather the inferred frequencies from the total number of reads. A way to 
-conceptualize this is that we assume exponential growth in the *number of cells*
+$t$, and $\tau$ is the time pass between time $t$ and $t+1$. We can rewrite
+@eq-fitness as
+$$
+\frac{1}{\tau}\ln \frac{f_{t+1}^{(b)}}{f_{t}^{(b)}} = (s^{(b)} - \bar{s}_t).
+$${#eq-logfreq}
+@eq-logfreq separates the observables---the barcode frequencies---from the
+latent parameters we want to infer from the data---the population mean fitness
+and the barcode relative fitness. This is ultimately the functional form used in
+our inference pipeline. Therefore, the relative fitness is computed by knowing
+the barcode log frequency ratio of each barcode throughout the growth-dilution
+cycles.
+
+It is important to notice that the frequencies $f_{t}^{(b)}$ are not the allele
+frequencies in the population (most of the culture is not sequenced since the
+reference strain is not barcoded), but rather the relative frequencies in the
+total number of sequencing reads. A way to conceptualize this subtle but
+important point is to assume exponential growth in the *number of cells*
 $N_t^{(b)}$ of the form
 $$
-N_{t+1}^{(b)} = N_{t}^{(b)} \mathrm{e}^{(s^{(b)} - \bar{s}_t)\tau},
+N_{t+1}^{(b)} = N_{t}^{(b)} \mathrm{e}^{\lambda^{(b)}\tau},
 $${#eq-ncells}
-for every barcode $b$. However, when we sequence barcodes, we do not directly
-measure the number of cells, but some number of reads $r_t^{(b)}$ that map to
-barcode $b$. In the simplest possible scenario, we assume
+for every barcode $b$ with growth rate $\lambda^{(b)}$. However, when we
+sequence barcodes, we do not directly measure the number of cells, but some
+number of reads $r_t^{(b)}$ that map to barcode $b$. In the simplest possible
+scenario, we assume
 $$
 r_{t}^{(b)} \propto N_{t}^{(b)},
 $${#eq-r_to_n}
 where, importantly, the proportionality constant depends on the total number of
 reads for the time $t$ library, which might vary from library to library.
 Therefore, to compare the number of reads between libraries at different time
-points, we must somehow normalize them to the same scale. The simplest form is
-to define a relative abundance, i.e., a frequency with respect to the total
-number of reads,
+points, we must normalize the number of reads to the same scale. The simplest
+form is to define a relative abundance, i.e., a frequency with respect to the
+total number of reads,
 $$
 f_{t}^{(b)} \equiv \frac{r_{t}^{(b)}}{\sum_{b'} r_{t}^{(b')}}.
 $${#eq-r_to_n_norm}
 This is the frequency @eq-fitness describes.
 
 Our ultimate objective is to infer the relative fitness $s^{(m)}$ for each of
-the $M$ mutants in the experiment. To do so, we must take into account the three
-main sources of uncertainty in our model:
+the $M$ mutants in the experiment. To do so, we account the three main sources
+of uncertainty in our model:
 
 1. Uncertainty in the determination of frequencies. Our model relates
 frequencies between adjacent time points to the fitness of the corresponding
-strain. However, we do not measure frequencies directly. Instead, our data
-consists of a vector of barcode counts $\underline{r}_t$ for each of the $T$
-time points in which the measurements were taken.
-2. Uncertainty in the value of the population mean fitness. As we will see later
-on, we use neutral lineages barcodes, which, by definition have mean fitness
-$s^{(n)} = 0$ to determine the value of the population mean fitness $\bar{s}_t$.
-This inference will come with its own uncertainty that must be propagated to the
-value of the relative fitness for the mutants.
-3. Uncertainty in each of the mutant's fitness values. 
+strain. However, we do not directly measure frequencies. Instead, our data for
+each barcode consists of a vector of counts $\underline{r}^{(b)}_t$ for each of
+the $T$ time points in which the measurements were taken.
+2. Uncertainty in the value of the population mean fitness. We define neutral
+lineages to have fitness $s^{(n)} = 0$, helping us anchor the value of the
+population mean fitness $\bar{s}_t$ for each pair of adjacent time points. 
+Moreover, we take this parameter as an empirical observable from the data, 
+meaning that we do not have a functional form that relates $\bar{s}_t$ to
+$\bar{s}_{t+1}$. Thus, we must infer the $T-1$ values of this population mean 
+fitness with their uncertainty that must be propagated to the value of
+the mutants' relative fitness.
+3. Uncertainty in each of the mutants' fitness values. 
 
 To account for all these sources of uncertainty in a principled way, we develop
 a Bayesian inference pipeline.

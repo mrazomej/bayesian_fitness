@@ -1,0 +1,42 @@
+---
+editor:
+    render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
+---
+
+The advent of DNA barcoding and high-throughput sequencing has opened new venues
+to understand microbial evolutionary dynamics with an unprecedented level of
+temporal resolution [@levy2015; @nguyenba2019a; @ascensao2023]. These
+experimental efforts rely on our ability to reliably infer the relative fitness
+of an ensemble of diverse genotypes. Moreover, inferring these fitness values
+over an ensemble of environmental conditions can help us determine the
+phenotypic diversity of a rapid adaptation process @kinsler2020.
+
+As with any other sequencing-based quantification, tracking lineages via DNA
+barcode sequencing is inexorably accompanied by noise sources coming from
+experimental manipulation of the microbial cultures, DNA extraction and
+sequencing library preparation that involves multiple rounds of PCR
+amplification, and the sequencing process itself. Thus, accounting for the
+uncertainty when inferring the parameters we care about from the data is a key
+step to drawing reliable conclusions. Bayesian statistics presents a paradigm
+with which to account for all known sources of uncertainty in a principled way
+@eddy2004a. This, combined with the development of modern Markov Chain Monte
+Carlo sampling algorithms have boosted a resurgence of Bayesian methods in
+different fields @efron2013a.
+
+We present a Bayesian inference pipeline to properly quantify our uncertainty
+about the parametric information we can extract from high-throughput competitive
+fitness assays. In these assays, the fitness of an ensemble of genotypes is
+determined relative to a reference genotype [@kinsler2020; @ascensao2023] [`add
+reference to fig`]. Small changes to our model allow us to account for relevant
+experimental variations of these competition assays: determination of multiple
+fitness values per genotype for growth-dilution cycles on different
+environments, and a hierarchical model to account for information from
+independent experimental replicates. We benchmark the ability of our pipeline to
+infer fitness parameters against synthetic data with known ground truth and
+re-analyze published data from @kinsler2020 to assess the method's performance
+on real experimental measurements. The method is accompanied with a `Julia`
+package to readily implement the inference pipeline with state-of-the-art
+scientific computing software. [`here mention something about the Python wrapper
+if appropriate`].

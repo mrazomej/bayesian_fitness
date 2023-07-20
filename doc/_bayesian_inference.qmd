@@ -1,6 +1,8 @@
 ---
 editor:
     render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
 ---
 ## Bayesian inference {#sec-bayesian_inference}
 
@@ -9,64 +11,71 @@ of relative fitness values
 $$
 \underline{s}^M = (s^{(1)}, s^{(2)}, \ldots, s^{(M)})^\dagger,
 $${#eq-fitness_mut_vec}
-where $^\dagger$ indicates the transpose. Our data consists of an $B \times T$
+where $^\dagger$ indicates the transpose. Our data consists of an $T \times B$
 matrix $\underline{\underline{R}}$, where $B = M + N$ is the number of unique
 barcodes given by the sum of the number of unique mutant barcodes $M$ and the
 number of unique neutral barcodes $N$, and $T$ is the number of time points
 where measurements were taken. The data matrix is then of the form
 $$
 \underline{\underline{R}} = \begin{bmatrix}
-\lvert & \lvert & \cdots & \lvert\\
-\underline{r}_1 & \underline{r}_2 & \cdots & \underline{r}_T\\
-\lvert & \lvert & \cdots & \lvert
+- & \underline{r}_1 & - \\
+- & \underline{r}_2 & - \\
+ & \vdots & \\
+- & \underline{r}_T & - \\
 \end{bmatrix},
 $${#eq-R_mat}
-where each column $\underline{r}_t$ is a $B$-dimensional array containing the
+where each row $\underline{r}_t$ is a $B$-dimensional array containing the
 raw barcode counts at time $t$. We can further split each vector
 $\underline{r}_t$ into two vectors of the form
 $$
 \underline{r}_t = \begin{bmatrix}
-\underline{r}_t^{M} \\
-\underline{r}_t^{N}
+\underline{r}_t^{N} \;
+\underline{r}_t^{M}
 \end{bmatrix},
 $${#eq-r-vec_split}
-i.e., the vector containing the mutant barcode counts $\underline{r}_t^{M}$ and
-the corresponding vector containing the neutral barcode counts
-$\underline{r}_t^{N}$. Our task is to compute the joint probability distribution
-of all relative fitness values given our data. Writing Bayes theorem this is
+i.e., the vector containing the neutral lineages barcode counts
+$\underline{r}_t^{N}$ and the corresponding vector containing the mutant barcode
+counts $\underline{r}_t^{M}$. Our objective is to compute the joint probability
+distribution of all relative fitness values given our data. We can express this 
+joint distribution using Bayes theorem as
 $$
 \pi(\underline{s}^M \mid \underline{\underline{R}}) = \frac{
 \pi(\underline{\underline{R}} \mid \underline{s}^M) 
 \pi(\underline{s}^M)}
 {\pi(\underline{\underline{R}})},
 $${#eq-bayes_obj}
-where hereafter $\pi(\cdot)$ defines the probability distribution  of the input
-unless otherwise stated. We can ignore the denominator on the right-hand side
-of @eq-bayes_obj, since it serves as a normalization constant that does not
-depend on our parameter of interest.
+where hereafter $\pi(\cdot)$ defines a probability density function unless
+otherwise stated. We can ignore the denominator on the right-hand side of
+@eq-bayes_obj, since it serves as a normalization constant that does not depend
+on our parameter of interest, simply writing
+$$
+\pi(\underline{s}^M \mid \underline{\underline{R}}) \propto
+\pi(\underline{\underline{R}} \mid \underline{s}^M) 
+\pi(\underline{s}^M)
+$${#eq-bayes_obj_propto}
 
-Although @eq-bayes_obj seems simple enough, recall that @eq-fitness relates
-frequency values and the population mean fitness to the mutant relative fitness.
-Therefore, we must include these nuisance parameters as part of our inference
-problem. At the end of the day, we can always marginalize the joint distribution
-to obtain the distribution we are interested in. To include these parameters,
-let 
+Although @eq-bayes_obj and @eq-bayes_obj_propto seem simple enough, recall that
+@eq-fitness relates barcode frequency values and the population mean fitness to
+the mutant relative fitness. Therefore, we must include these nuisance
+parameters as part of our inference problem. We can always marginalize the joint
+distribution to obtain the distribution we are interested in. To include these
+parameters, let 
 $$
 \underline{\bar{s}}_T = (\bar{s}_1, \bar{s}_2, \ldots, \bar{s}_{T-1})^\dagger,
 $${#eq-pop_fitness_vec}
 be the vector containing the $T-1$ population mean fitness we compute from the
 $T$ time points where measurements were taken. We have $T-1$ since the value
 of any $\bar{s}_t$ requires time points $t$ and $t+1$. Furthermore, let the
-matrix $\underline{\underline{F}}$ be a $B \times T$ matrix containing all
-frequency values. As with @eq-R_mat, each column of $\underline{\underline{F}}$
+matrix $\underline{\underline{F}}$ be a $T \times B$ matrix containing all
+frequency values. As with @eq-R_mat, each row of $\underline{\underline{F}}$
 can be split into two components of the form
 $$
 \underline{f}_t = \begin{bmatrix}
-\underline{f}_t^M \\
+\underline{f}_t^M \;
 \underline{f}_t^N
 \end{bmatrix},
 $${#eq-f_vec}
-to split the corresponding mutant and neutral barcode frequencies. With these
+to separate the corresponding mutant and neutral barcode frequencies. With these
 variables in hand, the full inference problem we must solve takes the form
 $$
 \pi(
@@ -81,9 +90,8 @@ $$
     \underline{s}^M, \underline{\bar{s}}_T, \underline{\underline{F}}
 ).
 $${#eq-bayes_full}
-As a reminder, we need to include these extra nuisance parameters, but we can
-always integrate them out to recover the marginal distribution we care about,
-i.e.,
+We can numerically integrate out all nuisance parameters to recover the marginal
+distribution we care about, i.e.,
 $$
 \pi(\underline{s}^M \mid \underline{\underline{R}}) =
 \int d^{T-1}\underline{\bar{s}}_T
@@ -95,14 +103,12 @@ $$
     \underline{\underline{R}}
 ).
 $${#eq-bayes_full_marginal}
-Although daunting at first sight, @eq-bayes_full_marginal will be solved 
-numerically, so we do not have to worry about this integration.
 
-### Splitting the posterior distribution {#seq-split_posterior}
+### Factorizing the posterior distribution {#seq-split_posterior}
 
-As written, the left-hand side of @eq-bayes_full is really difficult to work
-with. However, we can take advantage of the structure of our inference problem
-to rewrite it in a more manageable form. Specifically, we rewrite the joint
+The left-hand side of @eq-bayes_full is extremely difficult to work with.
+However, we can take advantage of the structure of our inference problem to
+rewrite it in a more manageable form. Specifically, we rewrite the joint
 probability distribution as a product of conditional distributions of the form
 $$
 \pi(
@@ -126,5 +132,6 @@ accounts for the uncertainty when inferring the frequency values given the
 barcode reads. The second term accounts for the uncertainty in the values of
 the mean population fitness at different time points. The last term accounts for
 the uncertainty in the parameter we care about---the mutants' relative
-fitnesses. In the following sections, we work through each of these terms to
-build up the posterior distribution we will sample from piece by piece.
+fitnesses. We invite the reader to check the supplementary material where we
+work through each of these terms to build the posterior distribution to sample
+from.

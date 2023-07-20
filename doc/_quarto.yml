@@ -7,7 +7,7 @@ project:
 
 book:
   title: "Bayesian inference of relative fitness on high-throughput pooled competition assays"
-  author: "Manuel Razo-Mejia"
+  author: "Manuel Razo-Mejia, Dmitri Petrov"
   page-navigation: true
   chapters:
     - index.qmd

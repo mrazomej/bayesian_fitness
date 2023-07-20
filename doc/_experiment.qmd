@@ -1,3 +1,28 @@
+---
+editor:
+    render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
+---
+
 ## Experimental setup
 
-`[add details on expeirmental setup]`
+Our inference pipeline is designed for the type of competition assays presented
+in @kinsler2020. In these experiments, an ensemble of genotypes is pooled
+together with an unlabeled reference strain that, initially, represents the vast
+majority ($\geq 90\%$) of the cells in the culture. Furthermore, a subfraction
+of labeled genotypes equivalent to the unlabeled reference strain---hereafter
+defined as *neutral* lineages---are spiked in at a relatively high abundance
+($\approx 3-5\%$), the rest of the culture being left for the ensemble of
+genotypes of interest.
+
+To determine the relative fitness of the ensemble of genotypes, a series of
+growth-dilution cycles are performed on either a single or multiple
+environments. In other words, the cultures are grown for some time to then
+dilute the culture back into fresh media and repeat for roughly 4-6 cycles,
+depending on the initial abundances of the mutants, and their relative growth
+rates. The DNA barcodes are sequenced at the end of each growth cycle to
+quantify the relative abundance of each of the barcodes. We point the reader to
+@kinsler2020 for specific details on these assays for *S. cerevisiae*. Figure
+[`ref here`] presents a typical barcode trajectory where the darker barcode
+trajectories represent the neutral lineages.
