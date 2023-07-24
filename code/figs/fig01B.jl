@@ -32,16 +32,6 @@ BayesFitUtils.viz.pboc_makie!()
 # Loading data
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-# Generate output directory 
-if !isdir("./output/")
-    mkdir("./output/")
-end # if
-
-# Generate figure dictionary
-if !isdir("./output/figs/")
-    mkdir("./output/figs/")
-end # if
-
 println("Loading data...")
 
 # Import data
