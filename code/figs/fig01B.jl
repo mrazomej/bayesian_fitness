@@ -100,4 +100,3 @@ Colorbar(
 )
 
 save("$(git_root())/doc/figs/fig01B.pdf", fig)
-save("$(git_root())/doc/figs/fig01B.svg", fig)
