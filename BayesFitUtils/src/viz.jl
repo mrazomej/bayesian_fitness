@@ -126,7 +126,7 @@ The `DataFrame` must contain at least the following columns:
 - `data::DataFrames.AbstractDataFrame`: **Tidy dataframe** with the data to be
   used to sample from the population mean fitness posterior distribution.
 
-## Optional Arguments
+## Optional Keyword Arguments
 - `id_col::Symbol=:barcode`: Name of the column in `data` containing the barcode
     identifier. The column may contain any type of entry.
 - `time_col::Symbol=:time`: Name of the column in `data` defining the time point
@@ -142,12 +142,14 @@ long as `sort` will resulted in time-ordered names.
 - `n_ticks::Int`: Ideal number of ticks to add to plot. See
   `Makie.WilkinsonTicks`.
 - `color::Union{ColorSchemes.ColorScheme,Symbol,ColorTypes.Colorant{Float64,
-  3}}=ColorSchemes.glasbey_hv_n256`: Single color or list of colors from
-  `ColorSchemes.jl` to be used in plot. Note: when a color list is provided,
-  colors are randomnly assigned to each barcode by sampling from the list of
-  colors.
+  3},Vector{<:ColorTypes.Colorant}}=ColorSchemes.glasbey_hv_n256`:
+  Single color or list of colors from `ColorSchemes.jl` to be used in plot.
+  Note: when a color list is provided, colors are randomnly assigned to each
+  barcode by sampling from the list of colors. When a `Vector` of colors is
+  provided, each curve.
 - `alpha::AbstractFloat=1.0`: Level of transparency for plots.
 - `linewidth::Real=5`: Trajectory linewidth.
+- `markersize::Real=0`: Markersize to show the position of time points.
 """
 function bc_time_series!(
     ax::Makie.Axis,
@@ -158,15 +160,22 @@ function bc_time_series!(
     zero_lim::Real=1E-8,
     zero_label::Union{String,Nothing}=nothing,
     n_ticks::Int=4,
-    color::Union{ColorSchemes.ColorScheme,Symbol,ColorTypes.Colorant{Float64,3}}=ColorSchemes.glasbey_hv_n256,
+    color::Union{ColorSchemes.ColorScheme,Symbol,ColorTypes.Colorant,Vector{<:ColorTypes.Colorant}}=ColorSchemes.glasbey_hv_n256,
     alpha::AbstractFloat=1.0,
-    linewidth::Real=2
+    linewidth::Real=2,
+    markersize::Real=0
 )
     # Group data by id_col
     data_group = DF.groupby(data, id_col)
 
+    # Check that enough colors where provided
+    if (typeof(color) <: Vector{<:ColorTypes.Colorant}) &
+       (length(color) < length(data_group))
+        error("Not enough colors were provided roe each individual group")
+    end # if
+
     # Loop through trajectories
-    for bc in data_group
+    for (i, bc) in enumerate(data_group)
         # Modify barcode values below zero_lim
         bc[bc[:, quant_col].<zero_lim, quant_col] .= zero_lim
 
@@ -176,21 +185,33 @@ function bc_time_series!(
         # Check if unique color was assigned to each barcode
         if typeof(color) <: ColorSchemes.ColorScheme
             # Plot trajectory
-            lines!(
+            scatterlines!(
                 ax,
                 bc[:, time_col],
                 bc[:, quant_col],
                 color=(color[StatsBase.sample(1:length(color))], alpha),
                 linewidth=linewidth,
+                markersize=markersize
+            )
+        elseif typeof(color) <: Vector{<:ColorTypes.Colorant}
+            # Plot trajectory
+            scatterlines!(
+                ax,
+                bc[:, time_col],
+                bc[:, quant_col],
+                color=(color[i], alpha),
+                linewidth=linewidth,
+                markersize=markersize
             )
         else
             # Plot trajectory
-            lines!(
+            scatterlines!(
                 ax,
                 bc[:, time_col],
                 bc[:, quant_col],
                 color=(color, alpha),
                 linewidth=linewidth,
+                markersize=markersize
             )
         end # if
     end # for
@@ -258,10 +279,11 @@ long as `sort` will resulted in time-ordered names.
 - `freq_col::Symbol=:count`: Name of the column in `data` containing the barcode
   frequency.
 - `color::Union{ColorSchemes.ColorScheme,Symbol,ColorTypes.Colorant{Float64,
-3}}=ColorSchemes.glasbey_hv_n256`: Single color or list of colors from
-`ColorSchemes.jl` to be used in plot. Note: when a color list is provided,
-colors are randomnly assigned to each barcode by sampling from the list of
-colors.
+  3},Vector{<:ColorTypes.Colorant}}=ColorSchemes.glasbey_hv_n256`:
+  Single color or list of colors from `ColorSchemes.jl` to be used in plot.
+  Note: when a color list is provided, colors are randomnly assigned to each
+  barcode by sampling from the list of colors. When a `Vector` of colors is
+  provided, each curve.
 - `alpha::AbstractFloat=1.0`: Level of transparency for plots.
 - `linewidth::Real=5`: Trajectory linewidth.
 - `markersize::Real=0`: Markersize to show the position of time points.
@@ -274,7 +296,7 @@ function logfreq_ratio_time_series!(
     id_col::Symbol=:barcode,
     time_col::Symbol=:time,
     freq_col::Symbol=:count,
-    color::Union{ColorSchemes.ColorScheme,Symbol,ColorTypes.Colorant{Float64,3}}=ColorSchemes.glasbey_hv_n256,
+    color::Union{ColorSchemes.ColorScheme,Symbol,ColorTypes.Colorant,Vector{<:ColorTypes.Colorant}}=ColorSchemes.glasbey_hv_n256,
     alpha::AbstractFloat=1.0,
     linewidth::Real=2,
     markersize::Real=0,
@@ -283,8 +305,14 @@ function logfreq_ratio_time_series!(
     # Group data by id_col
     data_group = DF.groupby(data, id_col)
 
+    # Check that enough colors where provided
+    if (typeof(color) <: Vector{<:ColorTypes.Colorant}) &
+       (length(color) < length(data_group))
+        error("Not enough colors were provided roe each individual group")
+    end # if
+
     # Loop through trajectories
-    for bc in data_group
+    for (i, bc) in enumerate(data_group)
         # Sort data by time
         DF.sort!(bc, time_col)
 
@@ -296,6 +324,16 @@ function logfreq_ratio_time_series!(
                 bc[2:end, time_col],
                 diff(log_fn.(bc[:, freq_col])),
                 color=(color[StatsBase.sample(1:length(color))], alpha),
+                linewidth=linewidth,
+                markersize=markersize
+            )
+        elseif typeof(color) <: Vector{<:ColorTypes.Colorant}
+            # Plot trajectory
+            scatterlines!(
+                ax,
+                bc[2:end, time_col],
+                diff(log_fn.(bc[:, freq_col])),
+                color=(color[i], alpha),
                 linewidth=linewidth,
                 markersize=markersize
             )
@@ -337,7 +375,7 @@ function ppc_time_series!(
     quantile::Vector{<:AbstractFloat},
     ppc_mat::Matrix{<:Real};
     time::Union{Vector{<:Real},Nothing}=nothing,
-    colors::Union{ColorSchemes.ColorScheme,Vector{<:ColorTypes.Colorant{Float64,3}}}=ColorSchemes.Blues_9,
+    colors::Union{ColorSchemes.ColorScheme,Vector{<:ColorTypes.Colorant}}=ColorSchemes.Blues_9,
     alpha::AbstractFloat=0.75
 )
     # Check that all quantiles are within bounds
