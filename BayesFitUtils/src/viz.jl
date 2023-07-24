@@ -169,9 +169,10 @@ function bc_time_series!(
     data_group = DF.groupby(data, id_col)
 
     # Check that enough colors where provided
-    if (typeof(color) <: Vector{<:ColorTypes.Colorant}) &
-       (length(color) < length(data_group))
-        error("Not enough colors were provided roe each individual group")
+    if (typeof(color) <: Vector{<:ColorTypes.Colorant})
+        if (length(color) < length(data_group))
+            error("Not enough colors were provided roe each individual group")
+        end # if
     end # if
 
     # Loop through trajectories
@@ -306,9 +307,10 @@ function logfreq_ratio_time_series!(
     data_group = DF.groupby(data, id_col)
 
     # Check that enough colors where provided
-    if (typeof(color) <: Vector{<:ColorTypes.Colorant}) &
-       (length(color) < length(data_group))
-        error("Not enough colors were provided roe each individual group")
+    if (typeof(color) <: Vector{<:ColorTypes.Colorant})
+        if (length(color) < length(data_group))
+            error("Not enough colors were provided roe each individual group")
+        end # if
     end # if
 
     # Loop through trajectories
