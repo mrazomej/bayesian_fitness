@@ -94,6 +94,7 @@ Manifest.toml
 doc/*_files/*
 doc/_*.html
 doc/_*.pdf
+doc/figs/
 code/analysis/*/output/
 code/processing/*/output/
 data/*/*
