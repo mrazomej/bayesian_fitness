@@ -10,11 +10,11 @@ csl: ieee.csl
 Our inference pipeline is designed for the type of competition assays presented
 in @kinsler2020. In these experiments, an ensemble of genotypes is pooled
 together with an unlabeled reference strain that, initially, represents the vast
-majority ($\geq 90\%$) of the cells in the culture. Furthermore, a subfraction
-of labeled genotypes equivalent to the unlabeled reference strain---hereafter
-defined as *neutral* lineages---are spiked in at a relatively high abundance
-($\approx 3-5\%$), the rest of the culture being left for the ensemble of
-genotypes of interest.
+majority ($\geq 90\%$) of the cells in the culture (see schematic in
+@fig-fig01(A)). Furthermore, a subfraction of labeled genotypes equivalent to
+the unlabeled reference strain---hereafter defined as *neutral* lineages---are
+spiked in at a relatively high abundance ($\approx 3-5\%$), the rest of the
+culture being left for the ensemble of genotypes of interest.
 
 To determine the relative fitness of the ensemble of genotypes, a series of
 growth-dilution cycles are performed on either a single or multiple
@@ -23,6 +23,16 @@ dilute the culture back into fresh media and repeat for roughly 4-6 cycles,
 depending on the initial abundances of the mutants, and their relative growth
 rates. The DNA barcodes are sequenced at the end of each growth cycle to
 quantify the relative abundance of each of the barcodes. We point the reader to
-@kinsler2020 for specific details on these assays for *S. cerevisiae*. Figure
-[`ref here`] presents a typical barcode trajectory where the darker barcode
+@kinsler2020 for specific details on these assays for *S. cerevisiae*.
+@fig-fig01(B) presents a typical barcode trajectory where the darker barcode
 trajectories represent the neutral lineages.
+
+![**Typical competitive fitness experiment**. (A) Schematic of the typical
+experimental design to determine the competitive fitness of an ensemble of
+barcoded genotypes. Genotypes are pooled together and grown over multiple
+growth-dilution cycles. At the end of each cycle, a sample is processed to
+generate a library for amplicon sequencing. (B) Typical barcode trajectory
+dataset. From each time point, the relative frequency of each barcode is
+determined from the total number of reads. Different shades of blue represent
+different relative fitness. Darker gray lines define the typical trajectory of
+neutral lineages.](./figs/fig01){#fig-fig01}
