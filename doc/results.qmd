@@ -2,19 +2,17 @@
 title: "Results"
 ---
 
+<!-- Experimental results -->
 {{< include _experiment.qmd >}}
 
+<!-- Fitness model -->
 {{< include _fitness_model.qmd >}}
 
-<!-- Bayesian inference section -->
+<!-- Bayesian inference -->
 {{< include _bayesian_inference.qmd >}}
 
-<!-- {{< include _bayes_freq.qmd >}}
+<!-- Single dataset -->
+{{< include _single_results.qmd >}}
 
-{{< include _bayes_meanfit.qmd >}}
-
-{{< include _bayes_mutfit.qmd >}} -->
-
-<!-- MCMC implementation -->
-
-<!-- {{< include _mcmc_sampling.qmd >}} -->
+<!-- Hierarchical model -->
+{{< include _hierarchical_results.qmd >}}

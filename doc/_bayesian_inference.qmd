@@ -135,3 +135,13 @@ the uncertainty in the parameter we care about---the mutants' relative
 fitnesses. We invite the reader to check the supplementary material where we
 work through each of these terms to build the posterior distribution to sample
 from.
+
+### Markov Chain Monter Carlo
+
+One of the technical challenges to the adoption of Bayesian methods is the
+analytical intractability of integrals such as that of @eq-bayes_full_marginal.
+However, modern algorithms such as Hamiltonian Monte Carlo (HMC) allow for the
+efficient integration of arbitrary posterior distributions @betancourt2017. In
+particular, this work is accompanied by the Julia library `BayesFitness.jl` that
+makes use of the implementation of HMC samplers to numerically approximate the
+solution of @eq-bayes_full_marginal within the Julia ecosystem @ge2018.
