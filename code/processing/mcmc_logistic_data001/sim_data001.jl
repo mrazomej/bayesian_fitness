@@ -277,6 +277,7 @@ if gen_plots
 end # if
 
 save("./output/figs/trajectories.pdf", fig)
+save("./output/figs/trajectories.svg", fig)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% # 
 # Save data to memory

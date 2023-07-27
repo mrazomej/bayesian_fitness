@@ -87,9 +87,6 @@ qs = [0.05, 0.68, 0.95]
 # Define colors
 colors = get(ColorSchemes.Purples_9, LinRange(0.25, 1.0, length(qs)))
 
-# Remove old version of file
-rm("./output/figs/logfreqratio_ppc_neutral_prior.pdf", force=true)
-
 # Load chain
 chn = JLD2.load(file)["chain"]
 
@@ -129,6 +126,7 @@ BayesFitUtils.viz.logfreq_ratio_time_series!(
 
 # Save figure into pdf
 save("./output/figs/logfreqratio_ppc_neutral_prior.pdf", fig)
+save("./output/figs/logfreqratio_ppc_neutral_prior.svg", fig)
 
 ##
 
@@ -168,9 +166,6 @@ qs = [0.05, 0.68, 0.95]
 # Define colors
 colors = get(ColorSchemes.Blues_9, LinRange(0.25, 1.0, length(qs)))
 
-# Remove old version of file
-rm("./output/figs/logfreqratio_ppc_neutral_posterior.pdf", force=true)
-
 # Compute posterior predictive checks
 ppc_mat = BayesFitness.stats.logfreq_ratio_mean_ppc(
     chn, n_ppc; param=param
@@ -207,6 +202,7 @@ BayesFitUtils.viz.logfreq_ratio_time_series!(
 
 # Save figure into pdf
 save("./output/figs/logfreqratio_ppc_neutral_posterior.pdf", fig)
+save("./output/figs/logfreqratio_ppc_neutral_posterior.svg", fig)
 
 ##
 
@@ -330,6 +326,7 @@ errorbars!(
 scatter!(ax, df_summary.fitness, df_summary.median, markersize=8)
 
 save("./output/figs/fitness_comparison.pdf", fig)
+save("./output/figs/fitness_comparison.svg", fig)
 
 fig
 ##
@@ -346,6 +343,7 @@ ax = Axis(fig[1, 1], xlabel="|median - true value|", ylabel="ECDF")
 ecdfplot!(ax, abs.(df_summary.median .- df_summary.fitness))
 
 save("./output/figs/median_true_ecdf.pdf", fig)
+save("./output/figs/median_true_ecdf.svg", fig)
 
 fig
 
@@ -371,6 +369,7 @@ ax = Axis(fig[1, 1], xlabel="|z-score|", ylabel="ECDF")
 ecdfplot!(ax, abs.(fitness_zscore))
 
 save("./output/figs/zscore_ecdf.pdf", fig)
+save("./output/figs/zscore_ecdf.svg", fig)
 
 fig
 
@@ -454,3 +453,4 @@ Label(fig[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=22)
 fig
 
 save("./output/figs/logfreqratio_ppc_mutant.pdf", fig)
+save("./output/figs/logfreqratio_ppc_mutant.svg", fig)
