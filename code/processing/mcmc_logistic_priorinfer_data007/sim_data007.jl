@@ -338,7 +338,7 @@ end # if
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% # 
 
 # Defne output directory
-out_dir = "$(git_root())/data/logistic_growth/data_001"
+out_dir = "$(git_root())/data/logistic_growth/data_007"
 
 # Check if output directory exists
 if !isdir(out_dir)

@@ -87,44 +87,65 @@ println("Loading data...")
 
 # Import data
 data = CSV.read(
-    "$(git_root())/data/logistic_growth/data_001/tidy_data.csv", DF.DataFrame
+    "$(git_root())/data/logistic_growth/data_007/tidy_data.csv", DF.DataFrame
 )
 
 ##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Obtain priors on expected errors from neutral measurements
+# Load prior inferences
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-# Group neutral data by barcode
-data_group = DF.groupby(data[data.neutral, :], :barcode)
+println("Loading prior information based on prior inferences...\n")
 
-# Initialize list to save log frequency changes
-logfreq = []
+chn = JLD2.load(
+    "./output/chain_popmean_fitness_1000steps_04walkers.jld2"
+)["chain"]
 
-# Loop through each neutral barcode
-for d in data_group
-    # Sort data by time
-    DF.sort!(d, :time)
-    # Compute log frequency ratio and append to list
-    push!(logfreq, diff(log.(d[:, :freq])))
-end # for
+# Select variables for population mean fitness and associated variance
+var_name = MCMCChains.namesingroup.(Ref(chn), [:s̲ₜ, :σ̲ₜ])
 
-# Generate matrix with log-freq ratios
-logfreq_mat = hcat(logfreq...)
+# Fit normal distributions to population mean fitness
+pop_mean = Distributions.fit.(
+    Ref(Distributions.Normal), [vec(chn[x]) for x in var_name[1]]
+)
 
-# Compute mean per time point for approximate mean fitness
-logfreq_mean = StatsBase.mean(logfreq_mat, dims=2)
+# Fit lognormal distributions to associated error
+pop_std = Distributions.fit.(
+    Ref(Distributions.LogNormal), [vec(chn[x]) for x in var_name[2]]
+)
 
-# Define prior for population mean fitness
-s_pop_prior = hcat(-logfreq_mean, repeat([0.3], length(logfreq_mean)))
+# Define parameters for population mean fitness
+s_pop_prior = hcat(
+    first.(Distributions.params.(pop_mean)),
+    last.(Distributions.params.(pop_mean))
+)
+# Define parameters for population mean fitness error
+σ_pop_prior = hcat(
+    first.(Distributions.params.(pop_std)),
+    last.(Distributions.params.(pop_std))
+)
+# Define parameters for mutant fitness error
+σ_mut_prior = maximum.(eachcol(σ_pop_prior))
 
-# Generate single list of log-frequency ratios to compute prior on σ
-logfreq_vec = vcat(logfreq...)
+# Load chain into memory
+chn = JLD2.load("./output/chain_freq_300steps_03walkers.jld2")["chain"]
 
-# Define priors for nuisance parameters for log-likelihood functions
-σ_pop_prior = [StatsBase.mean(logfreq_vec), StatsBase.std(logfreq_vec)]
-σ_mut_prior = σ_pop_prior
+# Select variables for population mean fitness and associated variance
+var_name = MCMCChains.namesingroup(chn, :Λ̲̲)
+
+# Fit normal distributions to population mean fitness
+bc_freq = Distributions.fit.(
+    Ref(Distributions.LogNormal), [vec(chn[x]) for x in var_name]
+)
+
+# Extract λ prior for frequencies
+λ_prior = hcat(
+    first.(Distributions.params.(bc_freq)),
+    last.(Distributions.params.(bc_freq))
+)
+
+##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Initialize MCMC sampling
@@ -145,7 +166,7 @@ param = Dict(
         :σ_mut_prior => σ_mut_prior,
         :s_mut_prior => [0.0, 1.0],
     ),
-    :sampler => Turing.NUTS(0.65),
+    :sampler => Turing.DynamicNUTS(),
     :ensemble => Turing.MCMCThreads(),
     :rm_T0 => false,
 )

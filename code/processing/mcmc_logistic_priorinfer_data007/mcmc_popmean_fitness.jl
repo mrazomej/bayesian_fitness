@@ -40,7 +40,6 @@ import Random
 # Import plotting libraries
 using CairoMakie
 import ColorSchemes
-import PDFmerger
 
 # Activate backend
 CairoMakie.activate!()
@@ -62,17 +61,17 @@ Turing.setrdcache(true)
 ##
 
 # Define sampling hyperparameters
-n_steps = 300
-n_walkers = 3
+n_steps = 1000
+n_walkers = 4
+
+# Define if plots should be generated
+gen_plots = false
 
 ##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate output directories
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-
-# Define output directory
-outdir = "./output/bc_freq"
 
 # Generate output directory 
 if !isdir("./output/")
@@ -89,7 +88,7 @@ println("Loading data...")
 
 # Import data
 data = CSV.read(
-    "$(git_root())/data/logistic_growth/data_001/tidy_data.csv", DF.DataFrame
+    "$(git_root())/data/logistic_growth/data_007/tidy_data.csv", DF.DataFrame
 )
 
 ##
@@ -105,8 +104,8 @@ param = Dict(
     :data => data,
     :n_walkers => n_walkers,
     :n_steps => n_steps,
-    :outputname => "./output/chain_freq_$(n_steps)steps_$(lpad(n_walkers, 2, "0"))walkers",
-    :model => BayesFitness.model.freq_lognormal,
+    :outputname => "./output/chain_popmean_fitness_$(n_steps)steps_$(lpad(n_walkers, 2, "0"))walkers",
+    :model => BayesFitness.model.neutrals_lognormal,
     :sampler => Turing.DynamicNUTS(),
     :ensemble => Turing.MCMCThreads(),
     :rm_T0 => false,
@@ -114,5 +113,10 @@ param = Dict(
 
 # Run inference
 println("Running Inference...")
+@time BayesFitness.mcmc.mcmc_popmean_fitness(; param...)
 
-@time BayesFitness.mcmc.mcmc_joint_fitness(; param...)
+##
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Generate diagnostic plots
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
