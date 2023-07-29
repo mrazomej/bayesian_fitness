@@ -63,9 +63,6 @@ Turing.setrdcache(true)
 n_steps = 1000
 n_walkers = 4
 
-# Define if plots should be generated
-gen_plots = false
-
 ##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
