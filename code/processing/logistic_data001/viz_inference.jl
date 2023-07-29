@@ -65,73 +65,7 @@ data = CSV.read(
 ##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Plotting PPC for population mean fitness
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-
-# Define file
-file = first(Glob.glob("./output/chain_popmean_fitness_*"))
-
-# Define dictionary with corresponding parameters for variables needed for
-# the posterior predictive checks
-param = Dict(
-    :population_mean_fitness => :s̲ₜ,
-    :population_std_fitness => :σ̲ₜ,
-)
-
-# Define number of posterior predictive check samples
-n_ppc = 500
-
-# Define quantiles to compute
-qs = [0.05, 0.68, 0.95]
-
-# Define colors
-colors = get(ColorSchemes.Purples_9, LinRange(0.25, 1.0, length(qs)))
-
-# Load chain
-chn = JLD2.load(file)["chain"]
-
-# Compute posterior predictive checks
-ppc_mat = BayesFitness.stats.logfreq_ratio_mean_ppc(
-    chn, n_ppc; param=param
-)
-
-# Define time
-t = vec(collect(axes(ppc_mat, 2)) .+ 1)
-
-# Initialize figure
-fig = Figure(resolution=(450, 350))
-
-# Add axis
-ax = Axis(
-    fig[1, 1],
-    xlabel="time point",
-    ylabel="ln(fₜ₊₁/fₜ)",
-    title="neutral lineages PPC | Prior"
-)
-
-# Plot posterior predictive checks
-BayesFitUtils.viz.ppc_time_series!(
-    ax, qs, ppc_mat; colors=colors, time=t
-)
-
-# Plot log-frequency ratio of neutrals
-BayesFitUtils.viz.logfreq_ratio_time_series!(
-    ax,
-    data[data.neutral, :];
-    freq_col=:freq,
-    color=:black,
-    alpha=1.0,
-    linewidth=2
-)
-
-# Save figure into pdf
-save("./output/figs/logfreqratio_ppc_neutral_prior.pdf", fig)
-save("./output/figs/logfreqratio_ppc_neutral_prior.svg", fig)
-
-##
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Read chain into memory and generate tidy dataframe with it
+# Read chain into memory 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Define file
@@ -147,10 +81,32 @@ s_names = MCMCChains.namesingroup(chn, :s̲⁽ᵐ⁾)
 σ_names = MCMCChains.namesingroup(chn, :σ̲⁽ᵐ⁾)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Plot Trace and density plots for population mean fitness
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Extract variable names
+var_names = vcat(
+    [MCMCChains.namesingroup(chn, :s̲ₜ), MCMCChains.namesingroup(chn, :σ̲ₜ)]...
+)
+
+# Initialize figure
+fig = Figure(resolution=(600, 800))
+
+# Generate mcmc_trace_density! plot
+BayesFitUtils.viz.mcmc_trace_density!(fig, chn[var_names]; alpha=0.5)
+
+# Save figure 
+save("./output/figs/trace_density_popmeanfitness.pdf", fig)
+save("./output/figs/trace_density_popmeanfitness.svg", fig)
+
+fig
+##
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Plot posterior predictive checks for neutral lineages in joint inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-# # Define dictionary with corresponding parameters for variables needed for
+# Define dictionary with corresponding parameters for variables needed for
 # the posterior predictive checks
 param = Dict(
     :population_mean_fitness => :s̲ₜ,
@@ -182,7 +138,7 @@ ax = Axis(
     fig[1, 1],
     xlabel="time point",
     ylabel="ln(fₜ₊₁/fₜ)",
-    title="neutral lineages PPC | Posterior"
+    title="neutral lineages PPC"
 )
 
 # Plot posterior predictive checks
@@ -203,6 +159,27 @@ BayesFitUtils.viz.logfreq_ratio_time_series!(
 # Save figure into pdf
 save("./output/figs/logfreqratio_ppc_neutral_posterior.pdf", fig)
 save("./output/figs/logfreqratio_ppc_neutral_posterior.svg", fig)
+
+##
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Trace and density plots for example mutants
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Define barcodes to include
+var_names = StatsBase.sample(s_names, 8)
+
+# Initialize figure
+fig = Figure(resolution=(600, 800))
+
+# Generate mcmc_trace_density! plot
+BayesFitUtils.viz.mcmc_trace_density!(fig, chn[var_names]; alpha=0.5)
+
+# Save figure 
+save("./output/figs/trace_density_mutants.pdf", fig)
+save("./output/figs/trace_density_mutants.svg", fig)
+
+fig
 
 ##
 
@@ -350,8 +327,9 @@ fig
 ##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# 
+# Plot ECDF for true fitness z-score 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
 # Fit Gaussian distribution to chains
 dist_fit = [Distributions.fit(Distributions.Normal, chn[x]) for x in s_names]
 # Extract parameters
