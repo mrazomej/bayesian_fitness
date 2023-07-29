@@ -86,7 +86,10 @@ n_ppc = 500
 qs = [0.05, 0.68, 0.95]
 
 # Define colors
-colors = get(ColorSchemes.Purples_9, LinRange(0.25, 1.0, length(qs)))
+colors = [
+    get(ColorSchemes.Greens_9, LinRange(0.25, 1.0, length(qs))),
+    get(ColorSchemes.Purples_9, LinRange(0.25, 1.0, length(qs)))
+]
 
 # Initialize figure
 fig = Figure(resolution=(350 * n_rep, 300))
@@ -115,7 +118,7 @@ for (i, file) in enumerate(files)
 
     # Plot posterior predictive checks
     BayesFitUtils.viz.ppc_time_series!(
-        ax[i], qs, ppc_mat; colors=colors, time=t
+        ax[i], qs, ppc_mat; colors=colors[i], time=t
     )
 
     # Plot log-frequency ratio of neutrals
@@ -143,7 +146,7 @@ fig
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Define file
-file = first(Glob.glob("./output/chain_joint_*"))
+file = first(Glob.glob("./output/chain_joint_hierarchical*"))
 
 # Load chain
 ids, chn = values(JLD2.load(file))
@@ -207,7 +210,6 @@ DF.rename!(
 )
 
 ##
-
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Plot posterior predictive checks for neutral lineages in joint inference
@@ -492,8 +494,8 @@ fig = Figure(resolution=(400, 400))
 # Add axis
 ax = Axis(
     fig[1, 1],
-    xlabel="true fitness value",
-    ylabel="inferred fitness",
+    xlabel="true hyper-fitness value",
+    ylabel="inferred hyper-fitness",
 )
 
 # Plot identity line
@@ -682,3 +684,8 @@ Label(fig[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=20)
 save("./output/figs/logfreqratio_ppc_mutant.pdf", fig)
 
 fig
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Load single-experiment inferences
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+

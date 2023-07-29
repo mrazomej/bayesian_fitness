@@ -197,7 +197,7 @@ param = Dict(
         :σ_mut_prior => σ_mut_prior,
         :s_mut_prior => [0.0, 1.0],
     ),
-    :sampler => Turing.DynamicNUTS(),
+    :sampler => Turing.NUTS(),
     :ensemble => Turing.MCMCThreads(),
     :rm_T0 => false,
 )
