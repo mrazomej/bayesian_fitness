@@ -37,17 +37,6 @@ import Random
 import StatsBase
 import Distributions
 
-# Import plotting libraries
-using CairoMakie
-import ColorSchemes
-
-# Activate backend
-CairoMakie.activate!()
-
-# Set PBoC Plotting style
-BayesFitUtils.viz.pboc_makie!()
-##
-
 Random.seed!(42)
 
 ##
@@ -60,7 +49,7 @@ Turing.setrdcache(true)
 ##
 
 # Define sampling hyperparameters
-n_steps = 1000
+n_steps = 1
 n_walkers = 4
 
 # Define if plots should be generated
@@ -96,85 +85,70 @@ data = CSV.read(
 # Load prior inferences
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-println("Loading prior information based on prior inferences...\n")
+println("Defining priors from neutral lineages data...\n")
 
-# List files
-chn_files = Glob.glob("./output/chain_popmean*jld2")
+# Initialize list to save priors
+s_pop_p = []
+logσ_pop_p = []
+logσ_mut_p = []
 
-# Initialize lists to save priors
-s_pop_prior = []
-σ_pop_prior = []
-σ_mut_prior = []
-λ_prior = []
+# Group data by replicates
+data_rep = DF.groupby(data[data.neutral, :], :rep)
 
-# Loop through files
-for (i, f) in enumerate(chn_files)
-    # Load chain
-    chn = JLD2.load(f)["chain"]
+# Loop through replicates
+for df in data_rep
+    # Group neutral data by barcode
+    data_group = DF.groupby(df, :barcode)
 
-    # Select variables for population mean fitness and associated variance
-    var_name = MCMCChains.namesingroup.(Ref(chn), [:s̲ₜ, :σ̲ₜ])
+    # Initialize list to save log frequency changes
+    logfreq = []
 
-    # Fit normal distributions to population mean fitness
-    pop_mean = Distributions.fit.(
-        Ref(Distributions.Normal), [vec(chn[x]) for x in var_name[1]]
-    )
+    # Loop through each neutral barcode
+    for d in data_group
+        # Sort data by time
+        DF.sort!(d, :time)
+        # Compute log frequency ratio and append to list
+        push!(logfreq, diff(log.(d[:, :freq])))
+    end # for
 
-    # Fit lognormal distributions to associated error
-    pop_std = Distributions.fit.(
-        Ref(Distributions.LogNormal), [vec(chn[x]) for x in var_name[2]]
-    )
+    # Generate matrix with log-freq ratios
+    logfreq_mat = hcat(logfreq...)
 
-    # Define parameters for population mean fitness
+    # Compute mean per time point for approximate mean fitness
+    logfreq_mean = StatsBase.mean(logfreq_mat, dims=2)
+
+    # Define prior for population mean fitness
     push!(
-        s_pop_prior,
-        hcat(
-            first.(Distributions.params.(pop_mean)),
-            last.(Distributions.params.(pop_mean))
-        )
+        s_pop_p, hcat(-logfreq_mean, repeat([0.3], length(logfreq_mean)))
     )
-    # Define parameters for population mean fitness error
+
+    # Generate single list of log-frequency ratios to compute prior on σ
+    logfreq_vec = vcat(logfreq...)
+
+    # Define priors for nuisance parameters for log-likelihood functions
     push!(
-        σ_pop_prior,
-        hcat(
-            first.(Distributions.params.(pop_std)),
-            last.(Distributions.params.(pop_std))
-        )
+        logσ_pop_p, [StatsBase.mean(logfreq_vec), StatsBase.std(logfreq_vec)]
     )
-    # Define parameters for mutant fitness error
-    push!(σ_mut_prior, maximum.(eachcol(σ_pop_prior[i])))
-end # for
-
-# List files
-chn_files = Glob.glob("./output/chain_freq*jld2")
-
-# Loop through files
-for f in chn_files
-    # Load chain into memory
-    chn = JLD2.load(f)["chain"]
-
-    # Select variables for population mean fitness and associated variance
-    var_name = MCMCChains.namesingroup(chn, :Λ̲̲)
-
-    # Fit normal distributions to population mean fitness
-    bc_freq = Distributions.fit.(
-        Ref(Distributions.LogNormal), [vec(chn[x]) for x in var_name]
-    )
-
-    # Extract λ prior for frequencies
     push!(
-        λ_prior,
-        hcat(
-            first.(Distributions.params.(bc_freq)),
-            last.(Distributions.params.(bc_freq))
-        )
+        logσ_mut_p, [StatsBase.mean(logfreq_vec), StatsBase.std(logfreq_vec)]
     )
 end # for
 
-# Concatenate into single array
-s_pop_prior = vcat(s_pop_prior...)
-σ_pop_prior = vcat(σ_pop_prior...)
-σ_mut_prior = maximum.(eachrow(hcat(σ_mut_prior...)))
+# Convert priors to long matrices with repeated values to give unique priors to
+# each replicate
+s_pop_prior = vcat(s_pop_p...)
+σ_pop_prior = vcat(
+    [
+        hcat(repeat([x], length(unique(data.time)) - 1)...)' for x in logσ_pop_p
+    ]...
+)
+σ_mut_prior = vcat(
+    [
+        hcat(repeat([x],
+            length(unique(data[.!data.neutral, :barcode])))...)'
+        for x in logσ_pop_p
+    ]...
+)
 
 ##
 
@@ -190,14 +164,15 @@ param = Dict(
     :n_walkers => n_walkers,
     :n_steps => n_steps,
     :outputname => "./output/chain_joint_hierarchical_fitness_$(n_steps)steps_$(lpad(n_walkers, 2, "0"))walkers",
-    :model => BayesFitness.model.fitness_lognormal_hierarchical_replicates,
+    :model => BayesFitness.model.exprep_fitness_lognormal,
     :model_kwargs => Dict(
         :s_pop_prior => s_pop_prior,
         :σ_pop_prior => σ_pop_prior,
         :σ_mut_prior => σ_mut_prior,
         :s_mut_prior => [0.0, 1.0],
     ),
-    :sampler => Turing.NUTS(),
+    :rep_col => :rep,
+    :sampler => Turing.externalsampler(DynamicHMC.NUTS()),
     :ensemble => Turing.MCMCThreads(),
     :rm_T0 => false,
 )
@@ -205,4 +180,4 @@ param = Dict(
 # Run inference
 println("Running Inference...")
 
-@time BayesFitness.mcmc.mcmc_joint_fitness_hierarchical_replicates(; param...)
+@time BayesFitness.mcmc.mcmc_sample(; param...)
