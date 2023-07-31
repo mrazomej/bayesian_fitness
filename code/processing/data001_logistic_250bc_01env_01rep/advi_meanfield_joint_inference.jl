@@ -13,18 +13,9 @@ import BayesFitness
 # Import libraries to manipulate data
 import DataFrames as DF
 import CSV
-import MCMCChains
-
-# Import library to save and load native julia objects
-import JLD2
-
-# Import library to list files
-import Glob
 
 # Import library to perform Bayesian inference
 import Turing
-import MCMCChains
-import DynamicHMC
 
 # Import AutoDiff backend
 using ReverseDiff
@@ -36,16 +27,6 @@ using Memoization
 import Random
 import StatsBase
 import Distributions
-
-# Import plotting libraries
-using CairoMakie
-import ColorSchemes
-
-# Activate backend
-CairoMakie.activate!()
-
-# Set PBoC Plotting style
-BayesFitUtils.viz.pboc_makie!()
 
 Random.seed!(42)
 
@@ -121,8 +102,8 @@ s_pop_prior = hcat(-logfreq_mean, repeat([0.3], length(logfreq_mean)))
 logfreq_vec = vcat(logfreq...)
 
 # Define priors for nuisance parameters for log-likelihood functions
-σ_pop_prior = [StatsBase.mean(logfreq_vec), StatsBase.std(logfreq_vec)]
-σ_mut_prior = σ_pop_prior
+logσ_pop_prior = [StatsBase.mean(logfreq_vec), StatsBase.std(logfreq_vec)]
+logσ_mut_prior = logσ_pop_prior
 
 ##
 
@@ -136,8 +117,8 @@ param = Dict(
     :model => BayesFitness.model.fitness_normal,
     :model_kwargs => Dict(
         :s_pop_prior => s_pop_prior,
-        :σ_pop_prior => σ_pop_prior,
-        :σ_mut_prior => σ_mut_prior,
+        :logσ_pop_prior => logσ_pop_prior,
+        :logσ_mut_prior => logσ_mut_prior,
         :s_mut_prior => [0.0, 1.0],
     ),
     :advi => Turing.ADVI(n_samples, n_steps),
@@ -158,4 +139,4 @@ end # if
 
 # Run inference
 println("Running Variational Inference...")
-@time dist = BayesFitness.vi.vi_joint_fitness(; param...)
+@time dist = BayesFitness.vi.advi(; param...)
