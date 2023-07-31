@@ -693,7 +693,10 @@ fig
 file = first(Glob.glob("./output/advi_meanfield*"))
 
 # Load distribution
-ids_advi, dist_advi = values(JLD2.load(file))
+advi_results = JLD2.load(file)
+ids_advi = advi_results["ids"]
+dist_advi = advi_results["dist"]
+var_advi = advi_results["var"]
 
 # Extract distribution parameters
 dist_params = hcat(Distributions.params(dist_advi)...)
@@ -704,16 +707,16 @@ dist_params = hcat(Distributions.params(dist_advi)...)
 
 # Locate variables
 # Locate hyperparameter variables
-θ_idx = occursin.("θ̲⁽ᵐ⁾", String.(names(chn)))[1:size(dist_params, 1)]
+θ_idx = occursin.("θ̲⁽ᵐ⁾", String.(var_advi))
 # Find columns with fitness parameter deviation 
-τ_idx = occursin.("τ̲⁽ᵐ⁾", String.(names(chn)))[1:size(dist_params, 1)]
-θ_tilde_idx = occursin.("θ̲̃⁽ᵐ⁾", String.(names(chn)))[1:size(dist_params, 1)]
+τ_idx = occursin.("τ̲⁽ᵐ⁾", String.(var_advi))
+θ_tilde_idx = occursin.("θ̲̃⁽ᵐ⁾", String.(var_advi))
 # Find columns with mutant fitness error
-σ_idx = occursin.("σ̲⁽ᵐ⁾", String.(names(chn)))[1:size(dist_params, 1)]
+σ_idx = occursin.("σ̲⁽ᵐ⁾", String.(var_advi))
 # Extract population mean fitness variable names
-pop_mean_idx = occursin.("s̲ₜ", String.(names(chn)))[1:size(dist_params, 1)]
+pop_mean_idx = occursin.("s̲ₜ", String.(var_advi))
 # Extract population mean fitness error variables
-pop_std_idx = occursin.("σ̲ₜ", String.(names(chn)))[1:size(dist_params, 1)]
+pop_std_idx = occursin.("σ̲ₜ", String.(var_advi))
 
 
 # Define names based on barcode name and replicate number
