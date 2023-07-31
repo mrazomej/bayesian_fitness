@@ -73,6 +73,10 @@ file = first(Glob.glob("./output/chain_joint_fitness_*"))
 
 # Load chain
 ids, chn = values(JLD2.load(file))
+
+# Convert chain to tidy dataframe
+df_chn = DF.DataFrame(chn)
+
 # Remove the string "mut" from mutant names
 mut_num = replace.(ids, "mut" => "")
 
@@ -96,8 +100,8 @@ fig = Figure(resolution=(600, 800))
 BayesFitUtils.viz.mcmc_trace_density!(fig, chn[var_names]; alpha=0.5)
 
 # Save figure 
-save("./output/figs/trace_density_popmeanfitness.pdf", fig)
-save("./output/figs/trace_density_popmeanfitness.svg", fig)
+save("./output/figs/mcmc_trace_density_popmeanfitness.pdf", fig)
+save("./output/figs/mcmc_trace_density_popmeanfitness.svg", fig)
 
 fig
 ##
@@ -157,9 +161,10 @@ BayesFitUtils.viz.logfreq_ratio_time_series!(
 )
 
 # Save figure into pdf
-save("./output/figs/logfreqratio_ppc_neutral_posterior.pdf", fig)
-save("./output/figs/logfreqratio_ppc_neutral_posterior.svg", fig)
+save("./output/figs/mcmc_logfreqratio_ppc_neutral_posterior.pdf", fig)
+save("./output/figs/mcmc_logfreqratio_ppc_neutral_posterior.svg", fig)
 
+fig
 ##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -176,8 +181,8 @@ fig = Figure(resolution=(600, 800))
 BayesFitUtils.viz.mcmc_trace_density!(fig, chn[var_names]; alpha=0.5)
 
 # Save figure 
-save("./output/figs/trace_density_mutants.pdf", fig)
-save("./output/figs/trace_density_mutants.svg", fig)
+save("./output/figs/mcmc_trace_density_mutants.pdf", fig)
+save("./output/figs/mcmc_trace_density_mutants.svg", fig)
 
 fig
 
@@ -302,8 +307,8 @@ errorbars!(
 # Plot comparison
 scatter!(ax, df_summary.fitness, df_summary.median, markersize=8)
 
-save("./output/figs/fitness_comparison.pdf", fig)
-save("./output/figs/fitness_comparison.svg", fig)
+save("./output/figs/mcmc_fitness_comparison.pdf", fig)
+save("./output/figs/mcmc_fitness_comparison.svg", fig)
 
 fig
 ##
@@ -319,8 +324,8 @@ ax = Axis(fig[1, 1], xlabel="|median - true value|", ylabel="ECDF")
 # Plot ECDF
 ecdfplot!(ax, abs.(df_summary.median .- df_summary.fitness))
 
-save("./output/figs/median_true_ecdf.pdf", fig)
-save("./output/figs/median_true_ecdf.svg", fig)
+save("./output/figs/mcmc_median_true_ecdf.pdf", fig)
+save("./output/figs/mcmc_median_true_ecdf.svg", fig)
 
 fig
 
@@ -346,8 +351,8 @@ ax = Axis(fig[1, 1], xlabel="|z-score|", ylabel="ECDF")
 # Plot ECDF
 ecdfplot!(ax, abs.(fitness_zscore))
 
-save("./output/figs/zscore_ecdf.pdf", fig)
-save("./output/figs/zscore_ecdf.svg", fig)
+save("./output/figs/mcmc_zscore_ecdf.pdf", fig)
+save("./output/figs/mcmc_zscore_ecdf.svg", fig)
 
 fig
 
@@ -430,5 +435,232 @@ Label(fig[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=22)
 
 fig
 
-save("./output/figs/logfreqratio_ppc_mutant.pdf", fig)
-save("./output/figs/logfreqratio_ppc_mutant.svg", fig)
+save("./output/figs/mcmc_logfreqratio_ppc_mutant.pdf", fig)
+save("./output/figs/mcmc_logfreqratio_ppc_mutant.svg", fig)
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Load variational inference
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Define file
+file = first(Glob.glob("./output/advi_meanfield*"))
+
+# Load distribution
+advi_results = JLD2.load(file)
+ids_advi = advi_results["ids"]
+dist_advi = advi_results["dist"]
+var_advi = advi_results["var"]
+
+# Extract distribution parameters
+dist_params = hcat(Distributions.params(dist_advi)...)
+
+##
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Format tidy dataframe with proper variable names
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+# Locate variables
+s_idx = occursin.("s̲⁽ᵐ⁾", String.(var_advi))
+# Find columns with mutant fitness error
+σ_idx = occursin.("σ̲⁽ᵐ⁾", String.(var_advi))
+# Extract population mean fitness variable names
+pop_mean_idx = occursin.("s̲ₜ", String.(var_advi))
+# Extract population mean fitness error variables
+pop_std_idx = occursin.("σ̲ₜ", String.(var_advi))
+
+# Convert parameters to dataframe
+df_advi = DF.DataFrame(dist_params, ["advi_mean", "advi_std"])
+df_advi[!, :var] = var_advi
+
+# Add barcode information
+df_advi[!, :barcode] .= "neutral"
+df_advi[s_idx, :barcode] .= ids_advi
+df_advi[σ_idx, :barcode] .= ids_advi
+
+##
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Compare inferred population mean fitness
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Locate variable names in MCMC
+mcmc_names = names(df_chn)[occursin.("s̲ₜ", names(df_chn))]
+# Locate variables in ADVI
+advi_idx = occursin.("s̲ₜ", String.(df_advi.var))
+
+# Compute mcmc mean and std
+mcmc_mean = StatsBase.mean.(eachcol(df_chn[:, mcmc_names]))
+mcmc_std = StatsBase.std.(eachcol(df_chn[:, mcmc_names]))
+
+# Extract advi mean and std
+advi_mean = df_advi[advi_idx, :advi_mean]
+advi_std = df_advi[advi_idx, :advi_std]
+
+
+# Initialize figure
+fig = Figure(resolution=(350, 350))
+
+# Add axis
+ax = Axis(
+    fig[1, 1],
+    xlabel="MCMC inference",
+    ylabel="ADVI inference",
+    title="population mean fitness",
+    aspect=AxisAspect(1),
+)
+
+# Add identity line
+lines!(ax, repeat([[0.5, 1.1]], 2)..., linestyle=:dash, color=:black)
+
+
+# add errorbars
+errorbars!(
+    mcmc_mean,
+    advi_mean,
+    mcmc_std,
+    color=(:gray, 0.5),
+    direction=:x
+)
+# add errorbars
+errorbars!(
+    mcmc_mean,
+    advi_mean,
+    advi_std,
+    color=(:gray, 0.5),
+    direction=:y
+)
+
+# Add points
+scatter!(
+    mcmc_mean,
+    advi_mean,
+    markersize=8
+)
+
+
+save("./output/figs/advi_vs_mcmc_popmean.pdf", fig)
+
+fig
+
+##
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Compare inferred mutant relative fitness
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Locate variable names in MCMC
+mcmc_names = names(df_chn)[occursin.("s̲⁽ᵐ⁾", names(df_chn))]
+# Locate variables in ADVI
+advi_idx = occursin.("s̲⁽ᵐ⁾", String.(df_advi.var))
+
+# Compute mcmc mean and std
+mcmc_mean = StatsBase.mean.(eachcol(df_chn[:, mcmc_names]))
+mcmc_std = StatsBase.std.(eachcol(df_chn[:, mcmc_names]))
+
+# Extract advi mean and std
+advi_mean = df_advi[advi_idx, :advi_mean]
+advi_std = df_advi[advi_idx, :advi_std]
+
+
+# Initialize figure
+fig = Figure(resolution=(350, 350))
+
+# Add axis
+ax = Axis(
+    fig[1, 1],
+    xlabel="MCMC inference",
+    ylabel="ADVI inference",
+    title="mutant relative fitness",
+    aspect=AxisAspect(1),
+)
+
+# Add identity line
+lines!(ax, repeat([[-0.5, 1.75]], 2)..., linestyle=:dash, color=:black)
+
+# add errorbars
+errorbars!(
+    mcmc_mean,
+    advi_mean,
+    mcmc_std,
+    color=(:gray, 0.5),
+    direction=:x
+)
+# add errorbars
+errorbars!(
+    mcmc_mean,
+    advi_mean,
+    advi_std,
+    color=(:gray, 0.5),
+    direction=:y
+)
+
+# Add points
+scatter!(
+    mcmc_mean,
+    advi_mean,
+    markersize=8
+)
+
+save("./output/figs/advi_vs_mcmc_mutant.pdf", fig)
+
+fig
+
+##
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Plot comparison between deterministic and Bayesian inference
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Generate dictionary from mutant barcode to true fitness value
+fit_dict = Dict(zip(df_summary.variable, df_summary.fitness))
+
+# Extract index for hyperparameter variables
+s_idx = occursin.("s̲⁽ᵐ⁾", String.(df_advi.var))
+
+# Initialize figure
+fig = Figure(resolution=(350, 350))
+
+# Add axis
+ax = Axis(
+    fig[1, 1],
+    xlabel="true fitness value",
+    ylabel="ADVI inferred fitness",
+)
+
+# Plot identity line
+lines!(
+    ax,
+    repeat(
+        [[0, 1.75]], 2
+    )...;
+    color=:black
+)
+
+# Add x-axis error bars
+errorbars!(
+    ax,
+    [
+        fit_dict[x] for x in [split(x, "_")[end] for x in
+              String.(df_advi[s_idx, :var])]
+    ],
+    df_advi[s_idx, :advi_mean],
+    df_advi[s_idx, :advi_std],
+    color=(:gray, 0.5),
+    direction=:y
+)
+
+# Plot comparison
+scatter!(
+    ax,
+    [
+        fit_dict[x] for x in [split(x, "_")[end] for x in
+              String.(df_advi[s_idx, :var])]
+    ],
+    df_advi[s_idx, :advi_mean],
+    markersize=8
+)
+
+save("./output/figs/advi_fitness_true.pdf", fig)
+
+fig
