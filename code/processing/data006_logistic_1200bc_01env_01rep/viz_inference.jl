@@ -59,7 +59,7 @@ println("Loading data...")
 
 # Import data
 data = CSV.read(
-    "$(git_root())/data/logistic_growth/data_008/tidy_data.csv", DF.DataFrame
+    "$(git_root())/data/logistic_growth/data_006/tidy_data.csv", DF.DataFrame
 )
 
 ##
@@ -432,3 +432,95 @@ fig
 
 save("./output/figs/logfreqratio_ppc_mutant.pdf", fig)
 save("./output/figs/logfreqratio_ppc_mutant.svg", fig)
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Load advi distribution 
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Load ADVI results
+ids_advi, advi = values(
+    JLD2.load("./output/advi_meanfield_01samples_50000steps.jld2")
+)
+
+##
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Compare inferences
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Locate fitness values in first model
+s_idx = occursin.("s̲⁽", String.(names(chn)))
+
+# Obtain variable names
+var_names = names(chn)[s_idx]
+
+# Initialize matrix to save parameters
+infer_param = Matrix{Float64}(undef, length(var_names), 2)
+
+# Loop through each chain element
+for (i, v) in enumerate(var_names)
+    # Extract chain and compute mean and std
+    infer_param[i, :] = [StatsBase.mean(chn[v]), StatsBase.std(chn[v])]
+end # for
+
+# Extract ADVI distribution parameters
+advi_param = Distributions.params(advi)
+
+# Extract relevant values
+infer_param = hcat(
+    [
+        infer_param,
+        advi_param[1][s_idx[1:end-1]],
+        advi_param[2][s_idx[1:end-1]]
+    ]...
+)
+
+# Convert to tidy dataframe
+df_param = DF.DataFrame(
+    infer_param, ["mcmc_mean", "mcmc_std", "advi_mean", "advi_std"]
+)
+# Add mutant information
+DF.insert_single_column!(df_param, var_names, "mutant")
+
+# Initialize figure
+fig = Figure(resolution=(350, 350))
+
+# Add axis
+ax = Axis(
+    fig[1, 1],
+    xlabel="ADVI inference",
+    ylabel="MCMC inference",
+    title="fitness comparison",
+    aspect=AxisAspect(1)
+)
+
+# Plot identity line
+lines!(ax, [-0.5, 1.75], [-0.5, 1.75], linestyle=:dash, color="black")
+
+# Plot x-axis error bars
+errorbars!(
+    ax,
+    df_param.advi_mean,
+    df_param.mcmc_mean,
+    df_param.advi_std,
+    df_param.advi_std,
+    direction=:x,
+    linewidth=1.5,
+    color=(:gray, 0.5)
+)
+# Plot y-axis error bars
+errorbars!(
+    ax,
+    df_param.advi_mean,
+    df_param.mcmc_mean,
+    df_param.mcmc_std,
+    df_param.mcmc_std,
+    direction=:y,
+    linewidth=1.5,
+    color=(:gray, 0.5)
+)
+
+# Plot fitness values
+scatter!(ax, df_param.advi_mean, df_param.mcmc_mean, markersize=5)
+
+fig

@@ -84,7 +84,7 @@ println("Loading data...")
 
 # Import data
 data = CSV.read(
-    "$(git_root())/data/logistic_growth/data_008/tidy_data.csv", DF.DataFrame
+    "$(git_root())/data/logistic_growth/data_006/tidy_data.csv", DF.DataFrame
 )
 
 ##
