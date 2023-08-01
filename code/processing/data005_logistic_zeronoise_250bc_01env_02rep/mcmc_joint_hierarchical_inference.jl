@@ -86,12 +86,9 @@ end # if
 println("Loading data...")
 
 # Import data
-df = CSV.read(
+data = CSV.read(
     "$(git_root())/data/logistic_growth/data_005/tidy_data.csv", DF.DataFrame
 )
-
-# Group data by repeat
-df_group = DF.groupby(df, :rep)
 
 ##
 
@@ -99,16 +96,21 @@ df_group = DF.groupby(df, :rep)
 # Load prior inferences
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-# Loop through groups
-for (i, data) in enumerate(df_group)
+println("Loading prior information based on prior inferences...\n")
 
-    println("Loading prior information for R$i...\n")
+# List files
+chn_files = Glob.glob("./output/chain_popmean*jld2")
 
-    # List files
-    chn_files = Glob.glob("./output/chain_popmean*jld2")
+# Initialize lists to save priors
+s_pop_prior = []
+σ_pop_prior = []
+σ_mut_prior = []
+λ_prior = []
 
+# Loop through files
+for (i, f) in enumerate(chn_files)
     # Load chain
-    chn = JLD2.load(chn_files[i])["chain"]
+    chn = JLD2.load(f)["chain"]
 
     # Select variables for population mean fitness and associated variance
     var_name = MCMCChains.namesingroup.(Ref(chn), [:s̲ₜ, :σ̲ₜ])
@@ -124,23 +126,32 @@ for (i, data) in enumerate(df_group)
     )
 
     # Define parameters for population mean fitness
-    s_pop_prior = hcat(
-        first.(Distributions.params.(pop_mean)),
-        last.(Distributions.params.(pop_mean))
+    push!(
+        s_pop_prior,
+        hcat(
+            first.(Distributions.params.(pop_mean)),
+            last.(Distributions.params.(pop_mean))
+        )
     )
     # Define parameters for population mean fitness error
-    σ_pop_prior = hcat(
-        first.(Distributions.params.(pop_std)),
-        last.(Distributions.params.(pop_std))
+    push!(
+        σ_pop_prior,
+        hcat(
+            first.(Distributions.params.(pop_std)),
+            last.(Distributions.params.(pop_std))
+        )
     )
     # Define parameters for mutant fitness error
-    σ_mut_prior = maximum.(eachcol(σ_pop_prior))
+    push!(σ_mut_prior, maximum.(eachcol(σ_pop_prior[i])))
+end # for
 
-    # List files
-    chn_files = Glob.glob("./output/chain_freq*jld2")
+# List files
+chn_files = Glob.glob("./output/chain_freq*jld2")
 
+# Loop through files
+for f in chn_files
     # Load chain into memory
-    chn = JLD2.load(chn_files[i])["chain"]
+    chn = JLD2.load(f)["chain"]
 
     # Select variables for population mean fitness and associated variance
     var_name = MCMCChains.namesingroup(chn, :Λ̲̲)
@@ -151,33 +162,47 @@ for (i, data) in enumerate(df_group)
     )
 
     # Extract λ prior for frequencies
-    λ_prior = hcat(
-        first.(Distributions.params.(bc_freq)),
-        last.(Distributions.params.(bc_freq))
+    push!(
+        λ_prior,
+        hcat(
+            first.(Distributions.params.(bc_freq)),
+            last.(Distributions.params.(bc_freq))
+        )
     )
-
-    println("Initializing MCMC sampling for R$i...\n")
-
-    # Define function parameters
-    param = Dict(
-        :data => data,
-        :n_walkers => n_walkers,
-        :n_steps => n_steps,
-        :outputname => "./output/chain_joint_fitness_R$(i)rep_$(n_steps)steps_$(lpad(n_walkers, 2, "0"))walkers",
-        :model => BayesFitness.model.fitness_lognormal,
-        :model_kwargs => Dict(
-            :s_pop_prior => s_pop_prior,
-            :σ_pop_prior => σ_pop_prior,
-            :σ_mut_prior => σ_mut_prior,
-            :s_mut_prior => [0.0, 1.0],
-        ),
-        :sampler => Turing.DynamicNUTS(),
-        :ensemble => Turing.MCMCThreads(),
-        :rm_T0 => false,
-    )
-
-    # Run inference
-    println("Running Inference...")
-
-    @time BayesFitness.mcmc.mcmc_joint_fitness(; param...)
 end # for
+
+# Concatenate into single array
+s_pop_prior = vcat(s_pop_prior...)
+σ_pop_prior = vcat(σ_pop_prior...)
+σ_mut_prior = maximum.(eachrow(hcat(σ_mut_prior...)))
+
+##
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Initialize MCMC sampling
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+println("Initializing MCMC sampling...\n")
+
+# Define function parameters
+param = Dict(
+    :data => data,
+    :n_walkers => n_walkers,
+    :n_steps => n_steps,
+    :outputname => "./output/chain_joint_hierarchical_fitness_$(n_steps)steps_$(lpad(n_walkers, 2, "0"))walkers",
+    :model => BayesFitness.model.fitness_lognormal_hierarchical_replicates,
+    :model_kwargs => Dict(
+        :s_pop_prior => s_pop_prior,
+        :σ_pop_prior => σ_pop_prior,
+        :σ_mut_prior => σ_mut_prior,
+        :s_mut_prior => [0.0, 1.0],
+    ),
+    :sampler => Turing.NUTS(),
+    :ensemble => Turing.MCMCThreads(),
+    :rm_T0 => false,
+)
+
+# Run inference
+println("Running Inference...")
+
+@time BayesFitness.mcmc.mcmc_joint_fitness_hierarchical_replicates(; param...)

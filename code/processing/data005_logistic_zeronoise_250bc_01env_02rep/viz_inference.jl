@@ -86,7 +86,10 @@ n_ppc = 500
 qs = [0.05, 0.68, 0.95]
 
 # Define colors
-colors = get(ColorSchemes.Purples_9, LinRange(0.25, 1.0, length(qs)))
+colors = [
+    get(ColorSchemes.Greens_9, LinRange(0.25, 1.0, length(qs))),
+    get(ColorSchemes.Purples_9, LinRange(0.25, 1.0, length(qs)))
+]
 
 # Initialize figure
 fig = Figure(resolution=(350 * n_rep, 300))
@@ -115,7 +118,7 @@ for (i, file) in enumerate(files)
 
     # Plot posterior predictive checks
     BayesFitUtils.viz.ppc_time_series!(
-        ax[i], qs, ppc_mat; colors=colors, time=t
+        ax[i], qs, ppc_mat; colors=colors[i], time=t
     )
 
     # Plot log-frequency ratio of neutrals
@@ -132,7 +135,7 @@ for (i, file) in enumerate(files)
 end # for
 
 # Save figure into pdf
-save("./output/figs/logfreqratio_ppc_neutral_prior.pdf", fig)
+save("./output/figs/mcmc_logfreqratio_ppc_neutral_prior.pdf", fig)
 
 fig
 
@@ -208,7 +211,6 @@ DF.rename!(
 
 ##
 
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Plot posterior predictive checks for neutral lineages in joint inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -271,7 +273,7 @@ for rep = 1:n_rep
 end # for
 
 # Save figure into pdf
-save("./output/figs/logfreqratio_ppc_neutral_posterior.pdf", fig)
+save("./output/figs/mcmc_logfreqratio_ppc_neutral_posterior.pdf", fig)
 
 fig
 
@@ -414,7 +416,7 @@ errorbars!(
 # Plot fitness values
 scatter!(ax, df_group[1].s_median, df_group[2].s_median, markersize=5)
 
-save("./output/figs/fitness_comparison_replicates.pdf", fig)
+save("./output/figs/mcmc_fitness_comparison_replicates.pdf", fig)
 
 fig
 
@@ -476,7 +478,7 @@ for (i, df) in enumerate(df_group)
 
 end # for
 
-save("./output/figs/fitness_comparison_hyperparameter.pdf", fig)
+save("./output/figs/mcmc_fitness_comparison_hyperparameter.pdf", fig)
 
 fig
 
@@ -519,7 +521,7 @@ errorbars!(
 # Plot comparison
 scatter!(ax, df_summary.fitness, df_summary.θ_median, markersize=8)
 
-save("./output/figs/fitness_true_hyperparameter.pdf", fig)
+save("./output/figs/mcmc_fitness_true_hyperparameter.pdf", fig)
 
 fig
 ##
@@ -535,7 +537,7 @@ ax = Axis(fig[1, 1], xlabel="|median - true value|", ylabel="ECDF")
 # Plot ECDF
 ecdfplot!(ax, abs.(df_summary.θ_median .- df_summary.fitness))
 
-save("./output/figs/median_true_ecdf.pdf", fig)
+save("./output/figs/mcmc_median_true_ecdf.pdf", fig)
 
 fig
 
@@ -569,7 +571,7 @@ ax = Axis(fig[1, 1], xlabel="|z-score|", ylabel="ECDF")
 # Plot ECDF
 ecdfplot!(ax, abs.(fitness_zscore))
 
-save("./output/figs/zscore_ecdf.pdf", fig)
+save("./output/figs/mcmc_zscore_ecdf.pdf", fig)
 
 fig
 
@@ -679,11 +681,480 @@ Label(fig[end, :, Bottom()], "time points", fontsize=20)
 # Add y-axis label
 Label(fig[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=20)
 
-save("./output/figs/logfreqratio_ppc_mutant.pdf", fig)
+save("./output/figs/mcmc_logfreqratio_ppc_mutant.pdf", fig)
 
 fig
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Load single-experiment inferences
+# Load variational inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+# Define file
+file = first(Glob.glob("./output/advi_meanfield*"))
+
+# Load distribution
+advi_results = JLD2.load(file)
+ids_advi = advi_results["ids"]
+dist_advi = advi_results["dist"]
+var_advi = advi_results["var"]
+
+# Extract distribution parameters
+dist_params = hcat(Distributions.params(dist_advi)...)
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Format tidy dataframe with proper variable names
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+# Locate variables
+# Locate hyperparameter variables
+θ_idx = occursin.("θ̲⁽ᵐ⁾", String.(var_advi))
+# Find columns with fitness parameter deviation 
+τ_idx = occursin.("τ̲⁽ᵐ⁾", String.(var_advi))
+θ_tilde_idx = occursin.("θ̲̃⁽ᵐ⁾", String.(var_advi))
+# Find columns with mutant fitness error
+σ_idx = occursin.("σ̲⁽ᵐ⁾", String.(var_advi))
+# Extract population mean fitness variable names
+pop_mean_idx = occursin.("s̲ₜ", String.(var_advi))
+# Extract population mean fitness error variables
+pop_std_idx = occursin.("σ̲ₜ", String.(var_advi))
+
+
+# Define names based on barcode name and replicate number
+# Define barcode names. This will be in the format `#_Rx`
+bc_names = vcat([string.(ids) .* "_R$(i)" for i = 1:n_rep]...)
+# Define mean fitness variable names this only includes the `R[x]` part to later
+# on attach either s̲ₜ or σ̲ₜ
+pop_names = vcat([
+    "R$i[" .* string.(1:(length(pop_mean_vars)÷n_rep)) .* "]"
+    for i = 1:n_rep
+]...)
+
+# Convert parameters to dataframe
+df_advi = DF.DataFrame(dist_params, ["advi_mean", "advi_std"])
+df_advi[!, :var] = names(chn)[1:size(dist_params, 1)]
+
+# Rename corresponding variables
+df_advi[θ_idx, :var] .= Symbol.("θ⁽ᵐ⁾_" .* string.(ids))
+df_advi[σ_idx, :var] .= Symbol.("σ⁽ᵐ⁾_" .* bc_names)
+df_advi[pop_mean_idx, :var] .= Symbol.("s̲ₜ_" .* pop_names)
+df_advi[pop_std_idx, :var] .= Symbol.("σ̲ₜ_" .* pop_names)
+
+# Compute individual replicate fitness value. This value is not directly
+# track by Turing.jl when sampling because it is a derived quantity, not an
+# input to the model. We could use the `Turing.generated_quantities` function to
+# compute this, but it is simpler to do it directly from the distributions by
+# sampling.
+
+# Define number of samples 
+n_sample = 10_000
+
+# Sample θ̲ variables
+θ_mat = hcat(
+    [
+        Random.rand(Distributions.Normal(x...), n_sample)
+        for x in eachrow(df_advi[θ_idx, [:advi_mean, :advi_std]])
+    ]...
+)
+
+# Sample τ̲ variables
+τ_mat = exp.(
+    hcat(
+        [
+            Random.rand(Distributions.Normal(x...), n_sample)
+            for x in eachrow(df_advi[τ_idx, [:advi_mean, :advi_std]])
+        ]...
+    )
+)
+
+# Sample θ̲̃ variables
+θ_tilde_mat = hcat(
+    [
+        Random.rand(Distributions.Normal(x...), n_sample)
+        for x in eachrow(df_advi[θ_tilde_idx, [:advi_mean, :advi_std]])
+    ]...
+)
+
+
+# Compute individual strains fitness values
+s_mat = hcat(repeat([θ_mat], n_rep)...) .+ (τ_mat .* θ_tilde_mat)
+
+# Compute mean and standard deviation
+s_param = hcat(
+    [StatsBase.median.(eachcol(s_mat)), StatsBase.std.(eachcol(s_mat))]...
+)
+
+# Insert individual replicate fitness values to dataframe
+DF.append!(
+    df_advi,
+    DF.DataFrame(
+        hcat(s_param, Symbol.("s⁽ᵐ⁾_" .* bc_names)),
+        [:advi_mean, :advi_std, :var]
+    )
+)
+
+# Locate repeat information
+rep = Vector{String}(undef, size(df_advi, 1))
+rep[occursin.("R1", String.(df_advi.var))] .= "R1"
+rep[occursin.("R2", String.(df_advi.var))] .= "R2"
+rep[.!occursin.("R", String.(df_advi.var))] .= "NA"
+
+# Add repeat information
+df_advi[!, :rep] = rep
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Compare inferred population mean fitness
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Locate variable names in MCMC
+mcmc_names = names(df_chn)[occursin.("s̲ₜ", names(df_chn))]
+# Locate variables in ADVI
+advi_idx = occursin.("s̲ₜ", String.(df_advi.var))
+
+# Compute mcmc mean and std
+mcmc_mean = StatsBase.mean.(eachcol(df_chn[:, mcmc_names]))
+mcmc_std = StatsBase.std.(eachcol(df_chn[:, mcmc_names]))
+
+# Extract advi mean and std
+advi_mean = df_advi[advi_idx, :advi_mean]
+advi_std = df_advi[advi_idx, :advi_std]
+
+
+# Initialize figure
+fig = Figure(resolution=(350, 350))
+
+# Add axis
+ax = Axis(
+    fig[1, 1],
+    xlabel="MCMC inference",
+    ylabel="ADVI inference",
+    title="population mean fitness",
+    aspect=AxisAspect(1),
+)
+
+# Add identity line
+lines!(ax, repeat([[0.2, 1]], 2)..., linestyle=:dash, color=:black)
+
+
+# add errorbars
+errorbars!(
+    mcmc_mean,
+    advi_mean,
+    mcmc_std,
+    color=(:gray, 0.5),
+    direction=:x
+)
+# add errorbars
+errorbars!(
+    mcmc_mean,
+    advi_mean,
+    advi_std,
+    color=(:gray, 0.5),
+    direction=:y
+)
+
+# Add points
+scatter!(
+    mcmc_mean,
+    advi_mean,
+    markersize=8
+)
+
+
+save("./output/figs/advi_vs_mcmc_popmean.pdf", fig)
+
+fig
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Compare inferred mutant relative fitness
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Locate variable names in MCMC
+mcmc_names = names(df_chn)[occursin.("s⁽ᵐ⁾", names(df_chn))]
+# Locate variables in ADVI
+advi_idx = occursin.("s⁽ᵐ⁾", String.(df_advi.var))
+
+# Compute mcmc mean and std
+mcmc_mean = StatsBase.mean.(eachcol(df_chn[:, mcmc_names]))
+mcmc_std = StatsBase.std.(eachcol(df_chn[:, mcmc_names]))
+
+# Extract advi mean and std
+advi_mean = df_advi[advi_idx, :advi_mean]
+advi_std = df_advi[advi_idx, :advi_std]
+
+
+# Initialize figure
+fig = Figure(resolution=(350, 350))
+
+# Add axis
+ax = Axis(
+    fig[1, 1],
+    xlabel="MCMC inference",
+    ylabel="ADVI inference",
+    title="mutant relative fitness",
+    aspect=AxisAspect(1),
+)
+
+# Add identity line
+lines!(ax, repeat([[-0.5, 1.75]], 2)..., linestyle=:dash, color=:black)
+
+# add errorbars
+errorbars!(
+    mcmc_mean,
+    advi_mean,
+    mcmc_std,
+    color=(:gray, 0.5),
+    direction=:x
+)
+# add errorbars
+errorbars!(
+    mcmc_mean,
+    advi_mean,
+    advi_std,
+    color=(:gray, 0.5),
+    direction=:y
+)
+
+# Add points
+scatter!(
+    mcmc_mean,
+    advi_mean,
+    markersize=8
+)
+
+save("./output/figs/advi_vs_mcmc_mutant.pdf", fig)
+
+fig
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Compare inferred mutant relative fitness hyperparameter
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Locate variable names in MCMC
+mcmc_names = names(df_chn)[occursin.("θ⁽ᵐ⁾", names(df_chn))]
+# Locate variables in ADVI
+advi_idx = occursin.("θ⁽ᵐ⁾", String.(df_advi.var))
+
+# Compute mcmc mean and std
+mcmc_mean = StatsBase.mean.(eachcol(df_chn[:, mcmc_names]))
+mcmc_std = StatsBase.std.(eachcol(df_chn[:, mcmc_names]))
+
+# Extract advi mean and std
+advi_mean = df_advi[advi_idx, :advi_mean]
+advi_std = df_advi[advi_idx, :advi_std]
+
+
+# Initialize figure
+fig = Figure(resolution=(350, 350))
+
+# Add axis
+ax = Axis(
+    fig[1, 1],
+    xlabel="MCMC inference",
+    ylabel="ADVI inference",
+    title="relative fitness hyperparameter",
+    aspect=AxisAspect(1),
+)
+
+# Add identity line
+lines!(ax, repeat([[-0.5, 1.75]], 2)..., linestyle=:dash, color=:black)
+
+# add errorbars
+errorbars!(
+    mcmc_mean,
+    advi_mean,
+    mcmc_std,
+    color=(:gray, 0.5),
+    direction=:x
+)
+# add errorbars
+errorbars!(
+    mcmc_mean,
+    advi_mean,
+    advi_std,
+    color=(:gray, 0.5),
+    direction=:y
+)
+
+# Add points
+scatter!(
+    mcmc_mean,
+    advi_mean,
+    markersize=8
+)
+
+save("./output/figs/advi_vs_mcmc_hyperparameter.pdf", fig)
+
+fig
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Compare median fitness for individual replicates
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Initialize figure
+fig = Figure(resolution=(350, 350))
+
+# Add axis
+ax = Axis(
+    fig[1, 1],
+    xlabel="replicate 1 fitness",
+    ylabel="replicate 2 fitness",
+    title="fitness comparison",
+    aspect=AxisAspect(1)
+)
+
+# Plot identity line
+lines!(ax, [-0.5, 1.75], [-0.5, 1.75], linestyle=:dash, color="black")
+
+# Group data by repeat
+df_group = DF.groupby(df_advi[occursin.("s⁽ᵐ⁾", String.(df_advi.var)), :], :rep)
+
+# Plot x-axis error bars
+errorbars!(
+    ax,
+    df_group[1].advi_mean,
+    df_group[2].advi_mean,
+    df_group[1].advi_std,
+    direction=:x,
+    linewidth=1.5,
+    color=(:gray, 0.5)
+)
+# Plot y-axis error bars
+errorbars!(
+    ax,
+    df_group[1].advi_mean,
+    df_group[2].advi_mean,
+    df_group[2].advi_std,
+    direction=:y,
+    linewidth=1.5,
+    color=(:gray, 0.5)
+)
+
+# Plot fitness values
+scatter!(ax, df_group[1].advi_mean, df_group[2].advi_mean, markersize=5)
+
+save("./output/figs/advi_fitness_comparison_replicates.pdf", fig)
+
+fig
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Compare median fitness with hyperparameter
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Initialize figure
+fig = Figure(resolution=(350 * 2, 350))
+
+# Add axis
+ax = [
+    Axis(
+        fig[1, i],
+        xlabel="hyper parameter fitness",
+        ylabel="individual replicate fitness",
+        aspect=AxisAspect(1),
+    ) for i = 1:2
+]
+
+# Loop through repeats
+for i in 1:n_rep
+    # Plot identity line
+    lines!(ax[i], [-0.5, 1.75], [-0.5, 1.75], linestyle=:dash, color="black")
+
+    # extract indexes
+    θ_idx = occursin.("θ⁽ᵐ⁾", String.(df_advi.var))
+    s_idx = (occursin.("s⁽ᵐ⁾", String.(df_advi.var))) .&
+            (occursin.("R$(1)", df_advi.rep))
+    # Plot x-axis error bars
+    errorbars!(
+        ax[i],
+        df_advi[θ_idx, :advi_mean],
+        df_advi[s_idx, :advi_mean],
+        df_advi[θ_idx, :advi_std],
+        direction=:x,
+        linewidth=1.5,
+        color=(:gray, 0.5)
+    )
+    # Plot y-axis error bars
+    errorbars!(
+        ax[i],
+        df_advi[θ_idx, :advi_mean],
+        df_advi[s_idx, :advi_mean],
+        df_advi[s_idx, :advi_std],
+        direction=:y,
+        linewidth=1.5,
+        color=(:gray, 0.5)
+    )
+
+    # Plot fitness values
+    scatter!(
+        ax[i],
+        df_advi[θ_idx, :advi_mean],
+        df_advi[s_idx, :advi_mean],
+        markersize=5
+    )
+
+    # Add plot title
+    ax[i].title = "replicate R$(i)"
+
+end # for
+
+save("./output/figs/advi_fitness_comparison_hyperparameter.pdf", fig)
+
+fig
+
+##
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Plot comparison between deterministic and Bayesian inference
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Generate dictionary from mutant barcode to true fitness value
+fit_dict = Dict(zip(df_summary.barcode, df_summary.fitness))
+
+# Extract index for hyperparameter variables
+θ_idx = occursin.("θ⁽ᵐ⁾", String.(df_advi.var))
+
+# Initialize figure
+fig = Figure(resolution=(350, 350))
+
+# Add axis
+ax = Axis(
+    fig[1, 1],
+    xlabel="true hyper-fitness value",
+    ylabel="ADVI inferred hyper-fitness",
+)
+
+# Plot identity line
+lines!(
+    ax,
+    repeat(
+        [[0, 1.75]], 2
+    )...;
+    color=:black
+)
+
+# Add x-axis error bars
+errorbars!(
+    ax,
+    [
+        fit_dict[x] for x in [split(x, "_")[end] for x in
+              String.(df_advi[θ_idx, :var])]
+    ],
+    df_advi[θ_idx, :advi_mean],
+    df_advi[θ_idx, :advi_std],
+    color=(:gray, 0.5),
+    direction=:y
+)
+
+# Plot comparison
+scatter!(
+    ax,
+    [
+        fit_dict[x] for x in [split(x, "_")[end] for x in
+              String.(df_advi[θ_idx, :var])]
+    ],
+    df_advi[θ_idx, :advi_mean],
+    markersize=8
+)
+
+save("./output/figs/advi_fitness_true_hyperparameter.pdf", fig)
+
+fig
