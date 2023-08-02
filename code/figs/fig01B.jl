@@ -66,6 +66,7 @@ BayesFitUtils.viz.bc_time_series!(
     ax,
     data[.!(data.neutral), :],
     zero_lim=0,
+    quant_col=:freq,
     alpha=0.5,
     color=color,
 )
@@ -75,6 +76,7 @@ BayesFitUtils.viz.bc_time_series!(
     ax,
     data[data.neutral, :],
     zero_lim=0,
+    quant_col=:freq,
     color=ColorSchemes.seaborn_muted[end-2]
 )
 
