@@ -98,3 +98,4 @@ doc/figs/
 code/analysis/*/output/
 code/processing/*/output/
 data/*/*
+*.jld2
