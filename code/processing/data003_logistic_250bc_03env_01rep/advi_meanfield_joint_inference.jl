@@ -54,8 +54,6 @@ Turing.setadbackend(:reversediff)
 # Allow system to generate cache to speed up computation
 Turing.setrdcache(true)
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Define ADVI hyerparameters
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -63,8 +61,6 @@ Turing.setrdcache(true)
 # Define number of samples and steps
 n_samples = 1
 n_steps = 10_000
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate output directories
@@ -74,8 +70,6 @@ n_steps = 10_000
 if !isdir("./output/")
     mkdir("./output/")
 end # if
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Loading the data
@@ -88,43 +82,18 @@ data = CSV.read(
     "$(git_root())/data/logistic_growth/data_003/tidy_data.csv", DF.DataFrame
 )
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Obtain priors on expected errors from neutral measurements
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-# Group neutral data by barcode
-data_group = DF.groupby(data[data.neutral, :], :barcode)
+# Compute naive parameters
+prior_param = BayesFitness.stats.naive_prior_neutral(data)
 
-# Initialize list to save log frequency changes
-logfreq = []
-
-# Loop through each neutral barcode
-for d in data_group
-    # Sort data by time
-    DF.sort!(d, :time)
-    # Compute log frequency ratio and append to list
-    push!(logfreq, diff(log.(d[:, :freq])))
-end # for
-
-# Generate matrix with log-freq ratios
-logfreq_mat = hcat(logfreq...)
-
-# Compute mean per time point for approximate mean fitness
-logfreq_mean = StatsBase.mean(logfreq_mat, dims=2)
-
-# Define prior for population mean fitness
-s_pop_prior = hcat(-logfreq_mean, repeat([0.3], length(logfreq_mean)))
-
-# Generate single list of log-frequency ratios to compute prior on σ
-logfreq_vec = vcat(logfreq...)
-
-# Define priors for nuisance parameters for log-likelihood functions
-logσ_pop_prior = [StatsBase.mean(logfreq_vec), StatsBase.std(logfreq_vec)]
-logσ_mut_prior = logσ_pop_prior
-
-##
+# Define parameter for population mean fitness adding a standard deviation
+s_pop_prior = hcat(
+    prior_param[:s_pop_prior],
+    repeat([0.2], length(prior_param[:s_pop_prior]))
+)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Define ADVI function parameters
@@ -136,8 +105,8 @@ param = Dict(
     :model => BayesFitness.model.multienv_fitness_normal,
     :model_kwargs => Dict(
         :s_pop_prior => s_pop_prior,
-        :logσ_pop_prior => logσ_pop_prior,
-        :logσ_mut_prior => logσ_mut_prior,
+        :logσ_pop_prior => prior_param[:logσ_pop_prior],
+        :logσ_mut_prior => prior_param[:logσ_pop_prior],
         :s_mut_prior => [0.0, 1.0],
         :envs => [1, 1, 2, 3, 1, 2, 3],
     ),
@@ -145,8 +114,6 @@ param = Dict(
     :opt => Turing.TruncatedADAGrad(),
     :fullrank => false
 )
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Perform optimization
