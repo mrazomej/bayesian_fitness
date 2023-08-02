@@ -37,7 +37,6 @@ import Random
 
 Random.seed!(42)
 
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Loading data
@@ -51,110 +50,88 @@ data = CSV.read(
 )
 
 # Define file
-file = "$(git_root())/code/processing/mcmc_logistic_data001/output/" *
-       "chain_joint_fitness_1000steps_04walkers.jld2"
+file = "$(git_root())/code/processing/data001_logistic_250bc_01env_01rep/" *
+       "output/advi_meanfield_01samples_10000steps.jld2"
 
-# Load chain
-ids, chn = values(JLD2.load(file))
-# Remove the string "mut" from mutant names
-mut_num = replace.(ids, "mut" => "")
-
-# Find columns with mutant fitness values and error
-s_names = MCMCChains.namesingroup(chn, :s̲⁽ᵐ⁾)
-σ_names = MCMCChains.namesingroup(chn, :σ̲⁽ᵐ⁾)
-
-##
+# Load distribution
+advi_results = JLD2.load(file)
+ids_advi = advi_results["ids"]
+dist_advi = advi_results["dist"]
+var_advi = advi_results["var"]
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Compute summary statistics for fitness values
+# Generate samples from distribution and format into dataframe
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Define number of samples
+n_samples = 10_000
+
+# Sample from ADVI joint distribution and convert to dataframe
+df_samples = DF.DataFrame(Random.rand(dist_advi, n_samples)', var_advi)
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Compute summary statistics for each barcode
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Initialize dataframe to save individual barcode summary statistics
+df_summary = DF.DataFrame()
+
+# Find barcode variables
+s_names = names(df_samples)[occursin.("s̲⁽ᵐ⁾", names(df_samples))]
 
 # Define percentiles to include
 per = [2.5, 97.5, 16, 84]
 
-# Convert chain to tidy dataframe
-df = DF.stack(DF.DataFrame(chn[s_names]), DF.Not([:iteration, :chain]))
+# Loop through barcodes
+for (i, bc) in enumerate(s_names)
+    # Extract fitness chain
+    fitness_s = @view df_samples[:, bc]
 
-# FILTER 95% #
-
-# Group data by barcode
-df_group = DF.groupby(df, :variable)
-
-# Initialize dataframe to save summaries
-df_filt = DF.DataFrame()
-
-# Loop through groups
-for g in df_group
-    # Filter data
-    DF.append!(
-        df_filt,
-        g[(g.value.≥StatsBase.percentile(g.value, 5)).&(g.value.≤StatsBase.percentile(g.value, 95)),
-            :]
+    # Compute summary statistics
+    fitness_summary = Dict(
+        :mean => StatsBase.mean(fitness_s),
+        :median => StatsBase.median(fitness_s),
+        :std => StatsBase.std(fitness_s),
+        :var => StatsBase.var(fitness_s),
+        :skewness => StatsBase.skewness(fitness_s),
+        :kurtosis => StatsBase.kurtosis(fitness_s),
     )
-end # group
 
-# Add barcode column to match
-df_filt[!, :barcode] = getindex.(
-    Ref(Dict(unique(df_filt.variable) .=> ids)), df_filt.variable
-)
+    # Loop through percentiles
+    for p in per
+        setindex!(
+            fitness_summary,
+            StatsBase.percentile(fitness_s, p),
+            Symbol("$(p)_percentile")
+        )
+    end # for
 
-# Append fitness and growth rate value
-DF.leftjoin!(
-    df_filt,
-    unique(data[.!(data.neutral), [:barcode, :fitness, :growth_rate]]);
-    on=:barcode
-)
-
-# Compute summary statistics
-df_summary = DF.combine(
-    DF.groupby(df_filt, [:variable, :barcode]),
-    :value => StatsBase.median,
-    :value => StatsBase.mean,
-    :value => StatsBase.std,
-    :value => StatsBase.var,
-    :value => StatsBase.skewness,
-    :value => StatsBase.kurtosis,
-)
-
-# Loop through percentiles
-for p in per
-    # Compute and add percentile
-    DF.leftjoin!(
-        df_summary,
-        # Rename column from :value_function to :p_percentile
-        DF.rename!(
-            # Compute percentile p for each group
-            DF.combine(
-                # Group MCMC chains by :variable, :value
-                DF.groupby(df_filt[:, [:variable, :value]], :variable),
-                # Define anonymous function to compute percentile
-                :value => x -> StatsBase.percentile(x, p)
-            ),
-            :value_function => Symbol("$(p)_percentile")
-        );
-        on=:variable
-    )
+    # Convert to dataframe
+    df = DF.DataFrame(fitness_summary)
+    # Add barcode
+    df[!, :id] .= bc
+    # Append to dataframe
+    DF.append!(df_summary, df)
 end # for
 
-# Rename columns
-DF.rename!(
+# Add barcode
+DF.insertcols!(
     df_summary,
-    :value_median => :median,
-    :value_mean => :mean,
-    :value_std => :std,
-    :value_var => :var,
-    :value_skewness => :skewness,
-    :value_kurtosis => :excess_kurtosis,
+    :barcode => ids_advi,
 )
+
+# Sort by barcode
+DF.sort!(df_summary, :barcode)
 
 # Append fitness and growth rate value
 DF.leftjoin!(
     df_summary,
-    unique(data[.!(data.neutral), [:barcode, :fitness, :growth_rate]]);
+    unique(
+        data[.!(data.neutral),
+            [:barcode, :fitness, :growth_rate]]
+    );
     on=:barcode
 )
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Set figure layout
@@ -263,8 +240,8 @@ for row in 1:n_row
             )
 
             # Compute posterior predictive checks
-            local ppc_mat = BayesFitness.stats.logfreq_ratio_mean_ppc(
-                chn, n_ppc; param=param
+            local ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
+                df_samples, n_ppc; model=:normal, param=param
             )
 
             # Define time
@@ -307,15 +284,15 @@ for row in 1:n_row
         # Define dictionary with corresponding parameters for variables needed
         # for the posterior predictive checks
         local param = Dict(
-            :mutant_mean_fitness => Symbol(bc_plot[counter].variable),
+            :mutant_mean_fitness => Symbol(bc_plot[counter].id),
             :mutant_std_fitness => Symbol(
-                replace(bc_plot[counter].variable, "s" => "σ")
+                replace(bc_plot[counter].id, "s" => "logσ")
             ),
             :population_mean_fitness => :s̲ₜ,
         )
         # Compute posterior predictive checks
         local ppc_mat = BayesFitness.stats.logfreq_ratio_mutant_ppc(
-            chn, n_ppc; param=param
+            df_samples, n_ppc; model=:normal, param=param
         )
         # Plot posterior predictive checks
         BayesFitUtils.viz.ppc_time_series!(
@@ -366,6 +343,8 @@ Label(gl_ppc[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=22)
 rowgap!(gl_ppc, 0)
 colgap!(gl_ppc, 4)
 
+fig
+
 # ---------------------------------------------------------------------------- #
 
 # Add axis
@@ -399,20 +378,6 @@ scatter!(ax, df_summary.fitness, df_summary.median, markersize=8)
 
 # ---------------------------------------------------------------------------- #
 
-# Group data by barcode
-df_group = DF.groupby(df_filt, :variable)
-
-# Initialize matrix to save difference between ground truth and inferred value
-diff_mat = Matrix{Float64}(undef, size(first(df_group), 1), length(df_group))
-
-# Loop through mutants
-for (i, var) in enumerate(df_group)
-    # Extract true value
-    fitness = df_summary[df_summary.variable.==first(var.variable), :fitness]
-    # Compute differences
-    diff_mat[:, i] = abs.(var.value .- fitness)
-end # for
-
 # Add axis
 ax = Axis(
     gl_comp[2, 1],
@@ -423,25 +388,10 @@ ax = Axis(
     yticks=LinearTicks(4),
 )
 
-# Group data by barcode
-df_group = DF.groupby(df_filt, [:variable, :barcode])
-
-# # Initialize matrix to save difference between ground truth and inferred value
-diff_mat = Matrix{Float64}(undef, size(first(df_group), 1), length(df_group))
-
-# Loop through mutants
-for (i, var) in enumerate(df_group)
-    # Compute differences
-    diff_mat[:, i] = var.value .- var.fitness
-end # for
-
-# Add reference line
-vlines!(ax, 0, linestyle=:dash, color=:black)
-
 # Plot ECDF
 ecdfplot!(
     ax,
-    abs.(StatsBase.percentile.(eachcol(diff_mat), Ref(50.0))),
+    abs.(df_summary.median .- df_summary.fitness),
     linewidth=2
 )
 
@@ -456,21 +406,28 @@ Label(
 )
 
 Label(
-    gl_ppc[1, 1, TopLeft()], "(B)",
+    gl_data[2, 1, TopLeft()], "(B)",
     fontsize=26,
     padding=(0, 5, 5, 0),
     halign=:right
 )
 
 Label(
-    gl_comp[1, 1, TopLeft()], "(C)",
+    gl_ppc[1, 1, TopLeft()], "(C)",
     fontsize=26,
     padding=(0, 5, 5, 0),
     halign=:right
 )
 
 Label(
-    gl_comp[2, 1, TopLeft()], "(D)",
+    gl_comp[1, 1, TopLeft()], "(D)",
+    fontsize=26,
+    padding=(0, 5, 5, 0),
+    halign=:right
+)
+
+Label(
+    gl_comp[2, 1, TopLeft()], "(E)",
     fontsize=26,
     padding=(0, 5, 5, 0),
     halign=:right
@@ -480,4 +437,4 @@ save("$(git_root())/doc/figs/fig02.pdf", fig)
 save("$(git_root())/doc/figs/fig02.png", fig)
 
 fig
-##
+#
