@@ -196,7 +196,7 @@ if gen_plots
         fig = Figure(resolution=(800, 800))
 
         # Generate mcmc_trace_density! plot
-        BayesFitness.viz.mcmc_trace_density!(
+        BayesFitUtils.viz.mcmc_trace_density!(
             fig, chains; alpha=0.5, title=String(split(od, "/")[end])
         )
 
