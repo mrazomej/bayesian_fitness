@@ -35,17 +35,13 @@ Turing.setadbackend(:reversediff)
 # Allow system to generate cache to speed up computation
 Turing.setrdcache(true)
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Define ADVI hyerparameters
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Define number of samples and steps
 n_samples = 1
-n_steps = 50_000
-
-##
+n_steps = 10_000
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate output directories
@@ -55,8 +51,6 @@ n_steps = 50_000
 if !isdir("./output/")
     mkdir("./output/")
 end # if
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Loading the data
@@ -71,8 +65,6 @@ data = CSV.read(
 
 # Define number of unique environments
 n_env = length(unique(data.env))
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Obtain priors on expected errors from neutral measurements
@@ -100,7 +92,7 @@ for df in data_rep
         s_pop_p,
         hcat(
             naive_prior[:s_pop_prior],
-            repeat([0.1], length(naive_prior[:s_pop_prior]))
+            repeat([0.3], length(naive_prior[:s_pop_prior]))
         )
     )
 
@@ -135,7 +127,6 @@ mat_counts = BayesFitness.utils.data2arrays(data; rep_col=:rep)[:bc_count]
 # Set priors for λ parameter
 logλ_prior = hcat(log.(mat_counts[:] .+ 1), repeat([2.0], length(mat_counts)))
 
-##
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Define ADVI function parameters
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
