@@ -779,8 +779,8 @@ for row in 1:n_row
             data_bc,
             freq_col=:freq,
             color=:black,
-            linewidth=2,
-            markersize=8
+            linewidth=3,
+            markersize=12
         )
 
         # Hide axis decorations

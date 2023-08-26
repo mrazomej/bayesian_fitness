@@ -47,7 +47,7 @@ Turing.setrdcache(true)
 ##
 
 # Define sampling hyperparameters
-n_steps = 5000
+n_steps = 3000
 n_walkers = 4
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -75,17 +75,25 @@ data = CSV.read(
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Compute naive priors from neutral strains
-neutral_priors = BayesFitness.stats.naive_prior_neutral(data)
+naive_priors = BayesFitness.stats.naive_prior(data)
 
-# Define prior for population mean fitness setting the expected mean fitness
-# variability.
+# Select standard deviation parameters
 s_pop_prior = hcat(
-    neutral_priors[:s_pop_prior],
-    repeat([0.1], length(neutral_priors[:s_pop_prior]))
+    naive_priors[:s_pop_prior],
+    repeat([0.2], length(naive_priors[:s_pop_prior]))
 )
-# Define nuisance parameter priors for log-likelihood errors
-logσ_pop_prior = neutral_priors[:logσ_pop_prior]
-logσ_mut_prior = neutral_priors[:logσ_pop_prior]
+
+logσ_pop_prior = hcat(
+    naive_priors[:logσ_pop_prior],
+    repeat([0.2], length(naive_priors[:logσ_pop_prior]))
+)
+
+logσ_mut_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 0.2]
+
+logλ_prior = hcat(
+    naive_priors[:logλ_prior],
+    repeat([3.0], length(naive_priors[:logλ_prior]))
+)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Initialize MCMC sampling
@@ -105,8 +113,9 @@ param = Dict(
         :logσ_pop_prior => logσ_pop_prior,
         :logσ_mut_prior => logσ_mut_prior,
         :s_mut_prior => [0.0, 1.0],
+        :logλ_prior => logλ_prior,
     ),
-    :sampler => Turing.NUTS(), #Turing.externalsampler(DynamicHMC.NUTS()),
+    :sampler => Turing.externalsampler(DynamicHMC.NUTS()),
     :ensemble => Turing.MCMCThreads(),
     :rm_T0 => false,
 )
