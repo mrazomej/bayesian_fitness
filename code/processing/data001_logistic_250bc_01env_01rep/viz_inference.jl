@@ -11,6 +11,7 @@ import BayesFitUtils
 import BayesFitness
 
 # Import basic math
+import LinearAlgebra
 import StatsBase
 import Distributions
 import Random
@@ -36,10 +37,7 @@ CairoMakie.activate!()
 # Set PBoC Plotting style
 BayesFitUtils.viz.pboc_makie!()
 
-
 Random.seed!(42)
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Loading data
@@ -62,14 +60,12 @@ data = CSV.read(
     "$(git_root())/data/logistic_growth/data_001/tidy_data.csv", DF.DataFrame
 )
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Read chain into memory 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Define file
-file = first(Glob.glob("./output/chain_joint_fitness_*"))
+file = first(Glob.glob("./output/chain_joint_fitness_1000*"))
 
 # Load chain
 ids, chn = values(JLD2.load(file))
@@ -127,8 +123,8 @@ qs = [0.05, 0.68, 0.95]
 colors = get(ColorSchemes.Blues_9, LinRange(0.25, 1.0, length(qs)))
 
 # Compute posterior predictive checks
-ppc_mat = BayesFitness.stats.logfreq_ratio_mean_ppc(
-    chn, n_ppc; param=param
+ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
+    chn, n_ppc; param=param, model=:lognormal
 )
 
 # Define time
@@ -165,7 +161,6 @@ save("./output/figs/mcmc_logfreqratio_ppc_neutral_posterior.pdf", fig)
 save("./output/figs/mcmc_logfreqratio_ppc_neutral_posterior.svg", fig)
 
 fig
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Trace and density plots for example mutants
@@ -270,8 +265,6 @@ DF.leftjoin!(
     on=:barcode
 )
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Plot comparison between deterministic and Bayesian inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -311,7 +304,6 @@ save("./output/figs/mcmc_fitness_comparison.pdf", fig)
 save("./output/figs/mcmc_fitness_comparison.svg", fig)
 
 fig
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Plot ECDF distance from median
@@ -328,8 +320,6 @@ save("./output/figs/mcmc_median_true_ecdf.pdf", fig)
 save("./output/figs/mcmc_median_true_ecdf.svg", fig)
 
 fig
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Plot ECDF for true fitness z-score 
@@ -355,8 +345,6 @@ save("./output/figs/mcmc_zscore_ecdf.pdf", fig)
 save("./output/figs/mcmc_zscore_ecdf.svg", fig)
 
 fig
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Plot example posterior predictive checks
@@ -398,7 +386,7 @@ for row in 1:n_row
         local param = Dict(
             :mutant_mean_fitness => Symbol(bc_plot[counter].variable),
             :mutant_std_fitness => Symbol(
-                replace(bc_plot[counter].variable, "s" => "σ")
+                replace(bc_plot[counter].variable, "s" => "logσ")
             ),
             :population_mean_fitness => :s̲ₜ,
         )
@@ -451,34 +439,22 @@ ids_advi = advi_results["ids"]
 dist_advi = advi_results["dist"]
 var_advi = advi_results["var"]
 
-# Extract distribution parameters
-dist_params = hcat(Distributions.params(dist_advi)...)
+# Convert results to tidy dataframe
+df_advi = BayesFitness.utils.advi2df(dist_advi, var_advi, ids_advi)
 
-##
+# Define number of samples
+n_samples = 10_000
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Format tidy dataframe with proper variable names
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-
-# Locate variables
-s_idx = occursin.("s̲⁽ᵐ⁾", String.(var_advi))
-# Find columns with mutant fitness error
-σ_idx = occursin.("σ̲⁽ᵐ⁾", String.(var_advi))
-# Extract population mean fitness variable names
-pop_mean_idx = occursin.("s̲ₜ", String.(var_advi))
-# Extract population mean fitness error variables
-pop_std_idx = occursin.("σ̲ₜ", String.(var_advi))
-
-# Convert parameters to dataframe
-df_advi = DF.DataFrame(dist_params, ["advi_mean", "advi_std"])
-df_advi[!, :var] = var_advi
-
-# Add barcode information
-df_advi[!, :barcode] .= "neutral"
-df_advi[s_idx, :barcode] .= ids_advi
-df_advi[σ_idx, :barcode] .= ids_advi
-
-##
+# Sample from posterior MvNormal
+df_samples = DF.DataFrame(
+    Random.rand(
+        Distributions.MvNormal(
+            df_advi.mean, LinearAlgebra.Diagonal(df_advi.std .^ 2)
+        ),
+        n_samples
+    )',
+    var_advi
+)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Compare inferred population mean fitness
@@ -487,15 +463,15 @@ df_advi[σ_idx, :barcode] .= ids_advi
 # Locate variable names in MCMC
 mcmc_names = names(df_chn)[occursin.("s̲ₜ", names(df_chn))]
 # Locate variables in ADVI
-advi_idx = occursin.("s̲ₜ", String.(df_advi.var))
+advi_idx = occursin.("s̲ₜ", String.(df_advi.varname))
 
 # Compute mcmc mean and std
 mcmc_mean = StatsBase.mean.(eachcol(df_chn[:, mcmc_names]))
 mcmc_std = StatsBase.std.(eachcol(df_chn[:, mcmc_names]))
 
 # Extract advi mean and std
-advi_mean = df_advi[advi_idx, :advi_mean]
-advi_std = df_advi[advi_idx, :advi_std]
+mean = df_advi[advi_idx, :mean]
+std = df_advi[advi_idx, :std]
 
 
 # Initialize figure
@@ -517,7 +493,7 @@ lines!(ax, repeat([[0.5, 1.1]], 2)..., linestyle=:dash, color=:black)
 # add errorbars
 errorbars!(
     mcmc_mean,
-    advi_mean,
+    mean,
     mcmc_std,
     color=(:gray, 0.5),
     direction=:x
@@ -525,8 +501,8 @@ errorbars!(
 # add errorbars
 errorbars!(
     mcmc_mean,
-    advi_mean,
-    advi_std,
+    mean,
+    std,
     color=(:gray, 0.5),
     direction=:y
 )
@@ -534,7 +510,7 @@ errorbars!(
 # Add points
 scatter!(
     mcmc_mean,
-    advi_mean,
+    mean,
     markersize=8
 )
 
@@ -543,8 +519,6 @@ save("./output/figs/advi_vs_mcmc_popmean.pdf", fig)
 
 fig
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Compare inferred mutant relative fitness
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -552,15 +526,15 @@ fig
 # Locate variable names in MCMC
 mcmc_names = names(df_chn)[occursin.("s̲⁽ᵐ⁾", names(df_chn))]
 # Locate variables in ADVI
-advi_idx = occursin.("s̲⁽ᵐ⁾", String.(df_advi.var))
+advi_idx = occursin.("s̲⁽ᵐ⁾", String.(df_advi.varname))
 
 # Compute mcmc mean and std
 mcmc_mean = StatsBase.mean.(eachcol(df_chn[:, mcmc_names]))
 mcmc_std = StatsBase.std.(eachcol(df_chn[:, mcmc_names]))
 
 # Extract advi mean and std
-advi_mean = df_advi[advi_idx, :advi_mean]
-advi_std = df_advi[advi_idx, :advi_std]
+mean = df_advi[advi_idx, :mean]
+std = df_advi[advi_idx, :std]
 
 
 # Initialize figure
@@ -581,7 +555,7 @@ lines!(ax, repeat([[-0.5, 1.75]], 2)..., linestyle=:dash, color=:black)
 # add errorbars
 errorbars!(
     mcmc_mean,
-    advi_mean,
+    mean,
     mcmc_std,
     color=(:gray, 0.5),
     direction=:x
@@ -589,8 +563,8 @@ errorbars!(
 # add errorbars
 errorbars!(
     mcmc_mean,
-    advi_mean,
-    advi_std,
+    mean,
+    std,
     color=(:gray, 0.5),
     direction=:y
 )
@@ -598,7 +572,7 @@ errorbars!(
 # Add points
 scatter!(
     mcmc_mean,
-    advi_mean,
+    mean,
     markersize=8
 )
 
@@ -606,17 +580,20 @@ save("./output/figs/advi_vs_mcmc_mutant.pdf", fig)
 
 fig
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Plot comparison between deterministic and Bayesian inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-# Generate dictionary from mutant barcode to true fitness value
-fit_dict = Dict(zip(df_summary.variable, df_summary.fitness))
+# Extract dataframe with unique pairs of barcodes and fitness values
+data_fitness = DF.sort(
+    unique(data[(.!data.neutral), [:barcode, :fitness]]), :barcode
+)
 
-# Extract index for hyperparameter variables
-s_idx = occursin.("s̲⁽ᵐ⁾", String.(df_advi.var))
+# Extract ADVI inferred fitness
+advi_fitness = DF.sort(
+    df_advi[(df_advi.vartype.=="mut_fitness"), [:id, :mean, :std]],
+    :id
+)
 
 # Initialize figure
 fig = Figure(resolution=(350, 350))
@@ -632,20 +609,18 @@ ax = Axis(
 lines!(
     ax,
     repeat(
-        [[0, 1.75]], 2
+        [[-0.1, 1.75]], 2
     )...;
-    color=:black
+    color=:black,
+    linestyle="--"
 )
 
 # Add x-axis error bars
 errorbars!(
     ax,
-    [
-        fit_dict[x] for x in [split(x, "_")[end] for x in
-              String.(df_advi[s_idx, :var])]
-    ],
-    df_advi[s_idx, :advi_mean],
-    df_advi[s_idx, :advi_std],
+    data_fitness.fitness,
+    advi_fitness.mean,
+    advi_fitness.std,
     color=(:gray, 0.5),
     direction=:y
 )
@@ -653,14 +628,185 @@ errorbars!(
 # Plot comparison
 scatter!(
     ax,
-    [
-        fit_dict[x] for x in [split(x, "_")[end] for x in
-              String.(df_advi[s_idx, :var])]
-    ],
-    df_advi[s_idx, :advi_mean],
+    data_fitness.fitness,
+    advi_fitness.mean,
     markersize=8
 )
 
 save("./output/figs/advi_fitness_true.pdf", fig)
+
+fig
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Plot posterior predictive checks for neutral lineages in joint inference
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Define dictionary with corresponding parameters for variables needed for
+# the posterior predictive checks
+param = Dict(
+    :population_mean_fitness => :s̲ₜ,
+    :population_std_fitness => :logσ̲ₜ,
+)
+
+# Define number of posterior predictive check samples
+n_ppc = 500
+
+# Define quantiles to compute
+qs = [0.05, 0.68, 0.95]
+
+# Define colors
+ppc_color = get(ColorSchemes.Purples_9, LinRange(0.25, 1.0, length(qs)))
+
+# Initialize figure
+fig = Figure(resolution=(400, 350))
+
+# Compute posterior predictive checks
+ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
+    df_samples, n_ppc; model=:normal, param=param
+)
+
+# Add axis
+ax = Axis(
+    fig[1, 1],
+    xlabel="time point",
+    ylabel="ln(fₜ₊₁/fₜ)",
+    title="neutral lineages PPC",
+)
+
+# Plot posterior predictive checks
+BayesFitUtils.viz.ppc_time_series!(
+    ax, qs, ppc_mat; colors=ppc_color, time=sort(unique(data.time))[2:end]
+)
+
+# Plot log-frequency ratio of neutrals
+BayesFitUtils.viz.logfreq_ratio_time_series!(
+    ax,
+    data[data.neutral, :];
+    freq_col=:freq,
+    color=:black,
+    alpha=0.5,
+    linewidth=2,
+    markersize=8
+)
+
+# Save figure into pdf
+save("./output/figs/advi_logfreqratio_ppc_neutral.pdf", fig)
+
+fig
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Plot posterior predictive checks for barcodes
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Define number of posterior predictive check samples
+n_ppc = 500
+# Define quantiles to compute
+qs = [0.95, 0.675, 0.05]
+
+# Define number of rows and columns
+n_row, n_col = [4, 4]
+
+# List example barcodes to plot
+bc_plot = StatsBase.sample(
+    unique(data[.!data.neutral, :barcode]), n_row * n_col
+)
+
+# Extract unique mutant/fitnes variable name pairs
+mut_var = df_advi[(df_advi.vartype.=="mut_fitness"), [:id, :varname]]
+
+# Generate dictionary from mutant name to fitness value
+mut_var_dict = Dict(zip(mut_var.id, mut_var.varname))
+
+# Define colors
+colors = get(ColorSchemes.Blues_9, LinRange(0.5, 1, length(qs)))
+
+# Initialize figure
+fig = Figure(resolution=(300 * n_col, 300 * n_row))
+
+# Initialize plot counter
+counter = 1
+# Loop through rows
+for row in 1:n_row
+    # Loop through columns
+    for col in 1:n_col
+        # Add GridLayout
+        gl = fig[row, col] = GridLayout()
+        # Add axis
+        ax = Axis(gl[1, 1:6])
+
+        # Extract data
+        data_bc = DF.sort(
+            data[(data.barcode.==bc_plot[counter]), :], :time
+        )
+
+        # Extract variables for barcode PPC
+        global vars_bc = [
+            names(df_samples)[occursin.("s̲ₜ", names(df_samples))]
+            mut_var_dict[bc_plot[counter]]
+            replace(mut_var_dict[bc_plot[counter]], "s" => "logσ")
+        ]
+
+
+        # Define dictionary with corresponding parameters for variables needed
+        # for the posterior predictive checks
+        local param = Dict(
+            :mutant_mean_fitness => Symbol(mut_var_dict[bc_plot[counter]]),
+            :mutant_std_fitness => Symbol(
+                replace(mut_var_dict[bc_plot[counter]], "s" => "logσ")
+            ),
+            :population_mean_fitness => Symbol("s̲ₜ"),
+        )
+        # Compute posterior predictive checks
+        local ppc_mat = BayesFitness.stats.logfreq_ratio_mutant_ppc(
+            df_samples[:, Symbol.(vars_bc)],
+            n_ppc;
+            model=:normal,
+            param=param
+        )
+
+        # Plot posterior predictive checks
+        BayesFitUtils.viz.ppc_time_series!(
+            ax,
+            qs,
+            ppc_mat;
+            colors=colors,
+            time=sort(unique(data.time))[2:end]
+        )
+
+        # Plot log-frequency ratio of neutrals
+        BayesFitUtils.viz.logfreq_ratio_time_series!(
+            ax,
+            data_bc,
+            freq_col=:freq,
+            color=:black,
+            linewidth=2,
+            markersize=8
+        )
+
+        # Hide axis decorations
+        hidedecorations!.(ax, grid=false)
+        # Set row and col gaps
+        rowgap!(gl, 1)
+
+        # Add barcode as title
+        Label(
+            gl[0, 3:4],
+            text="barcode $(bc_plot[counter])",
+            fontsize=12,
+            justification=:center,
+            lineheight=0.9
+        )
+
+        # Update counter
+        global counter += 1
+    end  # for
+end # for
+
+# Add x-axis label
+Label(fig[end, :, Bottom()], "time points", fontsize=20)
+# Add y-axis label
+Label(fig[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=20)
+
+save("./output/figs/advi_logfreqratio_ppc_mutant.pdf", fig)
 
 fig

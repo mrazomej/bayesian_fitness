@@ -37,20 +37,7 @@ import Random
 import StatsBase
 import Distributions
 
-# Import plotting libraries
-using CairoMakie
-import ColorSchemes
-
-# Activate backend
-CairoMakie.activate!()
-
-# Set PBoC Plotting style
-BayesFitUtils.viz.pboc_makie!()
-##
-
 Random.seed!(42)
-
-##
 
 # Set AutoDiff backend
 Turing.setadbackend(:reversediff)
@@ -60,10 +47,8 @@ Turing.setrdcache(true)
 ##
 
 # Define sampling hyperparameters
-n_steps = 1000
+n_steps = 5000
 n_walkers = 4
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate output directories
@@ -73,8 +58,6 @@ n_walkers = 4
 if !isdir("./output/")
     mkdir("./output/")
 end # if
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Loading the data
@@ -87,41 +70,22 @@ data = CSV.read(
     "$(git_root())/data/logistic_growth/data_001/tidy_data.csv", DF.DataFrame
 )
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Obtain priors on expected errors from neutral measurements
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-# Group neutral data by barcode
-data_group = DF.groupby(data[data.neutral, :], :barcode)
+# Compute naive priors from neutral strains
+neutral_priors = BayesFitness.stats.naive_prior_neutral(data)
 
-# Initialize list to save log frequency changes
-logfreq = []
-
-# Loop through each neutral barcode
-for d in data_group
-    # Sort data by time
-    DF.sort!(d, :time)
-    # Compute log frequency ratio and append to list
-    push!(logfreq, diff(log.(d[:, :freq])))
-end # for
-
-# Generate matrix with log-freq ratios
-logfreq_mat = hcat(logfreq...)
-
-# Compute mean per time point for approximate mean fitness
-logfreq_mean = StatsBase.mean(logfreq_mat, dims=2)
-
-# Define prior for population mean fitness
-s_pop_prior = hcat(-logfreq_mean, repeat([0.3], length(logfreq_mean)))
-
-# Generate single list of log-frequency ratios to compute prior on σ
-logfreq_vec = vcat(logfreq...)
-
-# Define priors for nuisance parameters for log-likelihood functions
-σ_pop_prior = [StatsBase.mean(logfreq_vec), StatsBase.std(logfreq_vec)]
-σ_mut_prior = σ_pop_prior
+# Define prior for population mean fitness setting the expected mean fitness
+# variability.
+s_pop_prior = hcat(
+    neutral_priors[:s_pop_prior],
+    repeat([0.1], length(neutral_priors[:s_pop_prior]))
+)
+# Define nuisance parameter priors for log-likelihood errors
+logσ_pop_prior = neutral_priors[:logσ_pop_prior]
+logσ_mut_prior = neutral_priors[:logσ_pop_prior]
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Initialize MCMC sampling
@@ -135,14 +99,14 @@ param = Dict(
     :n_walkers => n_walkers,
     :n_steps => n_steps,
     :outputname => "./output/chain_joint_fitness_$(n_steps)steps_$(lpad(n_walkers, 2, "0"))walkers",
-    :model => BayesFitness.model.fitness_lognormal,
+    :model => BayesFitness.model.fitness_normal,
     :model_kwargs => Dict(
         :s_pop_prior => s_pop_prior,
-        :σ_pop_prior => σ_pop_prior,
-        :σ_mut_prior => σ_mut_prior,
+        :logσ_pop_prior => logσ_pop_prior,
+        :logσ_mut_prior => logσ_mut_prior,
         :s_mut_prior => [0.0, 1.0],
     ),
-    :sampler => Turing.DynamicNUTS(),
+    :sampler => Turing.NUTS(), #Turing.externalsampler(DynamicHMC.NUTS()),
     :ensemble => Turing.MCMCThreads(),
     :rm_T0 => false,
 )
@@ -150,4 +114,4 @@ param = Dict(
 # Run inference
 println("Running Inference...")
 
-@time BayesFitness.mcmc.mcmc_joint_fitness(; param...)
+@time BayesFitness.mcmc.mcmc_sample(; param...)

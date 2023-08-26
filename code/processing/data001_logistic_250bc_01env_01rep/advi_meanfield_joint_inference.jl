@@ -75,37 +75,18 @@ data = CSV.read(
 # Obtain priors on expected errors from neutral measurements
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-# Group neutral data by barcode
-data_group = DF.groupby(data[data.neutral, :], :barcode)
+# Compute naive priors from neutral strains
+neutral_priors = BayesFitness.stats.naive_prior_neutral(data)
 
-# Initialize list to save log frequency changes
-logfreq = []
-
-# Loop through each neutral barcode
-for d in data_group
-    # Sort data by time
-    DF.sort!(d, :time)
-    # Compute log frequency ratio and append to list
-    push!(logfreq, diff(log.(d[:, :freq])))
-end # for
-
-# Generate matrix with log-freq ratios
-logfreq_mat = hcat(logfreq...)
-
-# Compute mean per time point for approximate mean fitness
-logfreq_mean = StatsBase.mean(logfreq_mat, dims=2)
-
-# Define prior for population mean fitness
-s_pop_prior = hcat(-logfreq_mean, repeat([0.3], length(logfreq_mean)))
-
-# Generate single list of log-frequency ratios to compute prior on σ
-logfreq_vec = vcat(logfreq...)
-
-# Define priors for nuisance parameters for log-likelihood functions
-logσ_pop_prior = [StatsBase.mean(logfreq_vec), StatsBase.std(logfreq_vec)]
-logσ_mut_prior = logσ_pop_prior
-
-##
+# Define prior for population mean fitness setting the expected mean fitness
+# variability.
+s_pop_prior = hcat(
+    neutral_priors[:s_pop_prior],
+    repeat([0.1], length(neutral_priors[:s_pop_prior]))
+)
+# Define nuisance parameter priors for log-likelihood errors
+logσ_pop_prior = neutral_priors[:logσ_pop_prior]
+logσ_mut_prior = neutral_priors[:logσ_pop_prior]
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Define ADVI function parameters
