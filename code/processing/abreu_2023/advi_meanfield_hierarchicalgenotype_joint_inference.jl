@@ -148,3 +148,31 @@ end # if
 # Run inference
 println("Running Variational Inference...")
 @time dist = BayesFitness.vi.advi(; param...)
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Convert output to tidy dataframe
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# List files
+file = first(Glob.glob("./output/advi_meanfield_hier*"))
+
+# Define environment cycles
+envs = collect(
+    unique(data[:, [:time, :environment]])[:, :environment]
+)
+
+# Load results
+advi_results = JLD2.load(file)
+
+# Extract components
+mut_ids = advi_results["ids"]
+dist = advi_results["dist"]
+vars = advi_results["var"]
+
+# Generate tidy dataframe with distribution information
+df_advi = BayesFitness.utils.advi2df(
+    dist, vars, mut_ids; envs=envs
+)
+
+# Save output
+CSV.write(replace(file, ".jld2" => ".csv"), df_advi)
