@@ -47,7 +47,7 @@ Turing.setrdcache(true)
 ##
 
 # Define sampling hyperparameters
-n_steps = 3000
+n_steps = 3_000
 n_walkers = 4
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -80,15 +80,15 @@ naive_priors = BayesFitness.stats.naive_prior(data)
 # Select standard deviation parameters
 s_pop_prior = hcat(
     naive_priors[:s_pop_prior],
-    repeat([0.2], length(naive_priors[:s_pop_prior]))
+    repeat([0.05], length(naive_priors[:s_pop_prior]))
 )
 
 logσ_pop_prior = hcat(
     naive_priors[:logσ_pop_prior],
-    repeat([0.2], length(naive_priors[:logσ_pop_prior]))
+    repeat([1.0], length(naive_priors[:logσ_pop_prior]))
 )
 
-logσ_mut_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 0.2]
+logσ_mut_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 1.0]
 
 logλ_prior = hcat(
     naive_priors[:logλ_prior],

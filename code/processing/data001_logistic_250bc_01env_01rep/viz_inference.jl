@@ -429,7 +429,7 @@ fig
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Define file
-file = first(Glob.glob("./output/advi_meanfield*"))
+file = first(Glob.glob("./output/advi_meanfield*3000*"))
 
 # Load distribution
 advi_results = JLD2.load(file)
