@@ -65,7 +65,7 @@ data = CSV.read(
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Define file
-file = first(Glob.glob("./output/chain_joint_fitness_1000*"))
+file = first(Glob.glob("./output/chain_joint_fitness_3000*"))
 
 # Load chain
 ids, chn = values(JLD2.load(file))
@@ -86,7 +86,7 @@ s_names = MCMCChains.namesingroup(chn, :s̲⁽ᵐ⁾)
 
 # Extract variable names
 var_names = vcat(
-    [MCMCChains.namesingroup(chn, :s̲ₜ), MCMCChains.namesingroup(chn, :σ̲ₜ)]...
+    [MCMCChains.namesingroup(chn, :s̲ₜ), MCMCChains.namesingroup(chn, :logσ̲ₜ)]...
 )
 
 # Initialize figure
@@ -110,7 +110,7 @@ fig
 # the posterior predictive checks
 param = Dict(
     :population_mean_fitness => :s̲ₜ,
-    :population_std_fitness => :σ̲ₜ,
+    :population_std_fitness => :logσ̲ₜ,
 )
 
 # Define number of posterior predictive check samples
@@ -124,7 +124,7 @@ colors = get(ColorSchemes.Blues_9, LinRange(0.25, 1.0, length(qs)))
 
 # Compute posterior predictive checks
 ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
-    chn, n_ppc; param=param, model=:lognormal
+    chn, n_ppc; param=param, model=:normal
 )
 
 # Define time
@@ -180,8 +180,6 @@ save("./output/figs/mcmc_trace_density_mutants.pdf", fig)
 save("./output/figs/mcmc_trace_density_mutants.svg", fig)
 
 fig
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Compute summary statistics for fitness values
@@ -270,7 +268,7 @@ DF.leftjoin!(
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Initialize figure
-fig = Figure(resolution=(400, 400))
+fig = Figure(resolution=(300, 300))
 
 # Add axis
 ax = Axis(
@@ -283,7 +281,7 @@ ax = Axis(
 lines!(
     ax,
     repeat([[minimum(df_summary.median), maximum(df_summary.median)]], 2)...;
-    color=:black
+    color=:black, linestyle="--"
 )
 
 # Add x-axis error bars
@@ -310,7 +308,7 @@ fig
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Initialize figure
-fig = Figure(resolution=(400, 300))
+fig = Figure(resolution=(350, 300))
 # Add axis
 ax = Axis(fig[1, 1], xlabel="|median - true value|", ylabel="ECDF")
 # Plot ECDF
@@ -335,7 +333,7 @@ dist_param = hcat(
 # Compute Z-score of true fitness values
 fitness_zscore = (df_summary.fitness .- dist_param[:, 1]) ./ dist_param[:, 2]
 # Initialize figure
-fig = Figure(resolution=(400, 300))
+fig = Figure(resolution=(350, 300))
 # Add axis
 ax = Axis(fig[1, 1], xlabel="|z-score|", ylabel="ECDF")
 # Plot ECDF
@@ -421,10 +419,10 @@ Label(fig[end, :, Bottom()], "time points", fontsize=22)
 # Add y-axis label
 Label(fig[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=22)
 
-fig
-
 save("./output/figs/mcmc_logfreqratio_ppc_mutant.pdf", fig)
 save("./output/figs/mcmc_logfreqratio_ppc_mutant.svg", fig)
+
+fig
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Load variational inference
@@ -655,7 +653,7 @@ n_ppc = 500
 qs = [0.05, 0.68, 0.95]
 
 # Define colors
-ppc_color = get(ColorSchemes.Purples_9, LinRange(0.25, 1.0, length(qs)))
+ppc_color = get(ColorSchemes.Blues_9, LinRange(0.25, 1.0, length(qs)))
 
 # Initialize figure
 fig = Figure(resolution=(400, 350))
@@ -684,9 +682,7 @@ BayesFitUtils.viz.logfreq_ratio_time_series!(
     data[data.neutral, :];
     freq_col=:freq,
     color=:black,
-    alpha=0.5,
-    linewidth=2,
-    markersize=8
+    linewidth=2
 )
 
 # Save figure into pdf
