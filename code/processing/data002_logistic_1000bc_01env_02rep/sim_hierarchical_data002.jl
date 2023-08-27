@@ -60,7 +60,7 @@ n_data = 2
 # Define number of generations
 n_gen = 8
 # Define number of neutral and mutants
-n_neutral, n_mut = [25, 225]
+n_neutral, n_mut = [100, 900]
 # Define number of barcodes
 n_bc = n_neutral + n_mut
 
@@ -301,16 +301,18 @@ if gen_plots
         BayesFitUtils.viz.bc_time_series!(
             ax[1],
             data[.!(data.neutral), :],
-            zero_lim=0,
-            alpha=0.3
+            zero_lim=1E-9,
+            alpha=0.3,
+            quant_col=:freq,
         )
 
         # Plot neutral barcode trajectories
         BayesFitUtils.viz.bc_time_series!(
             ax[1],
             data[data.neutral, :],
-            zero_lim=0,
+            zero_lim=1E-9,
             color=ColorSchemes.Blues_9[end],
+            quant_col=:freq,
         )
 
         # Change scale
@@ -341,7 +343,7 @@ if gen_plots
     end # for
 end # if
 
-save("./output/trajectories.pdf", fig)
+save("./output/figs/trajectories.pdf", fig)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% # 
 # Save data to memory
