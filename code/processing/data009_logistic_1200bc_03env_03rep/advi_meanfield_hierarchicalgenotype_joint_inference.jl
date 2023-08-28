@@ -41,7 +41,7 @@ Turing.setrdcache(true)
 
 # Define number of samples and steps
 n_samples = 1
-n_steps = 10_000
+n_steps = 3_000
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate output directories
@@ -72,60 +72,28 @@ n_env = length(unique(data.env))
 
 println("Defining priors from neutral lineages data...\n")
 
-# Initialize list to save priors
-s_pop_p = []
-logσ_pop_p = []
-logσ_mut_p = []
-
-
-# Group data by replicates
-data_rep = DF.groupby(data[data.neutral, :], :rep)
-
-
-# Loop through replicates
-for df in data_rep
-    # Compute naive priors
-    naive_prior = BayesFitness.stats.naive_prior_neutral(df; pseudocount=1)
-
-    # Define prior for population mean fitness
-    push!(
-        s_pop_p,
-        hcat(
-            naive_prior[:s_pop_prior],
-            repeat([0.3], length(naive_prior[:s_pop_prior]))
-        )
-    )
-
-    # Define priors for nuisance parameters for log-likelihood functions
-    push!(
-        logσ_pop_p, naive_prior[:logσ_pop_prior]
-    )
-    push!(
-        logσ_mut_p, naive_prior[:logσ_pop_prior]
-    )
-end # for
-
-# Convert priors to long matrices with repeated values to give unique priors to
-# each replicate
-s_pop_prior = vcat(s_pop_p...)
-logσ_pop_prior = vcat(
-    [
-        hcat(repeat([x], length(unique(data.time)) - 1)...)' for x in logσ_pop_p
-    ]...
-)
-logσ_mut_prior = vcat(
-    [
-        hcat(repeat([x],
-            length(unique(data[.!data.neutral, :barcode])) * n_env)...)'
-        for x in logσ_pop_p
-    ]...
+# Compute naive priors from neutral strains
+naive_priors = BayesFitness.stats.naive_prior(
+    data; rep_col=:rep, pseudocount=1
 )
 
-# Extract counts as fed to inference pipeline
-mat_counts = BayesFitness.utils.data2arrays(data; rep_col=:rep)[:bc_count]
+# Select standard deviation parameters
+s_pop_prior = hcat(
+    naive_priors[:s_pop_prior],
+    repeat([0.05], length(naive_priors[:s_pop_prior]))
+)
 
-# Set priors for λ parameter
-logλ_prior = hcat(log.(mat_counts[:] .+ 1), repeat([2.0], length(mat_counts)))
+logσ_pop_prior = hcat(
+    naive_priors[:logσ_pop_prior],
+    repeat([1.0], length(naive_priors[:logσ_pop_prior]))
+)
+
+logσ_mut_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 1.0]
+
+logλ_prior = hcat(
+    naive_priors[:logλ_prior],
+    repeat([3.0], length(naive_priors[:logλ_prior]))
+)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Define ADVI function parameters

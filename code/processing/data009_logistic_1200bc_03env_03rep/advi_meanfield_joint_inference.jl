@@ -87,21 +87,27 @@ Threads.@threads for rep = 1:length(data_rep)
         unique(data_rep[rep][:, [:time, :env]])[:, :env]
     )
 
-    # Compute naive parameters
-    prior_param = BayesFitness.stats.naive_prior_neutral(data_rep[rep])
-
-    # Define parameter for population mean fitness adding a standard deviation
-    s_pop_prior = hcat(
-        prior_param[:s_pop_prior],
-        repeat([0.2], length(prior_param[:s_pop_prior]))
+    # Compute naive priors from neutral strains
+    naive_priors = BayesFitness.stats.naive_prior(
+        data_rep[rep]; pseudocount=1
     )
 
-    # Extract counts as fed to inference pipeline
-    mat_counts = BayesFitness.utils.data2arrays(data_rep[rep])[:bc_count]
+    # Select standard deviation parameters
+    s_pop_prior = hcat(
+        naive_priors[:s_pop_prior],
+        repeat([0.05], length(naive_priors[:s_pop_prior]))
+    )
 
-    # Set priors for λ parameter
+    logσ_pop_prior = hcat(
+        naive_priors[:logσ_pop_prior],
+        repeat([1.0], length(naive_priors[:logσ_pop_prior]))
+    )
+
+    logσ_mut_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 1.0]
+
     logλ_prior = hcat(
-        log.(mat_counts[:] .+ 1), repeat([2.0], length(mat_counts))
+        naive_priors[:logλ_prior],
+        repeat([3.0], length(naive_priors[:logλ_prior]))
     )
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -114,8 +120,8 @@ Threads.@threads for rep = 1:length(data_rep)
         :model => BayesFitness.model.multienv_fitness_normal,
         :model_kwargs => Dict(
             :s_pop_prior => s_pop_prior,
-            :logσ_pop_prior => prior_param[:logσ_pop_prior],
-            :logσ_mut_prior => prior_param[:logσ_pop_prior],
+            :logσ_pop_prior => logσ_pop_prior,
+            :logσ_mut_prior => logσ_mut_prior,
             :s_mut_prior => [0.0, 1.0],
             :logλ_prior => logλ_prior,
             :envs => envs,
