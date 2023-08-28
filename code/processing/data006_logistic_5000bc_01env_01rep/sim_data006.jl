@@ -55,7 +55,7 @@ gen_plots = true
 # Define number of generations
 n_gen = 8
 # Define number of neutral and mutants
-n_neutral, n_mut = [100, 1100]
+n_neutral, n_mut = [250, 4750]
 # Define number of barcodes
 n_bc = n_neutral + n_mut
 
@@ -239,16 +239,18 @@ if gen_plots
     BayesFitUtils.viz.bc_time_series!(
         ax[1],
         data[.!(data.neutral), :],
-        zero_lim=0,
-        alpha=0.3
+        zero_lim=1E-11,
+        alpha=0.3,
+        quant_col=:freq,
     )
 
     # Plot neutral barcode trajectories
     BayesFitUtils.viz.bc_time_series!(
         ax[1],
         data[data.neutral, :],
-        zero_lim=0,
+        zero_lim=1E-11,
         color=ColorSchemes.Blues_9[end],
+        quant_col=:freq
     )
 
     # Change scale
@@ -276,61 +278,6 @@ if gen_plots
     ax[2].ylabel = "ln(fₜ₊₁/fₜ)"
 
     save("./output/figs/trajectories.pdf", fig)
-    save("./output/figs/trajectories.svg", fig)
-end # if
-
-if gen_plots
-    # Initialize figure
-    fig = Figure(resolution=(400, 300))
-
-    # Add axis
-    ax = Axis(
-        fig[1, 1], xlabel="time", ylabel="barcode frequency", yscale=log10
-    )
-
-    # Plot mutant barcode trajectories
-    BayesFitUtils.viz.bc_time_series!(
-        ax,
-        data[.!(data.neutral), :],
-        zero_lim=0,
-        alpha=0.3
-    )
-
-    # Plot neutral barcode trajectories
-    BayesFitUtils.viz.bc_time_series!(
-        ax,
-        data[data.neutral, :],
-        zero_lim=0,
-        color=ColorSchemes.Blues_9[end],
-    )
-
-    save("./output/figs/bc_trajectories.pdf", fig)
-    save("./output/figs/bc_trajectories.svg", fig)
-end # if
-
-if gen_plots
-    # Initialize figure
-    fig = Figure(resolution=(400, 300))
-
-    # Add axis
-    ax = Axis(fig[1, 1], xlabel="time", ylabel="ln(fₜ₊₁/fₜ)")
-
-    # Plot mutant barcode trajectories
-    BayesFitUtils.viz.logfreq_ratio_time_series!(
-        ax,
-        data[.!(data.neutral), :],
-        alpha=0.3
-    )
-
-    # Plot neutral barcode trajectories
-    BayesFitUtils.viz.logfreq_ratio_time_series!(
-        ax,
-        data[data.neutral, :],
-        color=ColorSchemes.Blues_9[end],
-    )
-
-    save("./output/figs/logfreq_trajectories.pdf", fig)
-    save("./output/figs/logfreq_trajectories.svg", fig)
 end # if
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% # 
