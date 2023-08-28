@@ -30,12 +30,8 @@ CairoMakie.activate!()
 # Set PBoC Plotting style
 BayesFitUtils.viz.pboc_makie!()
 
-##
-
 # Set random seed
 Random.seed!(42)
-
-##
 
 # Define if plots should be generated
 gen_plots = true
@@ -55,7 +51,7 @@ gen_plots = true
 # Define number of generations
 n_gen = 8
 # Define number of neutral and mutants
-n_neutral, n_mut = [25, 225]
+n_neutral, n_mut = [100, 900]
 # Define number of barcodes
 n_bc = n_neutral + n_mut
 

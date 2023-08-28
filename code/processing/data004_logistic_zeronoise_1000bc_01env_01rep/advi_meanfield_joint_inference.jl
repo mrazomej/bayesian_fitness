@@ -43,9 +43,7 @@ Turing.setrdcache(true)
 
 # Define number of samples and steps
 n_samples = 1
-n_steps = 10_000
-
-##
+n_steps = 3_000
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate output directories
@@ -55,8 +53,6 @@ n_steps = 10_000
 if !isdir("./output/")
     mkdir("./output/")
 end # if
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Loading the data
@@ -69,43 +65,30 @@ data = CSV.read(
     "$(git_root())/data/logistic_growth/data_004/tidy_data.csv", DF.DataFrame
 )
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Obtain priors on expected errors from neutral measurements
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-# Group neutral data by barcode
-data_group = DF.groupby(data[data.neutral, :], :barcode)
+# Compute naive priors from neutral strains
+naive_priors = BayesFitness.stats.naive_prior(data)
 
-# Initialize list to save log frequency changes
-logfreq = []
+# Select standard deviation parameters
+s_pop_prior = hcat(
+    naive_priors[:s_pop_prior],
+    repeat([0.05], length(naive_priors[:s_pop_prior]))
+)
 
-# Loop through each neutral barcode
-for d in data_group
-    # Sort data by time
-    DF.sort!(d, :time)
-    # Compute log frequency ratio and append to list
-    push!(logfreq, diff(log.(d[:, :freq])))
-end # for
+logσ_pop_prior = hcat(
+    naive_priors[:logσ_pop_prior],
+    repeat([1.0], length(naive_priors[:logσ_pop_prior]))
+)
 
-# Generate matrix with log-freq ratios
-logfreq_mat = hcat(logfreq...)
+logσ_mut_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 1.0]
 
-# Compute mean per time point for approximate mean fitness
-logfreq_mean = StatsBase.mean(logfreq_mat, dims=2)
-
-# Define prior for population mean fitness
-s_pop_prior = hcat(-logfreq_mean, repeat([0.05], length(logfreq_mean)))
-
-# Generate single list of log-frequency ratios to compute prior on σ
-logfreq_vec = vcat(logfreq...)
-
-# Define priors for nuisance parameters for log-likelihood functions
-logσ_pop_prior = [-2.0, 0.1]
-logσ_mut_prior = logσ_pop_prior
-
-##
+logλ_prior = hcat(
+    naive_priors[:logλ_prior],
+    repeat([3.0], length(naive_priors[:logλ_prior]))
+)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Define ADVI function parameters
@@ -120,13 +103,12 @@ param = Dict(
         :logσ_pop_prior => logσ_pop_prior,
         :logσ_mut_prior => logσ_mut_prior,
         :s_mut_prior => [0.0, 1.0],
+        :logλ_prior => logλ_prior,
     ),
     :advi => Turing.ADVI(n_samples, n_steps),
     :opt => Turing.TruncatedADAGrad(),
     :fullrank => false
 )
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Perform optimization
