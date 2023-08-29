@@ -110,7 +110,7 @@ dist = advi_results["dist"]
 vars = advi_results["var"]
 
 # Generate tidy dataframe with distribution information
-df_advi = BayesFitness.utils.advi2df(dist, vars, mut_ids; n_rep=3, envs=envs)
+df_advi = BayesFitness.utils.advi_to_df(dist, vars, mut_ids; n_rep=3, envs=envs)
 
 # Rename env column and re-add env as numeric value
 DF.rename!(df_advi, :env => :environment)

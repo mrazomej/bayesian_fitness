@@ -170,7 +170,7 @@ dist = advi_results["dist"]
 vars = advi_results["var"]
 
 # Generate tidy dataframe with distribution information
-df_advi = BayesFitness.utils.advi2df(
+df_advi = BayesFitness.utils.advi_to_df(
     dist, vars, mut_ids; envs=envs
 )
 
