@@ -83,7 +83,7 @@ dist_advi = advi_results["dist"]
 var_advi = advi_results["var"]
 
 # Convert results to tidy dataframe
-df_advi = BayesFitness.utils.advi2df(dist_advi, var_advi, ids_advi; envs=envs)
+df_advi = BayesFitness.utils.advi_to_df(dist_advi, var_advi, ids_advi; envs=envs)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate samples from distribution and format into dataframe

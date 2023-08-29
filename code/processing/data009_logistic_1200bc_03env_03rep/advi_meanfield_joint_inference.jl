@@ -164,7 +164,7 @@ for f in files
     vars = advi_results["var"]
 
     # Generate tidy dataframe with distribution information
-    global df_advi = BayesFitness.utils.advi2df(
+    global df_advi = BayesFitness.utils.advi_to_df(
         dist, vars, mut_ids; n_rep=1, envs=envs
     )
 

@@ -81,7 +81,7 @@ dist_advi = advi_results["dist"]
 var_advi = advi_results["var"]
 
 # Convert results to tidy dataframe
-df_advi = BayesFitness.utils.advi2df(dist_advi, var_advi, ids_advi; n_rep=2)
+df_advi = BayesFitness.utils.advi_to_df(dist_advi, var_advi, ids_advi; n_rep=2)
 
 # Split variables by replicate
 rep_vars = Dict(

@@ -43,7 +43,7 @@ Turing.setrdcache(true)
 
 # Define number of samples and steps
 n_samples = 1
-n_steps = 10_000
+n_steps = 50_000
 
 ##
 

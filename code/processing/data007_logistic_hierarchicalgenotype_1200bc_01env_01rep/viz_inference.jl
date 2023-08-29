@@ -63,7 +63,7 @@ data = CSV.read(
 mut_geno_dict = Dict(values.(keys(DF.groupby(data, [:barcode, :genotype]))))
 
 # Extract list of mutants as they were used in the inference
-mut_ids = BayesFitness.utils.data2arrays(data)[:mut_ids]
+mut_ids = BayesFitness.utils.data_to_arrays(data)[:mut_ids]
 
 # Extract genotypes in the order they were used in the inference
 genotypes = [mut_geno_dict[m] for m in mut_ids]
@@ -89,7 +89,7 @@ dist_advi = advi_results["dist"]
 var_advi = advi_results["var"]
 
 # Convert results to tidy dataframe
-df_advi = BayesFitness.utils.advi2df(
+df_advi = BayesFitness.utils.advi_to_df(
     dist_advi, var_advi, ids_advi; n_rep=1, genotypes=genotypes
 )
 

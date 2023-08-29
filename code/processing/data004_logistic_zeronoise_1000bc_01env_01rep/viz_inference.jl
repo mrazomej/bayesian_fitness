@@ -74,7 +74,7 @@ dist_advi = advi_results["dist"]
 var_advi = advi_results["var"]
 
 # Convert results to tidy dataframe
-df_advi = BayesFitness.utils.advi2df(dist_advi, var_advi, ids_advi)
+df_advi = BayesFitness.utils.advi_to_df(dist_advi, var_advi, ids_advi)
 
 # Define number of samples
 n_samples = 10_000

@@ -98,7 +98,7 @@ logλ_prior = hcat(
 mut_geno_dict = Dict(values.(keys(DF.groupby(data, [:barcode, :genotype]))))
 
 # Extract list of mutants as they will be used in the inference
-mut_ids = BayesFitness.utils.data2arrays(data)[:mut_ids]
+mut_ids = BayesFitness.utils.data_to_arrays(data)[:mut_ids]
 
 # Extract genotypes in the order they will be used in the inference
 genotypes = [mut_geno_dict[m] for m in mut_ids]
