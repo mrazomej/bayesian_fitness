@@ -43,9 +43,7 @@ Turing.setrdcache(true)
 
 # Define number of samples and steps
 n_samples = 1
-n_steps = 10_000
-
-##
+n_steps = 3_000
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate output directories
@@ -55,8 +53,6 @@ n_steps = 10_000
 if !isdir("./output/")
     mkdir("./output/")
 end # if
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Loading the data
@@ -69,23 +65,31 @@ data = CSV.read(
     "$(git_root())/data/logistic_growth/data_007/tidy_data.csv", DF.DataFrame
 )
 
-
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Obtain priors on expected errors from neutral measurements
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-# Compute naive parameters
-prior_param = BayesFitness.stats.naive_prior_neutral(data)
+# Compute naive priors from neutral strains
+naive_priors = BayesFitness.stats.naive_prior(data; pseudocount=1)
 
-# Define parameter for population mean fitness adding a standard deviation
+# Select standard deviation parameters
 s_pop_prior = hcat(
-    prior_param[:s_pop_prior],
-    repeat([0.2], length(prior_param[:s_pop_prior]))
+    naive_priors[:s_pop_prior],
+    repeat([0.05], length(naive_priors[:s_pop_prior]))
 )
 
-##
+logσ_pop_prior = hcat(
+    naive_priors[:logσ_pop_prior],
+    repeat([1.0], length(naive_priors[:logσ_pop_prior]))
+)
+
+logσ_mut_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 1.0]
+
+logλ_prior = hcat(
+    naive_priors[:logλ_prior],
+    repeat([3.0], length(naive_priors[:logλ_prior]))
+)
+
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Define ADVI function parameters
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -107,17 +111,16 @@ param = Dict(
     :model => BayesFitness.model.genotype_fitness_normal,
     :model_kwargs => Dict(
         :s_pop_prior => s_pop_prior,
-        :logσ_pop_prior => prior_param[:logσ_pop_prior],
-        :logσ_mut_prior => prior_param[:logσ_pop_prior],
+        :logσ_pop_prior => logσ_pop_prior,
+        :logσ_mut_prior => logσ_mut_prior,
         :s_mut_prior => [0.0, 1.0],
+        :logλ_prior => logλ_prior,
         :genotypes => genotypes,
     ),
     :advi => Turing.ADVI(n_samples, n_steps),
     :opt => Turing.TruncatedADAGrad(),
     :fullrank => false
 )
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Perform optimization

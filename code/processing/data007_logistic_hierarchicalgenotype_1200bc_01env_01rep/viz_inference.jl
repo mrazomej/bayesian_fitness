@@ -14,11 +14,11 @@ import BayesFitness
 import StatsBase
 import Distributions
 import Random
+import LinearAlgebra
 
 # Import libraries to manipulate data
 import DataFrames as DF
 import CSV
-import MCMCChains
 
 # Import library to list files
 import Glob
@@ -37,8 +37,6 @@ CairoMakie.activate!()
 BayesFitUtils.viz.pboc_makie!()
 
 Random.seed!(42)
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Loading data
@@ -82,7 +80,7 @@ geno_idx = indexin(genotypes, geno_unique)
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Define file
-file = first(Glob.glob("./output/advi_meanfield*"))
+file = first(Glob.glob("./output/advi_meanfield*3000*"))
 
 # Load distribution
 advi_results = JLD2.load(file)
@@ -90,8 +88,10 @@ ids_advi = advi_results["ids"]
 dist_advi = advi_results["dist"]
 var_advi = advi_results["var"]
 
-# Extract distribution parameters
-dist_params = hcat(Distributions.params(dist_advi)...)
+# Convert results to tidy dataframe
+df_advi = BayesFitness.utils.advi2df(
+    dist_advi, var_advi, ids_advi; n_rep=1, genotypes=genotypes
+)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate samples from distribution and format into dataframe
@@ -100,28 +100,15 @@ dist_params = hcat(Distributions.params(dist_advi)...)
 # Define number of samples
 n_samples = 10_000
 
-# Sample from ADVI joint distribution and convert to dataframe
-df_samples = DF.DataFrame(Random.rand(dist_advi, n_samples)', var_advi)
-
-# Locate hyperparameter variables
-θ_idx = occursin.("θ̲⁽ᵐ⁾", String.(var_advi))
-# Find columns with fitness parameter deviation 
-τ_idx = occursin.("τ̲⁽ᵐ⁾", String.(var_advi))
-θ_tilde_idx = occursin.("θ̲̃⁽ᵐ⁾", String.(var_advi))
-
-# Compute samples for individual barcode fitness values. These are not
-# parameters included in the joint distribution, but can be computed from
-# samples of the other parameters
-df_samples = hcat(
-    df_samples,
-    DF.DataFrame(
-        Matrix(df_samples[:, θ_idx])[:, geno_idx] .+
-        (
-            exp.(Matrix(df_samples[:, τ_idx])) .*
-            Matrix(df_samples[:, θ_tilde_idx])
+# Sample from posterior MvNormal
+df_samples = DF.DataFrame(
+    Random.rand(
+        Distributions.MvNormal(
+            df_advi.mean, LinearAlgebra.Diagonal(df_advi.std .^ 2)
         ),
-        Symbol.("s_" .* ids_advi)
-    )
+        n_samples
+    )',
+    df_advi.varname
 )
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -173,180 +160,130 @@ BayesFitUtils.viz.logfreq_ratio_time_series!(
     ax,
     data[data.neutral, :];
     freq_col=:freq,
-    color=:gray,
-    alpha=0.5,
+    color=:black,
+    alpha=0.25,
     linewidth=2
 )
 
 # Save figure into pdf
 save("./output/figs/advi_logfreqratio_ppc_neutral.pdf", fig)
-save("./output/figs/advi_logfreqratio_ppc_neutral.svg", fig)
 
 fig
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Compute summary statistics for each barcode
+# Plot comparison between deterministic and Bayesian inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-# Initialize dataframe to save individual barcode summary statistics
-df_bc = DF.DataFrame()
-
-# Find barcode variables
-s_names = names(df_samples)[occursin.("s_", names(df_samples))]
-# Find genotype variables
-θ_names = names(df_samples)[occursin.("θ̲⁽ᵐ⁾", names(df_samples))]
-
-# Define percentiles to include
-per = [2.5, 97.5, 16, 84]
-
-# Loop through barcodes
-for (i, bc) in enumerate(s_names)
-    # Extract fitness chain
-    fitness_s = @view df_samples[:, bc]
-    # Extract hyperparameter chain
-    fitness_θ = @view df_samples[:, θ_names[geno_idx[i]]]
-
-    # Compute summary statistics
-    fitness_summary = Dict(
-        :s_mean => StatsBase.mean(fitness_s),
-        :s_median => StatsBase.median(fitness_s),
-        :s_std => StatsBase.std(fitness_s),
-        :s_var => StatsBase.var(fitness_s),
-        :s_skewness => StatsBase.skewness(fitness_s),
-        :s_kurtosis => StatsBase.kurtosis(fitness_s),
-        :θ_mean => StatsBase.mean(fitness_θ),
-        :θ_median => StatsBase.median(fitness_θ),
-        :θ_std => StatsBase.std(fitness_θ),
-        :θ_var => StatsBase.var(fitness_θ),
-        :θ_skewness => StatsBase.skewness(fitness_θ),
-        :θ_kurtosis => StatsBase.kurtosis(fitness_θ),)
-
-    # Loop through percentiles
-    for p in per
-        setindex!(
-            fitness_summary,
-            StatsBase.percentile(fitness_s, p),
-            Symbol("s_$(p)_percentile")
-        )
-        setindex!(
-            fitness_summary,
-            StatsBase.percentile(fitness_θ, p),
-            Symbol("θ_$(p)_percentile")
-        )
-    end # for
-
-    # Convert to dataframe
-    df = DF.DataFrame(fitness_summary)
-    # Add barcode
-    df[!, :id] .= bc
-    # Append to dataframe
-    DF.append!(df_bc, df)
-end # for
-
-# Add barcode and genotype
-DF.insertcols!(
-    df_bc,
-    :barcode => [split(x, "_")[2] for x in df_bc.id],
-    :genotype => geno_unique[geno_idx]
+# Extract dataframe with unique pairs of barcodes and fitness values
+data_fitness = DF.sort(
+    unique(data[(.!data.neutral), [:barcode, :fitness]]), :barcode
 )
 
-# Sort by barcode
-DF.sort!(df_bc, :barcode)
-
-# Append fitness and growth rate value
-DF.leftjoin!(
-    df_bc,
-    unique(
-        data[.!(data.neutral),
-            [:barcode, :genotype, :fitness, :growth_rate]]
-    );
-    on=[:barcode, :genotype]
+# Extract ADVI inferred fitness
+advi_fitness = DF.sort(
+    df_advi[(df_advi.vartype.=="mut_fitness"), [:id, :mean, :std]],
+    :id
 )
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Compare fitness of individal barcodes with ground truth
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Initialize figure
-fig = Figure(resolution=(350 * 2, 350))
+fig = Figure(resolution=(350, 350))
 
 # Add axis
-ax = [Axis(fig[1, i]) for i in 1:2]
+ax = Axis(
+    fig[1, 1],
+    xlabel="true fitness value",
+    ylabel="ADVI inferred fitness",
+)
 
-# Add identity line
-lines!(ax[1], repeat([[-0.05, 1.25]], 2)..., linestyle=:dash, color="black")
+# Plot identity line
+lines!(
+    ax,
+    repeat(
+        [[-0.1, 1.35]], 2
+    )...;
+    color=:black,
+    linestyle="--"
+)
 
-# Error bars
+# Add x-axis error bars
 errorbars!(
-    ax[1],
-    df_bc.fitness,
-    df_bc.s_median,
-    abs.(df_bc.s_median - df_bc[:, "s_16.0_percentile"]),
-    abs.(df_bc.s_median - df_bc[:, "s_84.0_percentile"]),
+    ax,
+    data_fitness.fitness,
+    advi_fitness.mean,
+    advi_fitness.std,
     color=(:gray, 0.5),
-    direction=:y,
+    direction=:y
 )
 
-# Add points
+# Plot comparison
 scatter!(
-    ax[1],
-    df_bc.fitness,
-    df_bc.s_mean,
-    markersize=5
+    ax,
+    data_fitness.fitness,
+    advi_fitness.mean,
+    markersize=8
 )
 
-# Label axis
-ax[1].xlabel = "true barcode fitness"
-ax[1].ylabel = "inferred fitness"
+save("./output/figs/advi_fitness_true.pdf", fig)
 
-df_genotype = DF.combine(
-    DF.groupby(df_bc, :genotype),
-    :θ_mean => StatsBase.mean,
-    :θ_mean => StatsBase.median,
-    Symbol("θ_16.0_percentile") => StatsBase.mean,
-    Symbol("θ_84.0_percentile") => StatsBase.mean,
-    :fitness => StatsBase.mean
+fig
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Plot comparison between deterministic and Bayesian inference
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Extract dataframe with unique pairs of barcodes and fitness values
+data_fitness_mean = DF.sort(
+    DF.combine(
+        DF.groupby(data[.!data.neutral, :], :genotype),
+        :fitness => StatsBase.mean
+    ),
+    :genotype
 )
 
-# Rename columns
-DF.rename!(
-    df_genotype,
-    :θ_mean_mean => :θ_mean,
-    :θ_mean_median => :θ_median,
-    Symbol("θ_16.0_percentile_mean") => :θ_16,
-    Symbol("θ_84.0_percentile_mean") => :θ_84,
-    :fitness_mean => :fitness
+# Extract ADVI inferred fitness
+advi_fitness_hyper = df_advi[
+    (df_advi.vartype.=="mut_hyperfitness"), [:varname, :mean, :std]
+]
+
+# Initialize figure
+fig = Figure(resolution=(350, 350))
+
+# Add axis
+ax = Axis(
+    fig[1, 1],
+    xlabel="true hyper-fitness value",
+    ylabel="ADVI inferred hyper-fitness",
 )
 
-# Add identity line
-lines!(ax[2], repeat([[-0.05, 1.25]], 2)..., linestyle=:dash, color="black")
+# Plot identity line
+lines!(
+    ax,
+    repeat(
+        [[-0.1, 1.35]], 2
+    )...;
+    color=:black,
+    linestyle="--"
+)
 
-# Error bars
+# Add x-axis error bars
 errorbars!(
-    ax[2],
-    df_genotype.fitness,
-    df_genotype.θ_mean,
-    abs.(df_genotype.θ_mean .- df_genotype.θ_16),
-    abs.(df_genotype.θ_mean .- df_genotype.θ_84),
+    ax,
+    data_fitness_mean.fitness_mean,
+    advi_fitness_hyper.mean,
+    advi_fitness_hyper.std,
     color=(:gray, 0.5),
-    direction=:y,
+    direction=:y
 )
 
-# Add points
+# Plot comparison
 scatter!(
-    ax[2],
-    df_genotype.fitness,
-    df_genotype.θ_mean,
-    markersize=5
+    ax,
+    data_fitness_mean.fitness_mean,
+    advi_fitness_hyper.mean,
+    markersize=8
 )
 
-# Label axis
-ax[2].xlabel = "true genotype fitness"
-ax[2].ylabel = "inferred fitness"
-
-# Save figure 
-save("./output/figs/advi_vs_true_fitness.pdf", fig)
-save("./output/figs/advi_vs_true_fitness.svg", fig)
+save("./output/figs/advi_hyperfitness_true.pdf", fig)
 
 fig
 
@@ -359,15 +296,13 @@ fig = Figure(resolution=(300 * 2, 300))
 # Add axis
 ax = Axis(fig[1, 1], xlabel="|barcode median - true value|", ylabel="ECDF")
 # Plot ECDF
-ecdfplot!(ax, abs.(df_bc.s_median .- df_bc.fitness))
+ecdfplot!(ax, abs.(data_fitness.fitness .- advi_fitness.mean))
 # Plot ECDF
 ax2 = Axis(fig[1, 2], xlabel="|genotype median - true value|", ylabel="ECDF")
 # Plot ECDF
-ecdfplot!(ax2, abs.(df_genotype.θ_median .- df_genotype.fitness))
-
+ecdfplot!(ax2, abs.(data_fitness_mean.fitness_mean .- advi_fitness_hyper.mean))
 
 save("./output/figs/advi_median_true_ecdf.pdf", fig)
-save("./output/figs/advi_median_true_ecdf.svg", fig)
 
 fig
 
@@ -383,14 +318,22 @@ qs = [0.95, 0.675, 0.05]
 # Define number of rows and columns
 n_row, n_col = [4, 4]
 
+# List example barcodes to plot
+bc_plot = StatsBase.sample(
+    unique(data[.!data.neutral, :barcode]), n_row * n_col
+)
+
+# Extract unique mutant/fitnes variable name pairs
+mut_var = df_advi[(df_advi.vartype.=="mut_fitness"), [:id, :varname]]
+
+# Generate dictionary from mutant name to fitness value
+mut_var_dict = Dict(zip(mut_var.id, mut_var.varname))
+
+# Define colors
+colors = get(ColorSchemes.Blues_9, LinRange(0.5, 1, length(qs)))
+
 # Initialize figure
 fig = Figure(resolution=(300 * n_col, 300 * n_row))
-
-# List example barcodes to plot
-bc_plot = StatsBase.sample(1:length(s_names), n_row * n_col)
-
-# find standard deviation variables
-σ_names = names(df_samples)[occursin.("logσ̲⁽ᵐ⁾", names(df_samples))]
 
 # Initialize plot counter
 counter = 1
@@ -398,47 +341,73 @@ counter = 1
 for row in 1:n_row
     # Loop through columns
     for col in 1:n_col
+        # Add GridLayout
+        gl = fig[row, col] = GridLayout()
         # Add axis
-        local ax = Axis(fig[row, col])
+        ax = Axis(gl[1, 1:6])
 
         # Extract data
         data_bc = DF.sort(
-            data[
-                data.barcode.==replace(s_names[bc_plot[counter]], "s_" => ""),
-                :],
-            :time
+            data[(data.barcode.==bc_plot[counter]), :], :time
         )
 
-        # Define colors
-        local colors = get(ColorSchemes.Blues_9, LinRange(0.5, 1.0, length(qs)))
+        # Extract variables for barcode PPC
+        global vars_bc = [
+            names(df_samples)[occursin.("s̲ₜ", names(df_samples))]
+            mut_var_dict[bc_plot[counter]]
+            replace(mut_var_dict[bc_plot[counter]], "s" => "logσ")
+        ]
+
 
         # Define dictionary with corresponding parameters for variables needed
         # for the posterior predictive checks
         local param = Dict(
-            :mutant_mean_fitness => Symbol(s_names[bc_plot[counter]]),
-            :mutant_std_fitness => Symbol(σ_names[bc_plot[counter]]),
-            :population_mean_fitness => :s̲ₜ,
+            :mutant_mean_fitness => Symbol(mut_var_dict[bc_plot[counter]]),
+            :mutant_std_fitness => Symbol(
+                replace(mut_var_dict[bc_plot[counter]], "s" => "logσ")
+            ),
+            :population_mean_fitness => Symbol("s̲ₜ"),
         )
         # Compute posterior predictive checks
         local ppc_mat = BayesFitness.stats.logfreq_ratio_mutant_ppc(
-            df_samples, n_ppc; model=:normal, param=param
+            df_samples[:, Symbol.(vars_bc)],
+            n_ppc;
+            model=:normal,
+            param=param
         )
+
         # Plot posterior predictive checks
         BayesFitUtils.viz.ppc_time_series!(
-            ax, qs, ppc_mat; colors=colors
+            ax,
+            qs,
+            ppc_mat;
+            colors=colors,
+            time=sort(unique(data.time))[2:end]
         )
 
-        # Add scatter of data
-        scatterlines!(ax, diff(log.(data_bc.freq)), color=:black, linewidth=2.5)
-
-        # Add title
-        ax.title = "$(replace(s_names[bc_plot[counter]], "s_" => ""))"
-        ax.titlesize = 18
-
-        ## == Plot format == ##
+        # Plot log-frequency ratio of neutrals
+        BayesFitUtils.viz.logfreq_ratio_time_series!(
+            ax,
+            data_bc,
+            freq_col=:freq,
+            color=:black,
+            linewidth=3,
+            markersize=12
+        )
 
         # Hide axis decorations
         hidedecorations!.(ax, grid=false)
+        # Set row and col gaps
+        rowgap!(gl, 1)
+
+        # Add barcode as title
+        Label(
+            gl[0, 3:4],
+            text="barcode $(bc_plot[counter])",
+            fontsize=12,
+            justification=:center,
+            lineheight=0.9
+        )
 
         # Update counter
         global counter += 1
@@ -446,11 +415,10 @@ for row in 1:n_row
 end # for
 
 # Add x-axis label
-Label(fig[end, :, Bottom()], "time points", fontsize=22)
+Label(fig[end, :, Bottom()], "time points", fontsize=20)
 # Add y-axis label
-Label(fig[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=22)
-
-fig
+Label(fig[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=20)
 
 save("./output/figs/advi_logfreqratio_ppc_mutant.pdf", fig)
-save("./output/figs/advi_logfreqratio_ppc_mutant.svg", fig)
+
+fig

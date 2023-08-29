@@ -76,8 +76,6 @@ frac_neutral = 0.02
 # Define fraction of culture that is mutants
 frac_mut = 1 - frac_anc - frac_neutral
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Define random initial number of cels
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -107,7 +105,7 @@ n₀ = [
 
 # Set neutral growth rates
 λ̲_geno[1:n_neutral+1] .= λ_a
-λ̲[1:n_neutral+1] .= λ_a
+# λ̲[1:n_neutral+1] .= λ_a
 
 # Define mutant fitness distribution mean
 λ_mut_mean = λ_a * 1.005
@@ -196,7 +194,8 @@ df_fit = DF.DataFrame(
     :genotype => [
         repeat(["genotype000"], n_neutral)
         vcat([
-            repeat(["genotype$(lpad(i, 2, "0"))"], n_geno_bc[i]) for i in 1:n_geno
+            repeat(["genotype$(lpad(i, 3, "0"))"], n_geno_bc[i])
+            for i in 1:n_geno
         ]...)
     ])
 
