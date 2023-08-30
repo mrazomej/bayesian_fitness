@@ -71,16 +71,15 @@ df_counts = CSV.read(
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Select columns that indicate the dataset
-df_idx = df_counts[:, 12:end]
+df_idx = df_counts[:, 13:end]
 
 # Enumerate the columns (needed to run things in parallel smoothly)
 n_col = size(df_idx, 2)
 
 # Loop through each dataset
-# Threads.@threads 
-for col = 1:n_col
+Threads.@threads for col = 1:n_col
     # Select data
-    data = df_counts[df_idx[:, col], 1:11]
+    data = df_counts[df_idx[:, col], 1:12]
 
     # Extract information
     condition = first(data.condition)
@@ -106,20 +105,20 @@ for col = 1:n_col
 
     if length(unique(n_rep_time)) == 1
         # Define environment cycles
-        global envs = collect(unique(data[:, [:time, :env]])[:, :env])
+        envs = collect(unique(data[:, [:time, :env]])[:, :env])
         # Define number of environments
-        n_env = length(unique(envs))
+        n_env = first(data.n_env)
     else
         # Obtain list of environments per replicate
-        global envs = [
+        envs = [
             collect(unique(d[:, [:time, :env]])[:, :env])
             for d in data_rep_group
         ]
         # Define number of environments
-        n_env = length(unique(reduce(vcat, envs)))
+        n_env = first(data.n_env)
     end # if
 
-    println("$(out_dir) : $(n_env)")
+    println("$(out_dir) #environments = $(n_env)")
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
     # Obtain priors on expected errors from neutral measurements
@@ -160,7 +159,7 @@ for col = 1:n_col
             :data => data,
             :outputname => "$(out_dir)/advi_meanfield_hierarchical_" *
                            "$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
-            :model => BayesFitness.model.replicate_fitness_lognormal,
+            :model => BayesFitness.model.replicate_fitness_normal,
             :model_kwargs => Dict(
                 :s_pop_prior => s_pop_prior,
                 :logσ_pop_prior => logσ_pop_prior,
@@ -198,12 +197,8 @@ for col = 1:n_col
     # Perform optimization
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-    # try
-    #     # Run inference
-    #     println("Running Variational Inference for $(condition)...")
-    #     @time dist = BayesFitness.vi.advi(; param...)
-    # catch
-    #     println("already processed")
-    # end
+    # Run inference
+    println("Running Variational Inference for $(condition)...")
+    @time dist = BayesFitness.vi.advi(; param...)
 
 end # for
