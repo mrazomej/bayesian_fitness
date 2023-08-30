@@ -126,7 +126,7 @@ s_pop_prior = hcat(
     last.(Distributions.params.(pop_std))
 )
 # Define parameters for mutant fitness error
-σ_mut_prior = maximum.(eachcol(σ_pop_prior))
+σ_bc_prior = maximum.(eachcol(σ_pop_prior))
 
 # Load chain into memory
 chn = JLD2.load("./output/chain_freq_300steps_03walkers.jld2")["chain"]
@@ -163,8 +163,8 @@ param = Dict(
     :model_kwargs => Dict(
         :s_pop_prior => s_pop_prior,
         :σ_pop_prior => σ_pop_prior,
-        :σ_mut_prior => σ_mut_prior,
-        :s_mut_prior => [0.0, 1.0],
+        :σ_bc_prior => σ_bc_prior,
+        :s_bc_prior => [0.0, 1.0],
         :envs => [1, 1, 2, 3, 1, 2, 3],
     ),
     :sampler => Turing.DynamicNUTS(),

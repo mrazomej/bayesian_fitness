@@ -153,9 +153,9 @@ function prior_neutral(data, rm_T0)
 
     # Define priors for nuisance parameters for log-likelihood functions
     logσ_pop_prior = [StatsBase.mean(logfreq_vec), StatsBase.std(logfreq_vec)]
-    logσ_mut_prior = logσ_pop_prior
+    logσ_bc_prior = logσ_pop_prior
 
-    return s_pop_prior, logσ_pop_prior, logσ_mut_prior
+    return s_pop_prior, logσ_pop_prior, logσ_bc_prior
 end # function
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -173,7 +173,7 @@ Threads.@threads for i in axes(df_include, 1)
     data = df[(df.env.==env).&(df.rep.==rep), :]
 
     # Extract prior information
-    s_pop_prior, logσ_pop_prior, logσ_mut_prior = prior_neutral(data, rm_T0)
+    s_pop_prior, logσ_pop_prior, logσ_bc_prior = prior_neutral(data, rm_T0)
 
     # Define function parameters
     param = Dict(
@@ -184,8 +184,8 @@ Threads.@threads for i in axes(df_include, 1)
         :model_kwargs => Dict(
             :s_pop_prior => s_pop_prior,
             :logσ_pop_prior => logσ_pop_prior,
-            :logσ_mut_prior => logσ_mut_prior,
-            :s_mut_prior => [0.0, 1.0],
+            :logσ_bc_prior => logσ_bc_prior,
+            :s_bc_prior => [0.0, 1.0],
         ),
         :advi => Turing.ADVI(n_samples, n_steps),
         :opt => Turing.TruncatedADAGrad(),

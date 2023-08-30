@@ -83,7 +83,7 @@ logσ_pop_prior = hcat(
     repeat([1.0], length(naive_priors[:logσ_pop_prior]))
 )
 
-logσ_mut_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 1.0]
+logσ_bc_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 1.0]
 
 logλ_prior = hcat(
     naive_priors[:logλ_prior],
@@ -95,13 +95,13 @@ logλ_prior = hcat(
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Generate dictionary from mutants to genotypes
-mut_geno_dict = Dict(values.(keys(DF.groupby(data, [:barcode, :genotype]))))
+bc_geno_dict = Dict(values.(keys(DF.groupby(data, [:barcode, :genotype]))))
 
 # Extract list of mutants as they will be used in the inference
-mut_ids = BayesFitness.utils.data_to_arrays(data)[:mut_ids]
+bc_ids = BayesFitness.utils.data_to_arrays(data)[:bc_ids]
 
 # Extract genotypes in the order they will be used in the inference
-genotypes = [mut_geno_dict[m] for m in mut_ids]
+genotypes = [bc_geno_dict[m] for m in bc_ids]
 
 ##
 param = Dict(
@@ -112,8 +112,8 @@ param = Dict(
     :model_kwargs => Dict(
         :s_pop_prior => s_pop_prior,
         :logσ_pop_prior => logσ_pop_prior,
-        :logσ_mut_prior => logσ_mut_prior,
-        :s_mut_prior => [0.0, 1.0],
+        :logσ_bc_prior => logσ_bc_prior,
+        :s_bc_prior => [0.0, 1.0],
         :logλ_prior => logλ_prior,
         :genotypes => genotypes,
     ),

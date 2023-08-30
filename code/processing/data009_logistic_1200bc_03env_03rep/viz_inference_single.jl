@@ -221,7 +221,7 @@ for file in files
         # Extract corresponding inference
         d_advi = DF.sort(
             df_advi[
-                (df_advi.env.==env).&(df_advi.vartype.=="mut_fitness"),
+                (df_advi.env.==env).&(df_advi.vartype.=="bc_fitness"),
                 [:id, :mean, :std]
             ],
             :id
@@ -283,7 +283,7 @@ for file in files
     # Extract corresponding inference
     d_advi = DF.sort(
         df_advi[
-            (df_advi.vartype.=="mut_fitness"),
+            (df_advi.vartype.=="bc_fitness"),
             [:id, :mean, :std]
         ],
         :id
@@ -321,7 +321,7 @@ for file in files
         # Extract corresponding inference
         d_advi = DF.sort(
             df_advi[
-                (df_advi.env.==env).&(df_advi.vartype.=="mut_fitness"),
+                (df_advi.env.==env).&(df_advi.vartype.=="bc_fitness"),
                 [:id, :mean, :std]
             ],
             :id
@@ -359,7 +359,7 @@ for file in files
 
     # List example barcodes to plot
     bc_plot = StatsBase.sample(
-        unique(df_advi[(df_advi.vartype.=="mut_fitness"), :id]), n_row * n_col
+        unique(df_advi[(df_advi.vartype.=="bc_fitness"), :id]), n_row * n_col
     )
 
     # Initialize plot counter
@@ -375,7 +375,7 @@ for file in files
             data_bc = DF.sort(data[data.barcode.==bc_plot[counter], :], :time)
             # Extract fitness variable names
             s_var = df_advi[
-                (df_advi.id.==bc_plot[counter]).&(df_advi.vartype.=="mut_fitness"),
+                (df_advi.id.==bc_plot[counter]).&(df_advi.vartype.=="bc_fitness"),
                 :varname]
             # Extract logσ variable names
             σ_var = replace.(s_var, Ref("s" => "logσ"))

@@ -103,7 +103,7 @@ Threads.@threads for rep = 1:length(data_rep)
         repeat([1.0], length(naive_priors[:logσ_pop_prior]))
     )
 
-    logσ_mut_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 1.0]
+    logσ_bc_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 1.0]
 
     logλ_prior = hcat(
         naive_priors[:logλ_prior],
@@ -121,8 +121,8 @@ Threads.@threads for rep = 1:length(data_rep)
         :model_kwargs => Dict(
             :s_pop_prior => s_pop_prior,
             :logσ_pop_prior => logσ_pop_prior,
-            :logσ_mut_prior => logσ_mut_prior,
-            :s_mut_prior => [0.0, 1.0],
+            :logσ_bc_prior => logσ_bc_prior,
+            :s_bc_prior => [0.0, 1.0],
             :logλ_prior => logλ_prior,
             :envs => envs,
         ),
@@ -159,13 +159,13 @@ for f in files
     advi_results = JLD2.load(f)
 
     # Extract components
-    mut_ids = advi_results["ids"]
+    bc_ids = advi_results["ids"]
     dist = advi_results["dist"]
     vars = advi_results["var"]
 
     # Generate tidy dataframe with distribution information
     global df_advi = BayesFitness.utils.advi_to_df(
-        dist, vars, mut_ids; n_rep=1, envs=envs
+        dist, vars, bc_ids; n_rep=1, envs=envs
     )
 
     # Save output

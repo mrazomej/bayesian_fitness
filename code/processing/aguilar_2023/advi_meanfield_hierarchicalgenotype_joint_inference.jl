@@ -41,7 +41,7 @@ Turing.setrdcache(true)
 
 # Define number of samples and steps
 n_samples = 1
-n_steps = 3_000
+n_steps = 10_000
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate output directories
@@ -69,9 +69,6 @@ df = df[df.rep.!="N/A", :]
 df_group = DF.groupby(df, :rep)
 
 println("Number of repeats: $(length(df_group))")
-
-# Remove group 1
-# df_group = df_group[2:end]
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Run inference
@@ -112,7 +109,7 @@ Threads.@threads for i in eachindex(df_group)
         repeat([1.0], length(naive_priors[:logσ_pop_prior]))
     )
 
-    logσ_mut_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 1.0]
+    logσ_bc_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 1.0]
 
     logλ_prior = hcat(
         naive_priors[:logλ_prior],
@@ -128,7 +125,7 @@ Threads.@threads for i in eachindex(df_group)
     oligo_edit_dict = Dict(oligo_edit[:, :oligo] .=> oligo_edit[:, :edit])
 
     # Extract list of oligos as they will be used in the inference
-    oligo_ids = BayesFitness.utils.data_to_arrays(data; id_col=:oligo)[:mut_ids]
+    oligo_ids = BayesFitness.utils.data_to_arrays(data; id_col=:oligo)[:bc_ids]
 
     # Extract edits in the order they will be used in the inference
     edit_list = [oligo_edit_dict[m] for m in oligo_ids]
@@ -143,8 +140,8 @@ Threads.@threads for i in eachindex(df_group)
         :model_kwargs => Dict(
             :s_pop_prior => s_pop_prior,
             :logσ_pop_prior => logσ_pop_prior,
-            :logσ_mut_prior => logσ_mut_prior,
-            :s_mut_prior => [0.0, 1.0],
+            :logσ_bc_prior => logσ_bc_prior,
+            :s_bc_prior => [0.0, 1.0],
             :genotypes => edit_list,
         ),
         :id_col => :oligo,
@@ -153,7 +150,6 @@ Threads.@threads for i in eachindex(df_group)
         :fullrank => false
     )
 
-    # Perform optimization
     # Run inference
     println("Running Variational Inference...")
     @time dist = BayesFitness.vi.advi(; param...)

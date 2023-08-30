@@ -96,7 +96,7 @@ n₀ = [
 ]
 
 # Define standard deviation to sample growth rates
-λ_mut_std = 0.1
+λ_bc_std = 0.1
 
 # Initialize array to store growth rates
 λ̲̲ = Matrix{Float64}(undef, n_bc + 1, n_env)
@@ -107,7 +107,7 @@ for env in 1:n_env
     λ̲̲[1:n_neutral+1, env] .= λ_a[env]
 
     # Define mutant fitness distribution mean
-    λ_mut_mean = λ_a[env] * 1.005
+    λ_bc_mean = λ_a[env] * 1.005
 
     # Define truncation ranges for growth rates
     λ_trunc = [λ_a[env] .* 0.9995, λ_a[env] * 1.5]
@@ -116,7 +116,7 @@ for env in 1:n_env
     λ̲̲[n_neutral+2:end, env] .= sort!(
         rand(
             Distributions.truncated(
-                Distributions.Normal(λ_mut_mean, λ_mut_std), λ_trunc...
+                Distributions.Normal(λ_bc_mean, λ_bc_std), λ_trunc...
             ), n_mut
         )
     )
@@ -351,9 +351,9 @@ n_init = κ / (2^(n_gen)) = $(n_init)
 ## Initial fraction of culture that is mutants
 `frac_mut = $(frac_mut)`
 ## Mutant fitness distribution mean
-`λ_mut_mean = λ_a * 1.005 = $(λ_a .* 1.005)
+`λ_bc_mean = λ_a * 1.005 = $(λ_a .* 1.005)
 ## Mutant fitness distribution standard deviation to sample growth rates
-`λ_mut_std = $(λ_mut_std)`
+`λ_bc_std = $(λ_bc_std)`
 ## Mutant fitness distribution truncation ranges for growth rates
 `λ_trunc = [λ_a .* 0.9995, λ_a .* 1.5] = $([[λ_a .* 0.995], [λ_a .* 1.5]])`
 ## Gaussian noise distribution standard deviation

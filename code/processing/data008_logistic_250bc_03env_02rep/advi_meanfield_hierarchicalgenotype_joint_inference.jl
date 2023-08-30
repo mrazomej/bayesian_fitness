@@ -81,7 +81,7 @@ n_env = length(unique(data.env))
 # Initialize list to save priors
 s_pop_p = []
 logσ_pop_p = []
-logσ_mut_p = []
+logσ_bc_p = []
 
 # Group data by replicates
 data_rep = DF.groupby(data[data.neutral, :], :rep)
@@ -121,7 +121,7 @@ for df in data_rep
         logσ_pop_p, [StatsBase.mean(logfreq_vec), StatsBase.std(logfreq_vec)]
     )
     push!(
-        logσ_mut_p, [StatsBase.mean(logfreq_vec), StatsBase.std(logfreq_vec)]
+        logσ_bc_p, [StatsBase.mean(logfreq_vec), StatsBase.std(logfreq_vec)]
     )
 end # for
 
@@ -133,7 +133,7 @@ logσ_pop_prior = vcat(
         hcat(repeat([x], length(unique(data.time)) - 1)...)' for x in logσ_pop_p
     ]...
 )
-logσ_mut_prior = vcat(
+logσ_bc_prior = vcat(
     [
         hcat(repeat([x],
             length(unique(data[.!data.neutral, :barcode])) * n_env)...)'
@@ -158,8 +158,8 @@ param = Dict(
         :envs => env_idx,
         :s_pop_prior => s_pop_prior,
         :logσ_pop_prior => logσ_pop_prior,
-        :logσ_mut_prior => logσ_mut_prior,
-        :s_mut_prior => [0.0, 1.0],
+        :logσ_bc_prior => logσ_bc_prior,
+        :s_bc_prior => [0.0, 1.0],
     ),
     :advi => Turing.ADVI(n_samples, n_steps),
     :opt => Turing.TruncatedADAGrad(),

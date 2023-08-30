@@ -60,13 +60,13 @@ data = CSV.read(
 )
 
 # Generate dictionary from mutants to genotypes
-mut_geno_dict = Dict(values.(keys(DF.groupby(data, [:barcode, :genotype]))))
+bc_geno_dict = Dict(values.(keys(DF.groupby(data, [:barcode, :genotype]))))
 
 # Extract list of mutants as they were used in the inference
-mut_ids = BayesFitness.utils.data_to_arrays(data)[:mut_ids]
+bc_ids = BayesFitness.utils.data_to_arrays(data)[:bc_ids]
 
 # Extract genotypes in the order they were used in the inference
-genotypes = [mut_geno_dict[m] for m in mut_ids]
+genotypes = [bc_geno_dict[m] for m in bc_ids]
 
 # Find unique genotypes
 geno_unique = unique(genotypes)
@@ -181,7 +181,7 @@ data_fitness = DF.sort(
 
 # Extract ADVI inferred fitness
 advi_fitness = DF.sort(
-    df_advi[(df_advi.vartype.=="mut_fitness"), [:id, :mean, :std]],
+    df_advi[(df_advi.vartype.=="bc_fitness"), [:id, :mean, :std]],
     :id
 )
 
@@ -242,7 +242,7 @@ data_fitness_mean = DF.sort(
 
 # Extract ADVI inferred fitness
 advi_fitness_hyper = df_advi[
-    (df_advi.vartype.=="mut_hyperfitness"), [:varname, :mean, :std]
+    (df_advi.vartype.=="bc_hyperfitness"), [:varname, :mean, :std]
 ]
 
 # Initialize figure
@@ -324,10 +324,10 @@ bc_plot = StatsBase.sample(
 )
 
 # Extract unique mutant/fitnes variable name pairs
-mut_var = df_advi[(df_advi.vartype.=="mut_fitness"), [:id, :varname]]
+bc_var = df_advi[(df_advi.vartype.=="bc_fitness"), [:id, :varname]]
 
 # Generate dictionary from mutant name to fitness value
-mut_var_dict = Dict(zip(mut_var.id, mut_var.varname))
+bc_var_dict = Dict(zip(bc_var.id, bc_var.varname))
 
 # Define colors
 colors = get(ColorSchemes.Blues_9, LinRange(0.5, 1, length(qs)))
@@ -354,17 +354,17 @@ for row in 1:n_row
         # Extract variables for barcode PPC
         global vars_bc = [
             names(df_samples)[occursin.("s̲ₜ", names(df_samples))]
-            mut_var_dict[bc_plot[counter]]
-            replace(mut_var_dict[bc_plot[counter]], "s" => "logσ")
+            bc_var_dict[bc_plot[counter]]
+            replace(bc_var_dict[bc_plot[counter]], "s" => "logσ")
         ]
 
 
         # Define dictionary with corresponding parameters for variables needed
         # for the posterior predictive checks
         local param = Dict(
-            :mutant_mean_fitness => Symbol(mut_var_dict[bc_plot[counter]]),
+            :mutant_mean_fitness => Symbol(bc_var_dict[bc_plot[counter]]),
             :mutant_std_fitness => Symbol(
-                replace(mut_var_dict[bc_plot[counter]], "s" => "logσ")
+                replace(bc_var_dict[bc_plot[counter]], "s" => "logσ")
             ),
             :population_mean_fitness => Symbol("s̲ₜ"),
         )

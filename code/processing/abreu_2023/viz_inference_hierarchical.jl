@@ -105,12 +105,12 @@ file = first(Glob.glob("./output/advi_meanfield_hier*3000*"))
 
 # Load distribution
 advi_results = JLD2.load(file)
-mut_ids = advi_results["ids"]
+bc_ids = advi_results["ids"]
 dist = advi_results["dist"]
 vars = advi_results["var"]
 
 # Generate tidy dataframe with distribution information
-df_advi = BayesFitness.utils.advi_to_df(dist, vars, mut_ids; n_rep=3, envs=envs)
+df_advi = BayesFitness.utils.advi_to_df(dist, vars, bc_ids; n_rep=3, envs=envs)
 
 # Rename env column and re-add env as numeric value
 DF.rename!(df_advi, :env => :environment)
@@ -171,14 +171,14 @@ for (i, p) in enumerate(rep_pairs)
     lines!(ax[i], repeat([[-3, 2]], 2)..., linestyle=:dash, color="black")
 
     # Group data by environment
-    df_group = DF.groupby(df_advi[df_advi.vartype.=="mut_fitness", :], :env)
+    df_group = DF.groupby(df_advi[df_advi.vartype.=="bc_fitness", :], :env)
 
     # Loop through environments
     for (j, data) in enumerate(df_group)
         # Group data by repeat
         data_group = DF.groupby(
             data[
-                ((data.rep.==p[1]).|(data.rep.==p[2])).&(data.vartype.=="mut_fitness"),
+                ((data.rep.==p[1]).|(data.rep.==p[2])).&(data.vartype.=="bc_fitness"),
                 :],
             :rep
         )
@@ -210,7 +210,7 @@ for (i, p) in enumerate(rep_pairs)
         # Group data by repeat
         data_group = DF.groupby(
             data[
-                ((data.rep.==p[1]).|(data.rep.==p[2])).&(data.vartype.=="mut_fitness"),
+                ((data.rep.==p[1]).|(data.rep.==p[2])).&(data.vartype.=="bc_fitness"),
                 :],
             :rep
         )
@@ -270,11 +270,11 @@ for rep in 1:n_rep
         # Plot x-axis error bars
         errorbars!(
             ax[rep],
-            data[data.vartype.=="mut_hyperfitness", :mean],
+            data[data.vartype.=="bc_hyperfitness", :mean],
             data[
-                (data.vartype.=="mut_fitness").&(data.rep.=="R$rep"),
+                (data.vartype.=="bc_fitness").&(data.rep.=="R$rep"),
                 :mean],
-            data[data.vartype.=="mut_hyperfitness", :std],
+            data[data.vartype.=="bc_hyperfitness", :std],
             direction=:x,
             linewidth=1.5,
             color=(:gray, 0.25)
@@ -282,12 +282,12 @@ for rep in 1:n_rep
         # Plot y-axis error bars
         errorbars!(
             ax[rep],
-            data[data.vartype.=="mut_hyperfitness", :mean],
+            data[data.vartype.=="bc_hyperfitness", :mean],
             data[
-                (data.vartype.=="mut_fitness").&(data.rep.=="R$rep"),
+                (data.vartype.=="bc_fitness").&(data.rep.=="R$rep"),
                 :mean],
             data[
-                (data.vartype.=="mut_fitness").&(data.rep.=="R$rep"),
+                (data.vartype.=="bc_fitness").&(data.rep.=="R$rep"),
                 :std],
             direction=:y,
             linewidth=1.5,
@@ -304,9 +304,9 @@ for rep = 1:n_rep
         # Plot fitness values
         scatter!(
             ax[rep],
-            data[data.vartype.=="mut_hyperfitness", :mean],
+            data[data.vartype.=="bc_hyperfitness", :mean],
             data[
-                (data.vartype.=="mut_fitness").&(data.rep.=="R$rep"),
+                (data.vartype.=="bc_fitness").&(data.rep.=="R$rep"),
                 :mean],
             markersize=5,
             color=(env_colors[env], 0.75)
@@ -415,7 +415,7 @@ qs = [0.95, 0.675, 0.05]
 n_row, n_col = [3, 3]
 
 # List example barcodes to plot
-bc_plot = StatsBase.sample(mut_ids, n_row * n_col)
+bc_plot = StatsBase.sample(bc_ids, n_row * n_col)
 
 # Define colors
 colors = [

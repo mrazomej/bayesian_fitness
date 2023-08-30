@@ -112,8 +112,8 @@ Threads.@threads for i in 1:length(df_keys)
         :model_kwargs => Dict(
             :s_pop_prior => s_pop_prior,
             :logσ_pop_prior => prior_param[:logσ_pop_prior],
-            :logσ_mut_prior => prior_param[:logσ_pop_prior],
-            :s_mut_prior => [0.0, 1.0],
+            :logσ_bc_prior => prior_param[:logσ_pop_prior],
+            :s_bc_prior => [0.0, 1.0],
         ),
         :advi => Turing.ADVI(n_samples, n_steps),
         :opt => Turing.TruncatedADAGrad(),

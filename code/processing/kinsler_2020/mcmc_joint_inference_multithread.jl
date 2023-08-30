@@ -162,7 +162,7 @@ for i in axes(df_include, 1)
     # Define priors
     s_pop_prior = Matrix(popmean[:, [:s_mean, :s_std]])
     σ_pop_prior = Matrix(popmean[:, [:σ_mean, :σ_std]])
-    σ_mut_prior = StatsBase.mean(eachcol(σ_pop_prior))
+    σ_bc_prior = StatsBase.mean(eachcol(σ_pop_prior))
 
     # Define function parameters
     param = Dict(
@@ -174,7 +174,7 @@ for i in axes(df_include, 1)
         :model_kwargs => Dict(
             :s_pop_prior => s_pop_prior,
             :σ_pop_prior => σ_pop_prior,
-            :σ_mut_prior => σ_mut_prior,
+            :σ_bc_prior => σ_bc_prior,
         ),
         :sampler => Turing.DynamicNUTS(),
         :ensemble => Turing.MCMCThreads(),

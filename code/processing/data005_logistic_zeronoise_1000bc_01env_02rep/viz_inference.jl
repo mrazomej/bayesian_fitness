@@ -140,7 +140,7 @@ for (i, p) in enumerate(rep_pairs)
     # Group data by repeat
     data_group = DF.groupby(
         df_advi[
-            ((df_advi.rep.==p[1]).|(df_advi.rep.==p[2])).&(df_advi.vartype.=="mut_fitness"),
+            ((df_advi.rep.==p[1]).|(df_advi.rep.==p[2])).&(df_advi.vartype.=="bc_fitness"),
             :],
         :rep
     )
@@ -216,11 +216,11 @@ for rep in 1:n_rep
     # Plot x-axis error bars
     errorbars!(
         ax[rep],
-        df_advi[df_advi.vartype.=="mut_hyperfitness", :mean],
+        df_advi[df_advi.vartype.=="bc_hyperfitness", :mean],
         df_advi[
-            (df_advi.vartype.=="mut_fitness").&(df_advi.rep.=="R$rep"),
+            (df_advi.vartype.=="bc_fitness").&(df_advi.rep.=="R$rep"),
             :mean],
-        df_advi[df_advi.vartype.=="mut_hyperfitness", :std],
+        df_advi[df_advi.vartype.=="bc_hyperfitness", :std],
         direction=:x,
         linewidth=1.5,
         color=(:gray, 0.25)
@@ -228,12 +228,12 @@ for rep in 1:n_rep
     # Plot y-axis error bars
     errorbars!(
         ax[rep],
-        df_advi[df_advi.vartype.=="mut_hyperfitness", :mean],
+        df_advi[df_advi.vartype.=="bc_hyperfitness", :mean],
         df_advi[
-            (df_advi.vartype.=="mut_fitness").&(df_advi.rep.=="R$rep"),
+            (df_advi.vartype.=="bc_fitness").&(df_advi.rep.=="R$rep"),
             :mean],
         df_advi[
-            (df_advi.vartype.=="mut_fitness").&(df_advi.rep.=="R$rep"),
+            (df_advi.vartype.=="bc_fitness").&(df_advi.rep.=="R$rep"),
             :std],
         direction=:y,
         linewidth=1.5,
@@ -243,9 +243,9 @@ for rep in 1:n_rep
     # Plot fitness values
     scatter!(
         ax[rep],
-        df_advi[df_advi.vartype.=="mut_hyperfitness", :mean],
+        df_advi[df_advi.vartype.=="bc_hyperfitness", :mean],
         df_advi[
-            (df_advi.vartype.=="mut_fitness").&(df_advi.rep.=="R$rep"),
+            (df_advi.vartype.=="bc_fitness").&(df_advi.rep.=="R$rep"),
             :mean],
         markersize=5,
     )
@@ -261,7 +261,7 @@ fig
 
 # Extract information
 data_advi = df_advi[
-    df_advi.vartype.=="mut_hyperfitness", [:id, :mean, :std]
+    df_advi.vartype.=="bc_hyperfitness", [:id, :mean, :std]
 ]
 DF.rename!(data_advi, :id => :barcode)
 
@@ -458,10 +458,10 @@ for row in 1:n_row
             ]
             # Extract specific mutant variables variable name
             s_var = first(df_advi[
-                (df_advi.id.==bc_plot[counter]).&(df_advi.rep.==string(key)).&(df_advi.vartype.=="mut_fitness"),
+                (df_advi.id.==bc_plot[counter]).&(df_advi.rep.==string(key)).&(df_advi.vartype.=="bc_fitness"),
                 :varname])
             logσ_var = first(df_advi[
-                (df_advi.id.==bc_plot[counter]).&(df_advi.rep.==string(key)).&(df_advi.vartype.=="mut_error"),
+                (df_advi.id.==bc_plot[counter]).&(df_advi.rep.==string(key)).&(df_advi.vartype.=="bc_error"),
                 :varname])
 
             # Define dictionary with corresponding parameters for variables needed

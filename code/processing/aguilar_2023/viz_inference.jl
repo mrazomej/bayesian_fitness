@@ -14,11 +14,11 @@ import BayesFitness
 import StatsBase
 import Distributions
 import Random
+import LinearAlgebra
 
 # Import libraries to manipulate data
 import DataFrames as DF
 import CSV
-import MCMCChains
 
 # Import library to list files
 import Glob
@@ -39,8 +39,6 @@ BayesFitUtils.viz.pboc_makie!()
 
 Random.seed!(42)
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Loading data
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -58,21 +56,20 @@ end # if
 println("Loading data...")
 
 # Import data
-df = CSV.read(
+df_counts = CSV.read(
     "$(git_root())/data/aguilar_2023/tidy_counts_oligo.csv", DF.DataFrame
 )
 
 # Remove repeat "N/A"
-df = df[df.rep.!="N/A", :]
-
-# Select R1 as representative dataset
-data = df[df.rep.=="R1", :]
+df_counts = df_counts[df_counts.rep.!="N/A", :]
 
 # Generate dictionary from mutants to genotypes
-oligo_edit_dict = Dict(values.(keys(DF.groupby(data, [:oligo, :edit]))))
+oligo_edit_dict = Dict(values.(keys(DF.groupby(df_counts, [:oligo, :edit]))))
 
 # Extract list of mutants as they were used in the inference
-oligo_ids = BayesFitness.utils.data_to_arrays(data; id_col=:oligo)[:mut_ids]
+oligo_ids = BayesFitness.utils.data_to_arrays(
+    df_counts[df_counts.rep.=="R1", :]; id_col=:oligo
+)[:bc_ids]
 
 # Extract genotypes in the order they were used in the inference
 edits = [oligo_edit_dict[m] for m in oligo_ids]
@@ -89,7 +86,7 @@ edits_idx = indexin(edits, edits_unique)
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Define file
-files = Glob.glob("./output/advi_meanfield_pop*50*")
+files = Glob.glob("./output/advi_meanfield_*10000*")
 
 # Initialize dictionary to save outputs
 advi_output = Dict()
@@ -98,6 +95,20 @@ advi_output = Dict()
 for (i, file) in enumerate(files)
     # Load distribution
     setindex!(advi_output, JLD2.load(file), "R$(i)")
+    # Convert distribution to tidy dataframe
+    df_advi = BayesFitness.utils.advi_to_df(
+        advi_output["R$(i)"]["dist"],
+        advi_output["R$(i)"]["var"],
+        advi_output["R$(i)"]["ids"];
+        genotypes=edits_idx
+    )
+    # Add result to dictionary
+    setindex!(advi_output["R$(i)"], df_advi, "df_advi")
+    # Write results into CSV file
+    CSV.write(
+        "./output/advi_hierarchicalgenotypes_results_$rep.csv",
+        advi_output["R$(i)"]["df_advi"]
+    )
 end # for
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -105,21 +116,26 @@ end # for
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Define number of samples
-n_samples = 10_000
+n_samples = 5_000
 
 # Loop through each replicate
-for rep in eachindex(advi_output)
-
-    # Extract variables
-    ids_advi = advi_output[rep]["ids"]
-    dist_advi = advi_output[rep]["dist"]
-    var_advi = advi_output[rep]["var"]
-
+for rep in sort(collect(eachindex(advi_output)))
+    println("Replicate $(rep)")
     # Sample from ADVI joint distribution and convert to dataframe
-    df_samples = DF.DataFrame(Random.rand(dist_advi, n_samples)', var_advi)
-
-    # Append dataframe to dictionary
-    setindex!(advi_output[rep], df_samples, "df_samples")
+    setindex!(
+        advi_output[rep],
+        DF.DataFrame(
+            Random.rand(
+                Distributions.MvNormal(
+                    advi_output[rep]["df_advi"].mean,
+                    LinearAlgebra.Diagonal(advi_output[rep]["df_advi"].std .^ 2)
+                ),
+                n_samples
+            )',
+            advi_output[rep]["df_advi"].varname
+        ),
+        "df_samples"
+    )
 end # for
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -142,7 +158,9 @@ qs = [0.05, 0.68, 0.95]
 # Define colors
 colors = get(ColorSchemes.Blues_9, LinRange(0.25, 1.0, length(qs)))
 
-rm("./output/figs/advi_logfreqratio_ppc_neutral_prior.pdf"; force=true)
+# Remove previous plot if it exists
+rm("./output/figs/advi_logfreqratio_ppc_neutral.pdf"; force=true)
+
 # Loop through repeats
 for rep in sort(collect(eachindex(advi_output)))
     println("Generating plot for $(rep)")
@@ -173,11 +191,11 @@ for rep in sort(collect(eachindex(advi_output)))
     # Plot log-frequency ratio of neutrals
     BayesFitUtils.viz.logfreq_ratio_time_series!(
         ax,
-        df[(df.neutral).&(df.rep.==rep), :];
+        df_counts[(df_counts.neutral).&(df_counts.rep.==rep), :];
         freq_col=:freq,
         id_col=:oligo,
-        color=:gray,
-        alpha=0.5,
+        color=:black,
+        alpha=0.25,
         linewidth=2
     )
 
@@ -186,189 +204,18 @@ for rep in sort(collect(eachindex(advi_output)))
 
     # Append pdf
     PDFmerger.append_pdf!(
-        "./output/figs/advi_logfreqratio_ppc_neutral_prior.pdf",
+        "./output/figs/advi_logfreqratio_ppc_neutral.pdf",
         "./output/figs/temp.pdf",
         cleanup=true
     )
 end # for
 
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Load variational inference
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-
-# Define file
-file = first(Glob.glob("./output/advi_meanfield*"))
-
-# Load distribution
-advi_results = JLD2.load(file)
-ids_advi = advi_results["ids"]
-dist_advi = advi_results["dist"]
-var_advi = advi_results["var"]
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Generate samples from distribution and format into dataframe
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-
-# Define number of samples
-n_samples = 10_000
-
-# Sample from ADVI joint distribution and convert to dataframe
-df_samples = DF.DataFrame(Random.rand(dist_advi, n_samples)', var_advi)
-
-# Locate hyperparameter variables
-θ_idx = occursin.("θ̲⁽ᵐ⁾", String.(var_advi))
-# Find columns with fitness parameter deviation 
-τ_idx = occursin.("τ̲⁽ᵐ⁾", String.(var_advi))
-θ_tilde_idx = occursin.("θ̲̃⁽ᵐ⁾", String.(var_advi))
-
-# Compute samples for individual barcode fitness values. These are not
-# parameters included in the joint distribution, but can be computed from
-# samples of the other parameters
-df_samples = hcat(
-    df_samples,
-    DF.DataFrame(
-        Matrix(df_samples[:, θ_idx])[:, edits_idx] .+
-        (
-            exp.(Matrix(df_samples[:, τ_idx])) .*
-            Matrix(df_samples[:, θ_tilde_idx])
-        ),
-        Symbol.("s_" .* ids_advi)
-    )
-)
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Plot posterior predictive checks for neutral lineages in joint inference
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-
-# Define dictionary with corresponding parameters for variables needed for
-# the posterior predictive checks
-param = Dict(
-    :population_mean_fitness => :s̲ₜ,
-    :population_std_fitness => :logσ̲ₜ,
-)
-
-# Define number of posterior predictive check samples
-n_ppc = 100
-
-# Define quantiles to compute
-qs = [0.05, 0.68, 0.95]
-
-# Define colors
-colors = get(ColorSchemes.Blues_9, LinRange(0.25, 1.0, length(qs)))
-
-# Compute posterior predictive checks
-ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
-    df_samples, n_ppc; model=:normal, param=param
-)
-
-# Define time
-t = vec(collect(axes(ppc_mat, 2)) .+ 1)
-
-# Initialize figure
-fig = Figure(resolution=(450, 350))
-
-# Add axis
-ax = Axis(
-    fig[1, 1],
-    xlabel="time point",
-    ylabel="ln(fₜ₊₁/fₜ)",
-    title="neutral lineages PPC"
-)
-
-# Plot posterior predictive checks
-BayesFitUtils.viz.ppc_time_series!(
-    ax, qs, ppc_mat; colors=colors, time=t
-)
-
-# Plot log-frequency ratio of neutrals
-BayesFitUtils.viz.logfreq_ratio_time_series!(
-    ax,
-    data[data.neutral, :];
-    freq_col=:freq,
-    id_col=:oligo,
-    color=:gray,
-    alpha=0.5,
-    linewidth=2
-)
-
-# Save figure into pdf
-save("./output/figs/advi_logfreqratio_ppc_neutral.pdf", fig)
-
-fig
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Compute summary statistics for each barcode
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-
-# Initialize dataframe to save individual barcode summary statistics
-df_oligo = DF.DataFrame()
-
-# Find barcode variables
-s_names = names(df_samples)[occursin.("s_", names(df_samples))]
-# Find genotype variables
-θ_names = names(df_samples)[occursin.("θ̲⁽ᵐ⁾", names(df_samples))]
-
-# Define percentiles to include
-per = [2.5, 97.5, 16, 84]
-
-# Loop through barcodes
-for (i, bc) in enumerate(s_names)
-    # Extract fitness chain
-    fitness_s = @view df_samples[:, bc]
-    # Extract hyperparameter chain
-    fitness_θ = @view df_samples[:, θ_names[edits_idx[i]]]
-
-    # Compute summary statistics
-    fitness_summary = Dict(
-        :s_mean => StatsBase.mean(fitness_s),
-        :s_median => StatsBase.median(fitness_s),
-        :s_std => StatsBase.std(fitness_s),
-        :s_var => StatsBase.var(fitness_s),
-        :s_skewness => StatsBase.skewness(fitness_s),
-        :s_kurtosis => StatsBase.kurtosis(fitness_s),
-        :θ_mean => StatsBase.mean(fitness_θ),
-        :θ_median => StatsBase.median(fitness_θ),
-        :θ_std => StatsBase.std(fitness_θ),
-        :θ_var => StatsBase.var(fitness_θ),
-        :θ_skewness => StatsBase.skewness(fitness_θ),
-        :θ_kurtosis => StatsBase.kurtosis(fitness_θ),)
-
-    # Loop through percentiles
-    for p in per
-        setindex!(
-            fitness_summary,
-            StatsBase.percentile(fitness_s, p),
-            Symbol("s_$(p)_percentile")
-        )
-        setindex!(
-            fitness_summary,
-            StatsBase.percentile(fitness_θ, p),
-            Symbol("θ_$(p)_percentile")
-        )
-    end # for
-
-    # Convert to dataframe
-    df = DF.DataFrame(fitness_summary)
-    # Add barcode
-    df[!, :id] .= bc
-    # Append to dataframe
-    DF.append!(df_oligo, df)
-end # for
-
-# Add barcode and genotype
-DF.insertcols!(
-    df_oligo,
-    :oligo => [split(x, "_")[2] for x in df_oligo.id],
-    :edit => edits_unique[edits_idx]
-)
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Plot example posterior predictive checks
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Remove previous plot if it exists
+rm("./output/figs/advi_logfreqratio_ppc_mutants.pdf"; force=true)
 
 # Define number of posterior predictive check samples
 n_ppc = 500
@@ -378,74 +225,124 @@ qs = [0.95, 0.675, 0.05]
 # Define number of rows and columns
 n_row, n_col = [4, 4]
 
-# Initialize figure
-fig = Figure(resolution=(300 * n_col, 300 * n_row))
-
 # List example barcodes to plot
-oligo_plot = StatsBase.sample(1:length(s_names), n_row * n_col)
+bc_plot = StatsBase.sample(
+    unique(df_counts[.!df_counts.neutral, :oligo]), n_row * n_col
+)
 
-# find standard deviation variables
-σ_names = names(df_samples)[occursin.("logσ̲⁽ᵐ⁾", names(df_samples))]
+# Extract unique mutant/fitnes variable name pairs
+bc_var = advi_output["R1"]["df_advi"][
+    (advi_output["R1"]["df_advi"].vartype.=="bc_fitness"), [:id, :varname]
+]
 
-# Initialize plot counter
-counter = 1
-# Loop through rows
-for row in 1:n_row
-    # Loop through columns
-    for col in 1:n_col
-        # Add axis
-        local ax = Axis(fig[row, col])
+# Generate dictionary from mutant name to fitness value
+bc_var_dict = Dict(zip(bc_var.id, bc_var.varname))
 
-        # Extract data
-        data_oligo = DF.sort(
-            data[
-                data.oligo.==replace(s_names[oligo_plot[counter]], "s_" => ""),
-                :],
-            :time
-        )
+# Define colors
+colors = get(ColorSchemes.Blues_9, LinRange(0.5, 1, length(qs)))
 
-        # Define colors
-        local colors = get(ColorSchemes.Blues_9, LinRange(0.5, 1.0, length(qs)))
+# Loop through repeats
+for rep in sort(collect(eachindex(advi_output)))
+    println("Generating plot for $(rep)")
+    # Initialize figure
+    fig = Figure(resolution=(300 * n_col, 200 * n_row))
 
-        # Define dictionary with corresponding parameters for variables needed
-        # for the posterior predictive checks
-        local param = Dict(
-            :mutant_mean_fitness => Symbol(s_names[oligo_plot[counter]]),
-            :mutant_std_fitness => Symbol(σ_names[oligo_plot[counter]]),
-            :population_mean_fitness => :s̲ₜ,
-        )
-        # Compute posterior predictive checks
-        local ppc_mat = BayesFitness.stats.logfreq_ratio_mutant_ppc(
-            df_samples, n_ppc; model=:normal, param=param
-        )
-        # Plot posterior predictive checks
-        BayesFitUtils.viz.ppc_time_series!(
-            ax, qs, ppc_mat; colors=colors
-        )
+    # Initialize plot counter
+    counter = 1
+    # Loop through rows
+    for row in 1:n_row
+        # Loop through columns
+        for col in 1:n_col
+            # Add GridLayout
+            gl = fig[row, col] = GridLayout()
+            # Add axis
+            ax = Axis(gl[1, 1:6])
 
-        # Add scatter of data
-        scatterlines!(
-            ax, diff(log.(data_oligo.freq)), color=:black, linewidth=2.5
-        )
+            # Extract data
+            data_bc = DF.sort(
+                df_counts[(df_counts.oligo.==bc_plot[counter]).&(df_counts.rep.==rep), :], :time
+            )
+            # Extract posterior samples
+            df_samples = advi_output[rep]["df_samples"]
 
-        # Add title
-        ax.title = "$(replace(s_names[oligo_plot[counter]], "s_" => ""))"
-        ax.titlesize = 18
+            # Extract variables for barcode PPC
+            global vars_bc = [
+                names(df_samples)[occursin.("s̲ₜ", names(df_samples))]
+                bc_var_dict[bc_plot[counter]]
+                replace(bc_var_dict[bc_plot[counter]], "s" => "logσ")
+            ]
 
-        ## == Plot format == ##
 
-        # Hide axis decorations
-        hidedecorations!.(ax, grid=false)
+            # Define dictionary with corresponding parameters for variables needed
+            # for the posterior predictive checks
+            local param = Dict(
+                :mutant_mean_fitness => Symbol(bc_var_dict[bc_plot[counter]]),
+                :mutant_std_fitness => Symbol(
+                    replace(bc_var_dict[bc_plot[counter]], "s" => "logσ")
+                ),
+                :population_mean_fitness => Symbol("s̲ₜ"),
+            )
+            # Compute posterior predictive checks
+            local ppc_mat = BayesFitness.stats.logfreq_ratio_mutant_ppc(
+                df_samples[:, Symbol.(vars_bc)],
+                n_ppc;
+                model=:normal,
+                param=param
+            )
 
-        # Update counter
-        global counter += 1
-    end  # for
+            # Plot posterior predictive checks
+            BayesFitUtils.viz.ppc_time_series!(
+                ax,
+                qs,
+                ppc_mat;
+                colors=colors,
+                time=sort(unique(df_counts[df_counts.rep.==rep, :time]))[2:end]
+            )
+
+            # Plot log-frequency ratio of neutrals
+            BayesFitUtils.viz.logfreq_ratio_time_series!(
+                ax,
+                data_bc,
+                freq_col=:freq,
+                color=:black,
+                id_col=:oligo,
+                linewidth=3,
+                markersize=12
+            )
+
+            # Hide axis decorations
+            hidedecorations!.(ax, grid=false)
+            # Set row and col gaps
+            rowgap!(gl, 1)
+
+            # Add barcode as title
+            Label(
+                gl[0, 3:4],
+                text="barcode $(bc_plot[counter])",
+                fontsize=12,
+                justification=:center,
+                lineheight=0.9
+            )
+
+            # Update counter
+            counter += 1
+        end  # for
+    end # for
+
+    # Add title
+    Label(fig[1, :, Top()], "Replicate $(rep)", fontsize=20)
+    # Add x-axis label
+    Label(fig[end, :, Bottom()], "time points", fontsize=20)
+    # Add y-axis label
+    Label(fig[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=20)
+
+    # Save figure to PDF
+    save("./output/figs/temp.pdf", fig)
+
+    # Append pdf
+    PDFmerger.append_pdf!(
+        "./output/figs/advi_logfreqratio_ppc_mutants.pdf",
+        "./output/figs/temp.pdf",
+        cleanup=true
+    )
 end # for
-
-# Add x-axis label
-Label(fig[end, :, Bottom()], "time points", fontsize=22)
-# Add y-axis label
-Label(fig[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=22)
-
-save("./output/figs/advi_logfreqratio_ppc_mutant.pdf", fig)
-fig

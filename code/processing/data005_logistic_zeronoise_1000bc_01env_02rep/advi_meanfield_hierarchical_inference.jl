@@ -87,7 +87,7 @@ logσ_pop_prior = hcat(
     repeat([1.0], length(naive_priors[:logσ_pop_prior]))
 )
 
-logσ_mut_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 1.0]
+logσ_bc_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 1.0]
 
 logλ_prior = hcat(
     naive_priors[:logλ_prior],
@@ -105,8 +105,8 @@ param = Dict(
     :model_kwargs => Dict(
         :s_pop_prior => s_pop_prior,
         :logσ_pop_prior => logσ_pop_prior,
-        :logσ_mut_prior => logσ_mut_prior,
-        :s_mut_prior => [0.0, 1.0],
+        :logσ_bc_prior => logσ_bc_prior,
+        :s_bc_prior => [0.0, 1.0],
         :logλ_prior => logλ_prior,
     ),
     :advi => Turing.ADVI(n_samples, n_steps),
