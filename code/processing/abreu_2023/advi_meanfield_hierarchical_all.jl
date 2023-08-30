@@ -77,7 +77,8 @@ df_idx = df_counts[:, 12:end]
 n_col = size(df_idx, 2)
 
 # Loop through each dataset
-Threads.@threads for col = 1:n_col
+# Threads.@threads 
+for col = 1:n_col
     # Select data
     data = df_counts[df_idx[:, col], 1:11]
 
@@ -105,14 +106,20 @@ Threads.@threads for col = 1:n_col
 
     if length(unique(n_rep_time)) == 1
         # Define environment cycles
-        envs = collect(unique(data[:, [:time, :env]])[:, :env])
+        global envs = collect(unique(data[:, [:time, :env]])[:, :env])
+        # Define number of environments
+        n_env = length(unique(envs))
     else
         # Obtain list of environments per replicate
-        envs = [
+        global envs = [
             collect(unique(d[:, [:time, :env]])[:, :env])
             for d in data_rep_group
         ]
+        # Define number of environments
+        n_env = length(unique(reduce(vcat, envs)))
     end # if
+
+    println("$(out_dir) : $(n_env)")
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
     # Obtain priors on expected errors from neutral measurements
@@ -147,31 +154,56 @@ Threads.@threads for col = 1:n_col
 
     println("Preparing parameters for Variational Inference...\n")
 
-    # Collect parameters in dictionary
-    param = Dict(
-        :data => data,
-        :outputname => "$(out_dir)/advi_meanfield_hierarchical_" *
-                       "$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
-        :model => BayesFitness.model.multienv_exprep_fitness_normal,
-        :model_kwargs => Dict(
-            :envs => envs,
-            :s_pop_prior => s_pop_prior,
-            :logσ_pop_prior => logσ_pop_prior,
-            :logσ_mut_prior => logσ_mut_prior,
-            :s_mut_prior => [0.0, 1.0],
-            :logλ_prior => logλ_prior,
-        ),
-        :advi => Turing.ADVI(n_samples, n_steps),
-        :opt => Turing.TruncatedADAGrad(),
-        :rep_col => :rep,
-        :fullrank => false
-    )
+    if n_env == 1
+        # Collect parameters in dictionary
+        param = Dict(
+            :data => data,
+            :outputname => "$(out_dir)/advi_meanfield_hierarchical_" *
+                           "$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
+            :model => BayesFitness.model.replicate_fitness_lognormal,
+            :model_kwargs => Dict(
+                :s_pop_prior => s_pop_prior,
+                :logσ_pop_prior => logσ_pop_prior,
+                :logσ_mut_prior => logσ_mut_prior,
+                :s_mut_prior => [0.0, 1.0],
+                :logλ_prior => logλ_prior,
+            ),
+            :advi => Turing.ADVI(n_samples, n_steps),
+            :opt => Turing.TruncatedADAGrad(),
+            :rep_col => :rep,
+            :fullrank => false
+        )
+    elseif n_env > 1
+        # Collect parameters in dictionary
+        param = Dict(
+            :data => data,
+            :outputname => "$(out_dir)/advi_meanfield_hierarchical_" *
+                           "$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
+            :model => BayesFitness.model.multienv_replicate_fitness_normal,
+            :model_kwargs => Dict(
+                :envs => envs,
+                :s_pop_prior => s_pop_prior,
+                :logσ_pop_prior => logσ_pop_prior,
+                :logσ_mut_prior => logσ_mut_prior,
+                :s_mut_prior => [0.0, 1.0],
+                :logλ_prior => logλ_prior,
+            ),
+            :advi => Turing.ADVI(n_samples, n_steps),
+            :opt => Turing.TruncatedADAGrad(),
+            :rep_col => :rep,
+            :fullrank => false
+        )
+    end # if
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
     # Perform optimization
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-    # Run inference
-    println("Running Variational Inference for $(condition)...")
-    @time dist = BayesFitness.vi.advi(; param...)
+    # try
+    #     # Run inference
+    #     println("Running Variational Inference for $(condition)...")
+    #     @time dist = BayesFitness.vi.advi(; param...)
+    # catch
+    #     println("already processed")
+    # end
 
 end # for
