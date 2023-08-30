@@ -100,14 +100,13 @@ for (i, file) in enumerate(files)
         advi_output["R$(i)"]["dist"],
         advi_output["R$(i)"]["var"],
         advi_output["R$(i)"]["ids"];
-        genotypes=edits_idx
+        genotypes=edits
     )
     # Add result to dictionary
     setindex!(advi_output["R$(i)"], df_advi, "df_advi")
     # Write results into CSV file
     CSV.write(
-        "./output/advi_hierarchicalgenotypes_results_$rep.csv",
-        advi_output["R$(i)"]["df_advi"]
+        "./output/advi_hierarchicalgenotypes_results_R$(i).csv", df_advi
     )
 end # for
 
