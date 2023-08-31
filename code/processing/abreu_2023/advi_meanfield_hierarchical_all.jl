@@ -105,19 +105,17 @@ Threads.@threads for col = 1:n_col
 
     if length(unique(n_rep_time)) == 1
         # Define environment cycles
-        envs = collect(unique(data[:, [:time, :env]])[:, :env])
-        # Define number of environments
-        n_env = first(data.n_env)
+        envs = collect(sort(unique(data[:, [:time, :env]]), :time)[:, :env])
     else
         # Obtain list of environments per replicate
         envs = [
-            collect(unique(d[:, [:time, :env]])[:, :env])
+            collect(sort(unique(d[:, [:time, :env]]), :time)[:, :env])
             for d in data_rep_group
         ]
-        # Define number of environments
-        n_env = first(data.n_env)
     end # if
 
+    # Define number of environments
+    n_env = first(data.n_env)
     println("$(out_dir) #environments = $(n_env)")
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
