@@ -35,8 +35,6 @@ Turing.setadbackend(:reversediff)
 # Allow system to generate cache to speed up computation
 Turing.setrdcache(true)
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Define ADVI hyerparameters
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -94,16 +92,6 @@ logλ_prior = hcat(
 # Define ADVI function parameters
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-# Generate dictionary from mutants to genotypes
-bc_geno_dict = Dict(values.(keys(DF.groupby(data, [:barcode, :genotype]))))
-
-# Extract list of mutants as they will be used in the inference
-bc_ids = BayesFitness.utils.data_to_arrays(data)[:bc_ids]
-
-# Extract genotypes in the order they will be used in the inference
-genotypes = [bc_geno_dict[m] for m in bc_ids]
-
-##
 param = Dict(
     :data => data,
     :outputname => "./output/advi_meanfield_hierarchicalgenotypes_" *
@@ -115,8 +103,8 @@ param = Dict(
         :logσ_bc_prior => logσ_bc_prior,
         :s_bc_prior => [0.0, 1.0],
         :logλ_prior => logλ_prior,
-        :genotypes => genotypes,
     ),
+    :genotype_col => :genotype,
     :advi => Turing.ADVI(n_samples, n_steps),
     :opt => Turing.TruncatedADAGrad(),
     :fullrank => false
