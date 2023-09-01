@@ -37,7 +37,7 @@ import ColorSchemes
 CairoMakie.activate!()
 
 # Set PBoC Plotting style
-BayesFitUtils.viz.pboc_makie!()
+BayesFitUtils.viz.theme_makie!()
 
 Random.seed!(42)
 
@@ -71,17 +71,12 @@ n_rep = length(unique(df_counts.rep))
 # Load variational inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Loading ADVI results...")
 # Define file
 file = first(Glob.glob("./output/advi_meanfield*3000*"))
 
-# Load distribution
-advi_results = JLD2.load(file)
-ids_advi = advi_results["ids"]
-dist_advi = advi_results["dist"]
-var_advi = advi_results["var"]
-
 # Convert results to tidy dataframe
-df_advi = BayesFitness.utils.advi_to_df(dist_advi, var_advi, ids_advi; n_rep=2)
+df_advi = CSV.read(file, DF.DataFrame)
 
 # Split variables by replicate
 rep_vars = Dict(
@@ -113,6 +108,7 @@ df_samples = DF.DataFrame(
 # Compare mean fitness for individual replicates
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting fitness comparison between replicates...")
 # Collect all possible pairs of plots
 rep_pairs = collect(Combinatorics.combinations(unique(df_counts.rep), 2))
 
@@ -187,6 +183,8 @@ fig
 # Compare mean fitness with hyperparameter
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting comparison between replicate fitness and fitness hyperparameter")
+
 # Initialize figure
 fig = Figure(resolution=(350 * n_rep, 350))
 
@@ -259,6 +257,7 @@ fig
 # Plot comparison between deterministic and Bayesian inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting comparison between inferred fitness and ground truth...")
 # Extract information
 data_advi = df_advi[
     df_advi.vartype.=="bc_hyperfitness", [:id, :mean, :std]
@@ -313,6 +312,7 @@ fig
 # Plot ECDF distance from median
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting diagionstic ECDFs...")
 # Initialize figure
 fig = Figure(resolution=(400, 300))
 # Add axis
@@ -345,6 +345,7 @@ fig
 # Plot posterior predictive checks for neutral lineages in joint inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting posterior predictive checks for neutral lineages...")
 # Define dictionary with corresponding parameters for variables needed for
 # the posterior predictive checks
 param = Dict(
@@ -359,7 +360,7 @@ n_ppc = 500
 qs = [0.05, 0.68, 0.95]
 
 # Define colors
-ppc_color = get(ColorSchemes.Purples_9, LinRange(0.25, 1.0, length(qs)))
+ppc_color = get(ColorSchemes.Blues_9, LinRange(0.5, 1.0, length(qs)))
 
 # Initialize figure
 fig = Figure(resolution=(400 * n_rep, 350))
@@ -406,6 +407,7 @@ fig
 # Plot posterior predictive checks for barcodes
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plot posterior predictive checks for a few barcodes...")
 # Define number of posterior predictive check samples
 n_ppc = 500
 # Define quantiles to compute
@@ -414,8 +416,10 @@ qs = [0.95, 0.675, 0.05]
 # Define number of rows and columns
 n_row, n_col = [3, 3]
 
+# Extract barcodes
+bc_ids = unique(df_counts[.!(df_counts.neutral), :barcode])
 # List example barcodes to plot
-bc_plot = StatsBase.sample(ids_advi, n_row * n_col)
+bc_plot = StatsBase.sample(bc_ids, n_row * n_col)
 
 # Define colors
 colors = [
@@ -461,7 +465,7 @@ for row in 1:n_row
                 (df_advi.id.==bc_plot[counter]).&(df_advi.rep.==string(key)).&(df_advi.vartype.=="bc_fitness"),
                 :varname])
             logσ_var = first(df_advi[
-                (df_advi.id.==bc_plot[counter]).&(df_advi.rep.==string(key)).&(df_advi.vartype.=="bc_error"),
+                (df_advi.id.==bc_plot[counter]).&(df_advi.rep.==string(key)).&(df_advi.vartype.=="bc_std"),
                 :varname])
 
             # Define dictionary with corresponding parameters for variables needed
