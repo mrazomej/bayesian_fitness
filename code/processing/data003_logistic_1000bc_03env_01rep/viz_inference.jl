@@ -34,7 +34,7 @@ import ColorSchemes
 CairoMakie.activate!()
 
 # Set PBoC Plotting style
-BayesFitUtils.viz.pboc_makie!()
+BayesFitUtils.viz.theme_makie!()
 
 Random.seed!(42)
 
@@ -76,14 +76,8 @@ env_colors = Dict(env_unique .=> ColorSchemes.tableau_10[1:3])
 # Define file
 file = first(Glob.glob("./output/advi_meanfield*"))
 
-# Load distribution
-advi_results = JLD2.load(file)
-ids_advi = advi_results["ids"]
-dist_advi = advi_results["dist"]
-var_advi = advi_results["var"]
-
 # Convert results to tidy dataframe
-df_advi = BayesFitness.utils.advi_to_df(dist_advi, var_advi, ids_advi; envs=envs)
+df_advi = CSV.read(file, DF.DataFrame)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate samples from distribution and format into dataframe
@@ -377,10 +371,10 @@ for row in 1:n_row
         # Extract logσ variable names
         σ_var = replace.(s_var, Ref("s" => "logσ"))
         # Extract mean fitness variables
-        sₜ_var = df_advi[(df_advi.vartype.=="pop_mean"), :varname]
+        sₜ_var = df_advi[(df_advi.vartype.=="pop_mean_fitness"), :varname]
 
         # Extract samples
-        df_bc = df_samples[:, [sₜ_var; s_var; σ_var]]
+        global df_bc = df_samples[:, [sₜ_var; s_var; σ_var]]
 
         # Define colors
         local ppc_color = get(

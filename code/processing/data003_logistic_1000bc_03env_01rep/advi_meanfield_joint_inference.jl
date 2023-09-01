@@ -106,8 +106,8 @@ param = Dict(
         :logσ_bc_prior => logσ_bc_prior,
         :s_bc_prior => [0.0, 1.0],
         :logλ_prior => logλ_prior,
-        :envs => [1, 1, 2, 3, 1, 2, 3],
     ),
+    :env_col => :env,
     :advi => Turing.ADVI(n_samples, n_steps),
     :opt => Turing.TruncatedADAGrad(),
     :fullrank => false
@@ -124,4 +124,4 @@ end # if
 
 # Run inference
 println("Running Variational Inference...")
-@time dist = BayesFitness.vi.advi(; param...)
+@time BayesFitness.vi.advi(; param...)
