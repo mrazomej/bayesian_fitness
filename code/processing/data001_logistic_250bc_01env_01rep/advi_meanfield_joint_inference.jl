@@ -1,4 +1,3 @@
-##
 println("Loading packages...")
 
 # Load project package
@@ -34,8 +33,6 @@ Random.seed!(42)
 Turing.setadbackend(:reversediff)
 # Allow system to generate cache to speed up computation
 Turing.setrdcache(true)
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Define ADVI hyerparameters
@@ -96,7 +93,8 @@ logλ_prior = hcat(
 
 param = Dict(
     :data => data,
-    :outputname => "./output/advi_meanfield_$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
+    :outputname => "./output/advi_meanfield_" *
+                   "$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
     :model => BayesFitness.model.fitness_normal,
     :model_kwargs => Dict(
         :s_pop_prior => s_pop_prior,
@@ -121,4 +119,4 @@ end # if
 
 # Run inference
 println("Running Variational Inference...")
-@time dist = BayesFitness.vi.advi(; param...)
+@time BayesFitness.vi.advi(; param...)

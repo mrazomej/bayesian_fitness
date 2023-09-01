@@ -35,7 +35,7 @@ import ColorSchemes
 CairoMakie.activate!()
 
 # Set PBoC Plotting style
-BayesFitUtils.viz.pboc_makie!()
+BayesFitUtils.viz.theme_makie!()
 
 Random.seed!(42)
 
@@ -64,6 +64,8 @@ data = CSV.read(
 # Read chain into memory 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Loading MCMC Chains...")
+
 # Define file
 file = first(Glob.glob("./output/chain_joint_fitness_3000*"))
 
@@ -84,6 +86,7 @@ s_names = MCMCChains.namesingroup(chn, :s̲⁽ᵐ⁾)
 # Plot Trace and density plots for population mean fitness
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting trace and densities for population parameters...")
 # Extract variable names
 var_names = vcat(
     [MCMCChains.namesingroup(chn, :s̲ₜ), MCMCChains.namesingroup(chn, :logσ̲ₜ)]...
@@ -106,6 +109,7 @@ fig
 # Plot posterior predictive checks for neutral lineages in joint inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting posterior predictive checks for neutral lineages...")
 # Define dictionary with corresponding parameters for variables needed for
 # the posterior predictive checks
 param = Dict(
@@ -166,6 +170,7 @@ fig
 # Trace and density plots for example mutants
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting trace and densities for a few barcodes...")
 # Define barcodes to include
 var_names = StatsBase.sample(s_names, 8)
 
@@ -185,6 +190,7 @@ fig
 # Compute summary statistics for fitness values
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Computing summary statistics per chain...")
 # Define percentiles to include
 per = [2.5, 97.5, 16, 84]
 
@@ -267,6 +273,7 @@ DF.leftjoin!(
 # Plot comparison between deterministic and Bayesian inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting comparison between inferred fitness and ground truth")
 # Initialize figure
 fig = Figure(resolution=(300, 300))
 
@@ -307,6 +314,7 @@ fig
 # Plot ECDF distance from median
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting diagnostic ECDFs...")
 # Initialize figure
 fig = Figure(resolution=(350, 300))
 # Add axis
@@ -348,6 +356,7 @@ fig
 # Plot example posterior predictive checks
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting posterior predictive checks for example mutants...")
 # Define number of posterior predictive check samples
 n_ppc = 500
 # Define quantiles to compute
@@ -428,17 +437,12 @@ fig
 # Load variational inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Loading ADVI results...")
 # Define file
-file = first(Glob.glob("./output/advi_meanfield*3000*"))
-
-# Load distribution
-advi_results = JLD2.load(file)
-ids_advi = advi_results["ids"]
-dist_advi = advi_results["dist"]
-var_advi = advi_results["var"]
+file = first(Glob.glob("./output/advi_meanfield*3000*csv"))
 
 # Convert results to tidy dataframe
-df_advi = BayesFitness.utils.advi_to_df(dist_advi, var_advi, ids_advi)
+df_advi = CSV.read(file, DF.DataFrame)
 
 # Define number of samples
 n_samples = 10_000
@@ -451,13 +455,14 @@ df_samples = DF.DataFrame(
         ),
         n_samples
     )',
-    var_advi
+    df_advi.varname
 )
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Compare inferred population mean fitness
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting comparison between MCMC and ADVI results...")
 # Locate variable names in MCMC
 mcmc_names = names(df_chn)[occursin.("s̲ₜ", names(df_chn))]
 # Locate variables in ADVI
@@ -582,6 +587,7 @@ fig
 # Plot comparison between deterministic and Bayesian inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting comparison between ADVI results and ground truth...")
 # Extract dataframe with unique pairs of barcodes and fitness values
 data_fitness = DF.sort(
     unique(data[(.!data.neutral), [:barcode, :fitness]]), :barcode
@@ -639,6 +645,7 @@ fig
 # Plot posterior predictive checks for neutral lineages in joint inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting posterior predictive checks for neutral lineages...")
 # Define dictionary with corresponding parameters for variables needed for
 # the posterior predictive checks
 param = Dict(
@@ -694,6 +701,7 @@ fig
 # Plot posterior predictive checks for barcodes
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting posterior predictive checks for example barcodes...")
 # Define number of posterior predictive check samples
 n_ppc = 500
 # Define quantiles to compute
@@ -806,3 +814,5 @@ Label(fig[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=20)
 save("./output/figs/advi_logfreqratio_ppc_mutant.pdf", fig)
 
 fig
+
+println("Done!")
