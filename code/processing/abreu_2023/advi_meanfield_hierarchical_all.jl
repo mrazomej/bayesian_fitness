@@ -98,22 +98,6 @@ Threads.@threads for col = 1:n_col
     # Define list of environments
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-    # Group data by replicate
-    data_rep_group = DF.groupby(data, :rep)
-    # Define number of time points per replicate
-    n_rep_time = [length(unique(d[:, :time])) for d in data_rep_group]
-
-    if length(unique(n_rep_time)) == 1
-        # Define environment cycles
-        envs = collect(sort(unique(data[:, [:time, :env]]), :time)[:, :env])
-    else
-        # Obtain list of environments per replicate
-        envs = [
-            collect(sort(unique(d[:, [:time, :env]]), :time)[:, :env])
-            for d in data_rep_group
-        ]
-    end # if
-
     # Define number of environments
     n_env = first(data.n_env)
     println("$(out_dir) #environments = $(n_env)")
@@ -178,7 +162,6 @@ Threads.@threads for col = 1:n_col
                            "$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
             :model => BayesFitness.model.multienv_replicate_fitness_normal,
             :model_kwargs => Dict(
-                :envs => envs,
                 :s_pop_prior => s_pop_prior,
                 :logσ_pop_prior => logσ_pop_prior,
                 :logσ_bc_prior => logσ_bc_prior,
@@ -188,6 +171,7 @@ Threads.@threads for col = 1:n_col
             :advi => Turing.ADVI(n_samples, n_steps),
             :opt => Turing.TruncatedADAGrad(),
             :rep_col => :rep,
+            :env_col => :env,
             :fullrank => false
         )
     end # if
