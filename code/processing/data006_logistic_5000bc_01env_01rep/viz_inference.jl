@@ -23,9 +23,6 @@ import CSV
 # Import library to list files
 import Glob
 
-# Import library to load files
-import JLD2
-
 # Import plotting libraries
 using CairoMakie
 import ColorSchemes
@@ -34,7 +31,7 @@ import ColorSchemes
 CairoMakie.activate!()
 
 # Set PBoC Plotting style
-BayesFitUtils.viz.pboc_makie!()
+BayesFitUtils.viz.theme_makie!()
 
 Random.seed!(42)
 
@@ -63,17 +60,12 @@ data = CSV.read(
 # Load variational inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Loading ADVI results...")
 # Define file
 file = first(Glob.glob("./output/advi_meanfield*3000*"))
 
-# Load distribution
-advi_results = JLD2.load(file)
-ids_advi = advi_results["ids"]
-dist_advi = advi_results["dist"]
-var_advi = advi_results["var"]
-
 # Convert results to tidy dataframe
-df_advi = BayesFitness.utils.advi_to_df(dist_advi, var_advi, ids_advi)
+df_advi = CSV.read(file, DF.DataFrame)
 
 # Define number of samples
 n_samples = 10_000
@@ -86,13 +78,14 @@ df_samples = DF.DataFrame(
         ),
         n_samples
     )',
-    var_advi
+    df_advi.varname
 )
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Plot comparison between deterministic and Bayesian inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting ADVI results vs. ground truth...")
 # Extract dataframe with unique pairs of barcodes and fitness values
 data_fitness = DF.sort(
     unique(data[(.!data.neutral), [:barcode, :fitness]]), :barcode
@@ -150,6 +143,7 @@ fig
 # Plot posterior predictive checks for neutral lineages in joint inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting posterior predictive checks for neutral lineages...")
 # Define dictionary with corresponding parameters for variables needed for
 # the posterior predictive checks
 param = Dict(
@@ -164,7 +158,7 @@ n_ppc = 500
 qs = [0.05, 0.68, 0.95]
 
 # Define colors
-ppc_color = get(ColorSchemes.Blues_9, LinRange(0.25, 1.0, length(qs)))
+ppc_color = get(ColorSchemes.Blues_9, LinRange(0.5, 1.0, length(qs)))
 
 # Initialize figure
 fig = Figure(resolution=(400, 350))
@@ -193,7 +187,8 @@ BayesFitUtils.viz.logfreq_ratio_time_series!(
     data[data.neutral, :];
     freq_col=:freq,
     color=:black,
-    linewidth=2
+    linewidth=2,
+    alpha=0.25
 )
 
 # Save figure into pdf
@@ -205,6 +200,7 @@ fig
 # Plot posterior predictive checks for barcodes
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting posterior predictive checks for example mutants...")
 # Define number of posterior predictive check samples
 n_ppc = 500
 # Define quantiles to compute
@@ -317,3 +313,5 @@ Label(fig[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=20)
 save("./output/figs/advi_logfreqratio_ppc_mutant.pdf", fig)
 
 fig
+
+println("Done!")
