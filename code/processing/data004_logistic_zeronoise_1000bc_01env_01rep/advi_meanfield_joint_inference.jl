@@ -96,7 +96,8 @@ logλ_prior = hcat(
 
 param = Dict(
     :data => data,
-    :outputname => "./output/advi_meanfield_$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
+    :outputname => "./output/advi_meanfield_" *
+                   "$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
     :model => BayesFitness.model.fitness_normal,
     :model_kwargs => Dict(
         :s_pop_prior => s_pop_prior,

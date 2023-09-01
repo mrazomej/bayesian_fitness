@@ -19,13 +19,9 @@ import Random
 # Import libraries to manipulate data
 import DataFrames as DF
 import CSV
-import MCMCChains
 
 # Import library to list files
 import Glob
-
-# Import library to load files
-import JLD2
 
 # Import plotting libraries
 using CairoMakie
@@ -35,7 +31,7 @@ import ColorSchemes
 CairoMakie.activate!()
 
 # Set PBoC Plotting style
-BayesFitUtils.viz.pboc_makie!()
+BayesFitUtils.viz.theme_makie!()
 
 Random.seed!(42)
 
@@ -64,17 +60,12 @@ data = CSV.read(
 # Load variational inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Loading ADVI results...")
 # Define file
 file = first(Glob.glob("./output/advi_meanfield*3000*"))
 
-# Load distribution
-advi_results = JLD2.load(file)
-ids_advi = advi_results["ids"]
-dist_advi = advi_results["dist"]
-var_advi = advi_results["var"]
-
 # Convert results to tidy dataframe
-df_advi = BayesFitness.utils.advi_to_df(dist_advi, var_advi, ids_advi)
+df_advi = CSV.read(file, DF.DataFrame)
 
 # Define number of samples
 n_samples = 10_000
@@ -87,13 +78,14 @@ df_samples = DF.DataFrame(
         ),
         n_samples
     )',
-    var_advi
+    df_advi.varname
 )
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Plot comparison between deterministic and Bayesian inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plot comparison between ADVI results and ground truth...")
 # Extract dataframe with unique pairs of barcodes and fitness values
 data_fitness = DF.sort(
     unique(data[(.!data.neutral), [:barcode, :fitness]]), :barcode
@@ -151,6 +143,7 @@ fig
 # Plot posterior predictive checks for neutral lineages in joint inference
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting posterior predictive checks for neutral lineages...")
 # Define dictionary with corresponding parameters for variables needed for
 # the posterior predictive checks
 param = Dict(
@@ -206,6 +199,7 @@ fig
 # Plot posterior predictive checks for barcodes
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting posterior predictive checks for example barcodes...")
 # Define number of posterior predictive check samples
 n_ppc = 500
 # Define quantiles to compute
