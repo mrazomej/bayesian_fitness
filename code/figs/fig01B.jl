@@ -24,9 +24,7 @@ import ColorTypes
 CairoMakie.activate!()
 
 # Set PBoC Plotting style
-BayesFitUtils.viz.pboc_makie!()
-
-##
+BayesFitUtils.viz.theme_makie!()
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Loading data
@@ -38,8 +36,6 @@ println("Loading data...")
 data = CSV.read(
     "$(git_root())/data/logistic_growth/data_001/tidy_data.csv", DF.DataFrame
 )
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Plot barcode trajectories
@@ -61,6 +57,9 @@ ax = Axis(fig[1, 1], xlabel="time", ylabel="barcode frequency", yscale=log10)
 
 # %%% Barcode trajectories %%% #
 
+# Import personal color palette
+color_palette = BayesFitUtils.viz.colors()
+
 # Plot mutant barcode trajectories
 BayesFitUtils.viz.bc_time_series!(
     ax,
@@ -77,7 +76,7 @@ BayesFitUtils.viz.bc_time_series!(
     data[data.neutral, :],
     zero_lim=0,
     quant_col=:freq,
-    color=ColorSchemes.seaborn_muted[end-2]
+    color=color_palette[:pale_black]
 )
 
 # Set axis limits
