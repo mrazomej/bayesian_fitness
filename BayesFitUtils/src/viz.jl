@@ -3,6 +3,7 @@ using Measures, CairoMakie
 import Makie
 import ColorSchemes
 import ColorTypes
+import Colors
 
 # Import library to handle dataframes
 import DataFrames as DF
@@ -175,7 +176,7 @@ end
 Returns dictionary with personal color palette.
 """
 function colors()
-    return Dict(
+    col = Dict(
         :dark_black => "#000000",
         :black => "#000000",
         :light_black => "#05080F",
@@ -201,6 +202,17 @@ function colors()
         :light_purple => "#BC7FBC",
         :pale_purple => "#D5AFD5"
     )
+
+    # Initialize dictionary
+    colors = Dict()
+
+    # Loop through elements
+    for (key, item) in col
+        # Convert element to dictionary
+        setindex!(colors, Colors.color(item), key)
+    end # for
+
+    return colors
 end # function
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
