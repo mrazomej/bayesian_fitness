@@ -13,13 +13,11 @@ import BayesFitness
 # Import libraries to manipulate data
 import DataFrames as DF
 import CSV
-import MCMCChains
 
 # Import basic math
 import StatsBase
-
-# Import library to read MCMC chains
-import JLD2
+import Distributions
+import LinearAlgebra
 
 # Import plotting libraries
 using CairoMakie
@@ -30,7 +28,7 @@ import ColorTypes
 CairoMakie.activate!()
 
 # Set PBoC Plotting style
-BayesFitUtils.viz.pboc_makie!()
+BayesFitUtils.viz.theme_makie!()
 
 # Import library to set random seed
 import Random
@@ -51,13 +49,23 @@ data = CSV.read(
 
 # Define file
 file = "$(git_root())/code/processing/data001_logistic_250bc_01env_01rep/" *
-       "output/advi_meanfield_01samples_10000steps.jld2"
+       "output/advi_meanfield_01samples_3000steps.csv"
 
-# Load distribution
-advi_results = JLD2.load(file)
-ids_advi = advi_results["ids"]
-dist_advi = advi_results["dist"]
-var_advi = advi_results["var"]
+# Read ADVI results
+df_advi = CSV.read(file, DF.DataFrame)
+
+# Extract bc fitness values
+df_fitness = df_advi[(df_advi.vartype.=="bc_fitness"), :]
+
+# Extract real fitness values
+df_fitness_truth = DF.rename!(
+    unique(data[.!(data.neutral), [:barcode, :fitness]]),
+    :barcode => :id
+)
+
+# Add real fitness to ADVI results
+DF.leftjoin!(df_fitness, df_fitness_truth; on=:id)
+
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate samples from distribution and format into dataframe
@@ -66,71 +74,15 @@ var_advi = advi_results["var"]
 # Define number of samples
 n_samples = 10_000
 
-# Sample from ADVI joint distribution and convert to dataframe
-df_samples = DF.DataFrame(Random.rand(dist_advi, n_samples)', var_advi)
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Compute summary statistics for each barcode
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-
-# Initialize dataframe to save individual barcode summary statistics
-df_summary = DF.DataFrame()
-
-# Find barcode variables
-s_names = names(df_samples)[occursin.("s̲⁽ᵐ⁾", names(df_samples))]
-
-# Define percentiles to include
-per = [2.5, 97.5, 16, 84]
-
-# Loop through barcodes
-for (i, bc) in enumerate(s_names)
-    # Extract fitness chain
-    fitness_s = @view df_samples[:, bc]
-
-    # Compute summary statistics
-    fitness_summary = Dict(
-        :mean => StatsBase.mean(fitness_s),
-        :median => StatsBase.median(fitness_s),
-        :std => StatsBase.std(fitness_s),
-        :var => StatsBase.var(fitness_s),
-        :skewness => StatsBase.skewness(fitness_s),
-        :kurtosis => StatsBase.kurtosis(fitness_s),
-    )
-
-    # Loop through percentiles
-    for p in per
-        setindex!(
-            fitness_summary,
-            StatsBase.percentile(fitness_s, p),
-            Symbol("$(p)_percentile")
-        )
-    end # for
-
-    # Convert to dataframe
-    df = DF.DataFrame(fitness_summary)
-    # Add barcode
-    df[!, :id] .= bc
-    # Append to dataframe
-    DF.append!(df_summary, df)
-end # for
-
-# Add barcode
-DF.insertcols!(
-    df_summary,
-    :barcode => ids_advi,
-)
-
-# Sort by barcode
-DF.sort!(df_summary, :barcode)
-
-# Append fitness and growth rate value
-DF.leftjoin!(
-    df_summary,
-    unique(
-        data[.!(data.neutral),
-            [:barcode, :fitness, :growth_rate]]
-    );
-    on=:barcode
+# Sample from posterior MvNormal
+df_samples = DF.DataFrame(
+    Random.rand(
+        Distributions.MvNormal(
+            df_advi.mean, LinearAlgebra.Diagonal(df_advi.std .^ 2)
+        ),
+        n_samples
+    )',
+    df_advi.varname
 )
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -148,6 +100,9 @@ gl_ppc = fig[1, 2:3] = GridLayout()
 
 # Add grid layout for comparison
 gl_comp = fig[1, 4] = GridLayout()
+
+# Import personal color palette
+color_palette = BayesFitUtils.viz.colors()
 
 # ---------------------------------------------------------------------------- #
 
@@ -214,7 +169,12 @@ qs = [0.95, 0.675, 0.05]
 n_row, n_col = [3, 3]
 
 # List example barcodes to plot
-bc_plot = StatsBase.sample(eachrow(df_summary), n_row * n_col)
+bc_plot = StatsBase.sample(
+    eachrow(DF.sort(df_fitness, :mean)),
+    n_row * n_col,
+    replace=false,
+    ordered=true
+)
 
 # Initialize plot counter
 counter = 1
@@ -236,7 +196,7 @@ for row in 1:n_row
 
             # Define colors
             local colors = get(
-                ColorSchemes.Purples_9, LinRange(0.25, 1.0, length(qs))
+                ColorSchemes.Purples_9, LinRange(0.5, 1.0, length(qs))
             )
 
             # Compute posterior predictive checks
@@ -275,7 +235,7 @@ for row in 1:n_row
 
         # Extract data
         data_bc = DF.sort(
-            data[data.barcode.==bc_plot[counter].barcode, :], :time
+            data[data.barcode.==bc_plot[counter].id, :], :time
         )
 
         # Define colors
@@ -284,14 +244,14 @@ for row in 1:n_row
         # Define dictionary with corresponding parameters for variables needed
         # for the posterior predictive checks
         local param = Dict(
-            :mutant_mean_fitness => Symbol(bc_plot[counter].id),
-            :mutant_std_fitness => Symbol(
-                replace(bc_plot[counter].id, "s" => "logσ")
+            :bc_mean_fitness => Symbol(bc_plot[counter].varname),
+            :bc_std_fitness => Symbol(
+                replace(bc_plot[counter].varname, "s" => "logσ")
             ),
             :population_mean_fitness => :s̲ₜ,
         )
         # Compute posterior predictive checks
-        local ppc_mat = BayesFitness.stats.logfreq_ratio_mutant_ppc(
+        local ppc_mat = BayesFitness.stats.logfreq_ratio_bc_ppc(
             df_samples, n_ppc; model=:normal, param=param
         )
         # Plot posterior predictive checks
@@ -304,25 +264,12 @@ for row in 1:n_row
 
         # Define fitness ranges to display in title
         vals = [
-            round(bc_plot[counter].median; sigdigits=2),
-            round(
-                abs(
-                    bc_plot[counter]["16.0_percentile"] -
-                    bc_plot[counter].median
-                ),
-                sigdigits=2
-            ),
-            round(
-                abs(
-                    bc_plot[counter]["84.0_percentile"] -
-                    bc_plot[counter].median
-                ),
-                sigdigits=2
-            )
+            round(bc_plot[counter].mean; sigdigits=2),
+            round(bc_plot[counter].std; sigdigits=2),
         ]
 
         # Add title
-        ax.title = L"s^{(m)} = %$(vals[1])_{-%$(vals[2])}^{+%$(vals[3])}"
+        ax.title = L"s^{(m)} = %$(vals[1]){\pm%$(vals[2])}"
         # ax.titlesize = 18
 
         ## == Plot format == ##
@@ -358,30 +305,29 @@ ax = Axis(
 # Plot identity line
 lines!(
     ax,
-    repeat([[minimum(df_summary.median), maximum(df_summary.median)]], 2)...;
+    repeat([[minimum(df_fitness.mean), maximum(df_fitness.mean)]], 2)...;
     color=:black
 )
 
 # Add x-axis error bars
 errorbars!(
     ax,
-    df_summary.fitness,
-    df_summary.median,
-    abs.(df_summary.median .- df_summary[:, "16.0_percentile"]),
-    abs.(df_summary.median .- df_summary[:, "84.0_percentile"]),
+    df_fitness.fitness,
+    df_fitness.mean,
+    df_fitness.std,
     color=(:gray, 0.5),
     direction=:y
 )
 
 # Plot comparison
-scatter!(ax, df_summary.fitness, df_summary.median, markersize=8)
+scatter!(ax, df_fitness.fitness, df_fitness.mean, markersize=8)
 
 # ---------------------------------------------------------------------------- #
 
 # Add axis
 ax = Axis(
     gl_comp[2, 1],
-    xlabel="|median - true value|",
+    xlabel="|mean - true value|",
     ylabel="ECDF",
     aspect=AxisAspect(1),
     xticks=LinearTicks(4),
@@ -391,7 +337,7 @@ ax = Axis(
 # Plot ECDF
 ecdfplot!(
     ax,
-    abs.(df_summary.median .- df_summary.fitness),
+    abs.(df_fitness.mean .- df_fitness.fitness),
     linewidth=2
 )
 
