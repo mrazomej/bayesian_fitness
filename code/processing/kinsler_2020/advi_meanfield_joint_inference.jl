@@ -19,7 +19,6 @@ import Glob
 
 # Import library to perform Bayesian inference
 import Turing
-import DynamicHMC
 
 # Import AutoDiff backend
 using ReverseDiff
@@ -42,7 +41,7 @@ Random.seed!(42)
 
 # Define number of samples and steps
 n_samples = 1
-n_steps = 10_000
+n_steps = 4_500
 
 ##
 
@@ -71,7 +70,9 @@ end # if
 println("Loading data...")
 
 # Import data
-df = CSV.read("$(git_root())/data/kinsler_2020/tidy_counts_no_anc.csv", DF.DataFrame)
+df = CSV.read(
+    "$(git_root())/data/kinsler_2020/tidy_counts_no_anc.csv", DF.DataFrame
+)
 
 # Read datasets visual evaluation info
 df_include = CSV.read(
@@ -110,54 +111,6 @@ df_include = df_include[.!(complete_bool), :]
 
 println("$(size(df_include, 1)) datasets to process...\n")
 
-##
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Define function to extract prior information
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-
-function prior_neutral(data, rm_T0)
-    if rm_T0
-        data = data[data.time.>minimum(data.time), :]
-    end # if
-    # Group neutral data by barcode
-    data_group = DF.groupby(data[data.neutral, :], :barcode)
-
-    # Initialize list to save log frequency changes
-    logfreq = []
-
-    # Loop through each neutral barcode
-    for d in data_group
-        # Sort data by time
-        DF.sort!(d, :time)
-        # Compute log frequency ratio and append to list
-        push!(logfreq, diff(log.(d[:, :freq])))
-    end # for
-
-    # Generate matrix with log-freq ratios
-    logfreq_mat = hcat(logfreq...)
-
-    # Compute mean per time point for approximate mean fitness making sure we to
-    # remove infinities.
-    logfreq_mean = StatsBase.mean.(
-        [x[.!isinf.(x)] for x in eachrow(logfreq_mat)]
-    )
-
-    # Define prior for population mean fitness
-    s_pop_prior = hcat(-logfreq_mean, repeat([0.3], length(logfreq_mean)))
-
-    # Generate single list of log-frequency ratios to compute prior on σ
-    logfreq_vec = vcat(logfreq...)
-    # Remove infinities
-    logfreq_vec = logfreq_vec[.!isinf.(logfreq_vec)]
-
-    # Define priors for nuisance parameters for log-likelihood functions
-    logσ_pop_prior = [StatsBase.mean(logfreq_vec), StatsBase.std(logfreq_vec)]
-    logσ_bc_prior = logσ_pop_prior
-
-    return s_pop_prior, logσ_pop_prior, logσ_bc_prior
-end # function
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Perform ADVI on datasets
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -172,8 +125,26 @@ Threads.@threads for i in axes(df_include, 1)
     # Extract data
     data = df[(df.env.==env).&(df.rep.==rep), :]
 
-    # Extract prior information
-    s_pop_prior, logσ_pop_prior, logσ_bc_prior = prior_neutral(data, rm_T0)
+    # Compute naive priors from neutral strains
+    naive_priors = BayesFitness.stats.naive_prior(data)
+
+    # Select standard deviation parameters
+    s_pop_prior = hcat(
+        naive_priors[:s_pop_prior],
+        repeat([0.05], length(naive_priors[:s_pop_prior]))
+    )
+
+    logσ_pop_prior = hcat(
+        naive_priors[:logσ_pop_prior],
+        repeat([1.0], length(naive_priors[:logσ_pop_prior]))
+    )
+
+    logσ_bc_prior = [StatsBase.mean(naive_priors[:logσ_pop_prior]), 1.0]
+
+    logλ_prior = hcat(
+        naive_priors[:logλ_prior],
+        repeat([3.0], length(naive_priors[:logλ_prior]))
+    )
 
     # Define function parameters
     param = Dict(
@@ -186,6 +157,7 @@ Threads.@threads for i in axes(df_include, 1)
             :logσ_pop_prior => logσ_pop_prior,
             :logσ_bc_prior => logσ_bc_prior,
             :s_bc_prior => [0.0, 1.0],
+            :logλ_prior => logλ_prior,
         ),
         :advi => Turing.ADVI(n_samples, n_steps),
         :opt => Turing.TruncatedADAGrad(),
@@ -197,9 +169,4 @@ Threads.@threads for i in axes(df_include, 1)
     println("Running Inference for group $(i)...")
 
     @time BayesFitness.vi.advi(; param...)
-    # try
-    #     @time BayesFitness.vi.advi(; param...)
-    # catch
-    #     @warn "Group $(i) was already processed"
-    # end
 end # for
