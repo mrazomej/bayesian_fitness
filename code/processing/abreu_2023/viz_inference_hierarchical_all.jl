@@ -106,7 +106,7 @@ for col = 1:n_col
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
     # Load JLD2 file
-    file = Glob.glob("$(out_dir)/*3000*csv")
+    file = Glob.glob("$(out_dir)/advi*4500*csv")
 
     df_advi = CSV.read(file, DF.DataFrame)
 
@@ -124,7 +124,7 @@ for col = 1:n_col
     end
 
     # Define color for environments to keep consistency
-    global env_colors = Dict(
+    env_colors = Dict(
         String.(unique(df_advi.env)) .=>
             ColorSchemes.tableau_10[1:length(unique(df_advi.env))]
     )
@@ -156,7 +156,7 @@ for col = 1:n_col
     # Define number of replicates
     n_rep = length(unique(data.rep))
     # Collect all possible pairs of plots
-    rep_pairs = collect(Combinatorics.combinations(unique(data.rep), 2))
+    rep_pairs = sort(collect(Combinatorics.combinations(unique(data.rep), 2)))
 
     # Initialize figure
     fig = Figure(resolution=(350 * length(rep_pairs), 350))
@@ -496,14 +496,14 @@ for col = 1:n_col
                     # Define dictionary with corresponding parameters for
                     # variables needed for the posterior predictive checks
                     local param = Dict(
-                        :mutant_mean_fitness => Symbol(s_var),
-                        :mutant_std_fitness => Symbol(
+                        :bc_mean_fitness => Symbol(s_var),
+                        :bc_std_fitness => Symbol(
                             replace(s_var, "s" => "logσ")
                         ),
                         :population_mean_fitness => Symbol("s̲ₜ"),
                     )
                     # Compute posterior predictive checks
-                    local ppc_mat = BayesFitness.stats.logfreq_ratio_mutant_ppc(
+                    local ppc_mat = BayesFitness.stats.logfreq_ratio_bc_ppc(
                         df_samples[:, Symbol.(vars_bc)],
                         n_ppc;
                         model=:normal,
@@ -513,8 +513,8 @@ for col = 1:n_col
                     # Define dictionary with corresponding parameters for
                     # variables needed for the posterior predictive checks
                     local param = Dict(
-                        :mutant_mean_fitness => Symbol("s̲⁽ᵐ⁾"),
-                        :mutant_std_fitness => Symbol("logσ̲⁽ᵐ⁾"),
+                        :bc_mean_fitness => Symbol("s̲⁽ᵐ⁾"),
+                        :bc_std_fitness => Symbol("logσ̲⁽ᵐ⁾"),
                         :population_mean_fitness => Symbol("s̲ₜ"),
                     )
                     # Compute posterior predictive checks
