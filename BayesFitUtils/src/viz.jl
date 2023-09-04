@@ -115,6 +115,9 @@ function theme_makie!()
             extra_bold="Roboto Bold",
             extra_bold_italic="Roboto Bold Italic"
         ),
+        Figure=(
+            resolution = (300, 300)
+        ),
         Axis=(
             # backgroundcolor="#EAEAF2", 
             backgroundcolor="#E6E6EF",
@@ -159,7 +162,7 @@ function theme_makie!()
         Legend=(
             titlesize=15,
             labelsize=15,
-            bgcolor="#E3DCD0",
+            bgcolor="#E6E6EF",
         ),
         Lines=(
             linewidth=2,
