@@ -44,7 +44,7 @@ Random.seed!(42)
 
 # Define number of samples and steps
 n_samples = 1
-n_steps = 3_000
+n_steps = 5_000
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate output directories
@@ -106,6 +106,7 @@ param = Dict(
         :logσ_bc_prior => logσ_bc_prior,
         :s_bc_prior => [0.0, 1.0],
         :logλ_prior => logλ_prior,
+        :logτ_prior => [-2.0, 0.5],
     ),
     :advi => Turing.ADVI(n_samples, n_steps),
     :opt => Turing.TruncatedADAGrad(),

@@ -73,7 +73,7 @@ n_rep = length(unique(df_counts.rep))
 
 println("Loading ADVI results...")
 # Define file
-file = first(Glob.glob("./output/advi_meanfield*3000*"))
+file = first(Glob.glob("./output/advi_meanfield*5000*"))
 
 # Convert results to tidy dataframe
 df_advi = CSV.read(file, DF.DataFrame)
@@ -124,14 +124,25 @@ ax = [
     ) for i = 1:length(rep_pairs)
 ]
 
-# Define colors
-colors = ColorSchemes.seaborn_colorblind
-
 # Loop through pairs of replicates
 for (i, p) in enumerate(rep_pairs)
 
     # Plot identity line
-    lines!(ax[i], repeat([[-0.5, 1.75]], 2)..., linestyle=:dash, color="black")
+    lines!(
+        ax[i],
+        repeat(
+            [[
+                minimum(
+                    df_advi[df_advi.vartype.=="bc_hyperfitness", :mean]
+                ) * 1.05,
+                maximum(
+                    df_advi[df_advi.vartype.=="bc_hyperfitness", :mean]
+                ) * 1.05,]],
+            2
+        )...,
+        linestyle=:dash,
+        color="black"
+    )
 
     # Group data by repeat
     data_group = DF.groupby(
@@ -159,7 +170,7 @@ for (i, p) in enumerate(rep_pairs)
         data_group[2].std,
         direction=:y,
         linewidth=1.5,
-        color=(:gray, 0.1)
+        color=(:gray, 0.25)
     )
 
     # Plot fitness values
@@ -198,14 +209,23 @@ ax = [
     ) for i = 1:n_rep
 ]
 
-# Define plot colors
-colors = ColorSchemes.seaborn_colorblind
-
 # Loop through repeats
 for rep in 1:n_rep
     # Plot identity line
     lines!(
-        ax[rep], repeat([[-0.5, 1.75]], 2)..., linestyle=:dash, color="black"
+        ax[rep],
+        repeat(
+            [[
+                minimum(
+                    df_advi[df_advi.vartype.=="bc_hyperfitness", :mean]
+                ) * 1.05,
+                maximum(
+                    df_advi[df_advi.vartype.=="bc_hyperfitness", :mean]
+                ) * 1.05,]],
+            2
+        )...,
+        linestyle=:dash,
+        color="black"
     )
 
     # Add plot title
@@ -235,7 +255,7 @@ for rep in 1:n_rep
             :std],
         direction=:y,
         linewidth=1.5,
-        color=(:gray, 0.1)
+        color=(:gray, 0.25)
     )
 
     # Plot fitness values
@@ -265,7 +285,8 @@ data_advi = df_advi[
 DF.rename!(data_advi, :id => :barcode)
 
 data_counts = df_counts[
-    (.!df_counts.neutral).&(df_counts.rep.=="R1"), [:barcode, :fitness]
+    (.!df_counts.neutral).&(df_counts.rep.=="R1"),
+    [:barcode, :hyperfitness]
 ]
 
 # Combine information
@@ -283,13 +304,25 @@ ax = Axis(
 
 # Plot identity line
 lines!(
-    ax, repeat([[-0.1, 1.75]], 2)..., linestyle=:dash, color="black"
+    ax,
+    repeat(
+        [[
+            minimum(
+                df_advi[df_advi.vartype.=="bc_hyperfitness", :mean]
+            ) * 1.05,
+            maximum(
+                df_advi[df_advi.vartype.=="bc_hyperfitness", :mean]
+            ) * 1.05,]],
+        2
+    )...,
+    linestyle=:dash,
+    color="black"
 )
 
 # Plot errorbars
 errorbars!(
     ax,
-    data.fitness,
+    data.hyperfitness,
     data.mean,
     data.std,
     direction=:y,
@@ -299,12 +332,90 @@ errorbars!(
 # Plot mean comparision
 scatter!(
     ax,
-    data.fitness,
+    data.hyperfitness,
     data.mean,
     markersize=8,
 )
 
 save("./output/figs/advi_fitness_true_hyperparameter.pdf", fig)
+
+fig
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+println("Plotting replicate inferred fitness with true fitness...")
+
+# Extract information
+data_advi = df_advi[
+    df_advi.vartype.=="bc_fitness", [:id, :mean, :std, :rep]
+]
+DF.rename!(data_advi, :id => :barcode)
+
+data_counts = df_counts[(.!df_counts.neutral), [:barcode, :fitness, :rep]]
+
+# Combine information
+data = DF.leftjoin(data_advi, data_counts; on=[:barcode, :rep])
+
+
+# Initialize figure
+fig = Figure(resolution=(350 * n_rep, 350))
+
+# Add axis
+ax = [
+    Axis(
+        fig[1, i],
+        title="fitness comparison",
+        aspect=AxisAspect(1)
+    ) for i = 1:n_rep
+]
+
+# Loop through pairs of replicates
+for (i, p) in enumerate(unique(data.rep))
+
+    # Plot identity line
+    lines!(
+        ax[i],
+        repeat(
+            [[
+                minimum(
+                    df_advi[df_advi.vartype.=="bc_hyperfitness", :mean]
+                ) * 1.05,
+                maximum(
+                    df_advi[df_advi.vartype.=="bc_hyperfitness", :mean]
+                ) * 1.05,]],
+            2
+        )...,
+        linestyle=:dash,
+        color="black"
+    )
+
+    # Plot y-axis error bars
+    errorbars!(
+        ax[i],
+        data[data.rep.==p, :fitness],
+        data[data.rep.==p, :mean],
+        data[data.rep.==p, :std],
+        direction=:y,
+        linewidth=1.5,
+        color=(:gray, 0.25)
+    )
+
+    # Plot fitness values
+    scatter!(
+        ax[i],
+        data[data.rep.==p, :fitness],
+        data[data.rep.==p, :mean],
+        markersize=7,
+    )
+
+    # Label axis
+    ax[i].xlabel = "true replicate fitness"
+    ax[i].ylabel = "inferred replicate fitness"
+    ax[i].title = "replicate $p"
+end # for
+
+save("./output/figs/advi_fitness_comparison_replicates_truth.pdf", fig)
 
 fig
 
@@ -360,13 +471,16 @@ n_ppc = 500
 qs = [0.05, 0.68, 0.95]
 
 # Define colors
-ppc_color = get(ColorSchemes.Blues_9, LinRange(0.5, 1.0, length(qs)))
+colors = [
+    get(ColorSchemes.Blues_9, LinRange(0.5, 1, length(qs))),
+    get(ColorSchemes.Purples_9, LinRange(0.5, 1, length(qs))),
+]
 
 # Initialize figure
 fig = Figure(resolution=(400 * n_rep, 350))
 
 # Loop through replicates
-for (i, (key, value)) in enumerate(rep_vars)
+for (i, (key, value)) in enumerate(sort(rep_vars))
 
     # Compute posterior predictive checks
     ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
@@ -374,7 +488,7 @@ for (i, (key, value)) in enumerate(rep_vars)
     )
 
     # Add axis
-    ax = Axis(
+    local ax = Axis(
         fig[1, i],
         xlabel="time point",
         ylabel="ln(fₜ₊₁/fₜ)",
@@ -384,7 +498,7 @@ for (i, (key, value)) in enumerate(rep_vars)
     # Plot posterior predictive checks
     BayesFitUtils.viz.ppc_time_series!(
         ax, qs, ppc_mat;
-        colors=ppc_color, time=sort(unique(df_counts.time))[2:end]
+        colors=colors[i], time=sort(unique(df_counts.time))[2:end]
     )
 
     # Plot log-frequency ratio of neutrals
@@ -417,15 +531,19 @@ qs = [0.95, 0.675, 0.05]
 n_row, n_col = [3, 3]
 
 # Extract barcodes
-bc_ids = unique(df_counts[.!(df_counts.neutral), :barcode])
+bc_ids = DF.sort(
+    unique(df_counts[.!(df_counts.neutral), [:barcode, :fitness]]),
+    :fitness
+)
 # List example barcodes to plot
-bc_plot = StatsBase.sample(bc_ids, n_row * n_col)
+bc_plot = StatsBase.sample(
+    bc_ids.barcode, n_row * n_col, ordered=true, replace=false
+)
 
 # Define colors
 colors = [
     get(ColorSchemes.Blues_9, LinRange(0.5, 1, length(qs))),
     get(ColorSchemes.Purples_9, LinRange(0.5, 1, length(qs))),
-    get(ColorSchemes.Greens_9, LinRange(0.5, 1, length(qs)))
 ]
 
 # Initialize figure
@@ -440,10 +558,10 @@ for row in 1:n_row
         # Add GridLayout
         gl = fig[row, col] = GridLayout()
         # Add axis
-        ax = [Axis(gl[i, 1:6]) for i = 1:n_rep]
+        local ax = [Axis(gl[i, 1:6]) for i = 1:n_rep]
 
         # Loop through replicates
-        for (rep, (key, value)) in enumerate(rep_vars)
+        for (rep, (key, value)) in enumerate(sort(rep_vars))
 
             # Extract data
             data_bc = DF.sort(
@@ -454,7 +572,7 @@ for row in 1:n_row
             )
 
             # Extract variables for barcode PPC
-            global vars_bc = [
+            vars_bc = [
                 value[occursin.("̲ₜ", value)]
                 df_advi[
                     (df_advi.id.==bc_plot[counter]).&(df_advi.rep.==string(key)),
@@ -471,12 +589,12 @@ for row in 1:n_row
             # Define dictionary with corresponding parameters for variables needed
             # for the posterior predictive checks
             local param = Dict(
-                :mutant_mean_fitness => Symbol(s_var),
-                :mutant_std_fitness => Symbol(logσ_var),
+                :bc_mean_fitness => Symbol(s_var),
+                :bc_std_fitness => Symbol(logσ_var),
                 :population_mean_fitness => Symbol("s̲ₜ"),
             )
             # Compute posterior predictive checks
-            local ppc_mat = BayesFitness.stats.logfreq_ratio_mutant_ppc(
+            local ppc_mat = BayesFitness.stats.logfreq_ratio_bc_ppc(
                 df_samples[:, Symbol.(vars_bc)],
                 n_ppc;
                 model=:normal,
@@ -499,8 +617,12 @@ for row in 1:n_row
                 markersize=8
             )
 
+            # Compute mean and std for fitness values
+            mean_s = round(StatsBase.mean(df_samples[:, s_var]), sigdigits=2)
+            std_s = round(StatsBase.std(df_samples[:, s_var]), sigdigits=2)
+
             # Add title
-            ax[rep].title = "replicate $key"
+            ax[rep].title = "replicate $key | s⁽ᵐ⁾= $(mean_s)±$(std_s)"
             ax[rep].titlesize = 12
         end # for
 

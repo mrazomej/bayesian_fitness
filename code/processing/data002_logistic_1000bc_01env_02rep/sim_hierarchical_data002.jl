@@ -28,7 +28,7 @@ import Makie
 CairoMakie.activate!()
 
 # Set PBoC Plotting style
-BayesFitUtils.viz.pboc_makie!()
+BayesFitUtils.viz.theme_makie!()
 
 ##
 
@@ -50,7 +50,7 @@ gen_plots = true
 n_data = 2
 # Define standard deviation for between-experiment fitness distribution
 # variability
-σ_exp = 0.01
+σ_exp = 0.015
 # Define standard deviation for added Gaussian noise
 σ_lognormal = 0.3
 # Define ancestral strain growth rate
@@ -116,9 +116,6 @@ n₀ = hcat([
 # Define truncation ranges for growth rates
 λ_trunc = [λ_a .* 0.9999, λ_a * 1.5]
 
-# Define level of Gaussian noise to add
-σ_lognormal = 0.3
-
 # Sample mutant growth rates
 λ̲[n_neutral+2:end] .= sort!(
     rand(
@@ -128,25 +125,42 @@ n₀ = hcat([
     )
 )
 
+# Define truncation ranges for experimental replicates
+λ_trunc_exp = [minimum(λ̲), maximum(λ̲)]
+
+
 # Initialize array to save growth rates for each experiment
 λ̲̲ = ones(Float64, length(λ̲), n_data)
 # Loop through datasets
 for i = 1:n_data
     # Add "noise" to mutant fitness values
     λ̲̲[n_neutral+2:end, i] .= rand.(
-        Distributions.Normal.(λ̲[n_neutral+2:end], Ref(σ_exp))
+        Distributions.truncated.(
+            Distributions.LogNormal.(
+                log.(λ̲[n_neutral+2:end]), Ref(σ_exp)
+            ),
+            λ_trunc_exp...
+        )
     )
 end # for
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Simulate datasets 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-# Run deterministic simulation
-n_mat = BayesFitUtils.sim.logistic_fitness_measurement.(
+# Run deterministic simulation for hyper-parameter
+n_mat_hyper = BayesFitUtils.sim.logistic_fitness_measurement.(
     Ref(λ̲),
+    eachcol(n₀);
+    n_gen=n_gen,
+    κ=κ,
+    σ_lognormal=0.0,
+    poisson_noise=false
+)
+
+# Run deterministic simulation for each replicate
+n_mat = BayesFitUtils.sim.logistic_fitness_measurement.(
+    eachcol(λ̲̲),
     eachcol(n₀);
     n_gen=n_gen,
     κ=κ,
@@ -163,26 +177,28 @@ n_mat_noise = BayesFitUtils.sim.logistic_fitness_measurement.(
     σ_lognormal=σ_lognormal
 )
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Compute frequencies and log-frequency ratios
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Compute the frequencies for all non-ancestral strains
+f_mat_hyper = [
+    (n[:, 2:end] ./ sum(n[:, 2:end], dims=2)) for n in n_mat_hyper
+]
+
 f_mat = [
-    (n[:, 2:end] ./ sum(n[:, 2:end], dims=2)) .+ 1E-9 for n in n_mat
+    (n[:, 2:end] ./ sum(n[:, 2:end], dims=2)) for n in n_mat
 ]
 
 f_mat_noise = [
-    (n[:, 2:end] ./ sum(n[:, 2:end], dims=2)) .+ 1E-9 for n in n_mat_noise
+    (n[:, 2:end] ./ sum(n[:, 2:end], dims=2)) for n in n_mat_noise
 ]
 
 # Compute the frequency ratios
+γ_mat_hyper = [f[2:end, :] ./ f[1:end-1, :] for f in f_mat_hyper]
 γ_mat = [f[2:end, :] ./ f[1:end-1, :] for f in f_mat]
 γ_mat_noise = [f[2:end, :] ./ f[1:end-1, :] for f in f_mat_noise]
 
-##
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Compute deterministic fitness
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -199,29 +215,48 @@ df_fit = DF.DataFrame()
 # Loop through datasets
 for d in 1:n_data
     # Take the log of the frequency ratios
+    logγ_mat_hyper = log.(γ_mat_hyper[d])
     logγ_mat = log.(γ_mat[d])
 
+
     # Obtain population mean fitness given the neutrals
-    pop_mean_fitness = StatsBase.mean(-logγ_mat[:, 1:n_neutral], dims=2)
+    pop_mean_fitness_hyper = [
+        StatsBase.mean(x[.!isinf.(x)])
+        for x in eachrow(-logγ_mat_hyper[:, 1:n_neutral])
+    ]
+
+
+    pop_mean_fitness = [
+        StatsBase.mean(x[.!isinf.(x)])
+        for x in eachrow(-logγ_mat[:, 1:n_neutral])
+    ]
 
     # Compute fitness by extracting the population mean fitness from the log
     # frequency ratios and computing the mean of this quantity over time.
-    fitness = vec(StatsBase.mean(logγ_mat .- pop_mean_fitness, dims=1))
+    hyperfitness = vec([
+        StatsBase.mean(x[.!isinf.(x)] .+ pop_mean_fitness_hyper[.!isinf.(x)])
+        for x in eachcol(logγ_mat_hyper)
+    ])
+
+    fitness = vec([
+        StatsBase.mean(x[.!isinf.(x)] .+ pop_mean_fitness[.!isinf.(x)])
+        for x in eachcol(logγ_mat)
+    ])
+
 
     # Create dataframe with relative fitness and growth rate
     DF.append!(
         df_fit,
         DF.DataFrame(
             :barcode => bc_names,
-            :fitness => fitness .- StatsBase.mean(fitness[1:n_neutral]),
+            :hyperfitness => hyperfitness,
+            :fitness => fitness,
             :growth_rate => λ̲[2:end],
             :growth_rate_exp => λ̲̲[2:end, d],
             :rep .=> "R$(d)"
         )
     )
 end # for
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Convert data to tidy dataframe
@@ -301,18 +336,20 @@ if gen_plots
         BayesFitUtils.viz.bc_time_series!(
             ax[1],
             data[.!(data.neutral), :],
-            zero_lim=1E-9,
+            zero_lim=1E-12,
             alpha=0.3,
             quant_col=:freq,
+            zero_label="extinct",
         )
 
         # Plot neutral barcode trajectories
         BayesFitUtils.viz.bc_time_series!(
             ax[1],
             data[data.neutral, :],
-            zero_lim=1E-9,
+            zero_lim=1E-12,
             color=ColorSchemes.Blues_9[end],
             quant_col=:freq,
+            zero_label="extinct",
         )
 
         # Change scale
@@ -344,6 +381,51 @@ if gen_plots
 end # if
 
 save("./output/figs/trajectories.pdf", fig)
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% # 
+# Plot comparison between hyper fitness and replciate fitness
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% # 
+
+# Initialize figure
+fig = Figure(resolution=(300 * 2, 300))
+
+# Add axis
+ax = Axis(
+    fig[1, 1],
+    xlabel="hyperfitness",
+    ylabel="fitness"
+)
+
+# Group data by replicate
+df_group = DF.groupby(df[.!df.neutral, :], :rep)
+
+# Loop through replicates
+for d in df_group
+    # Plot comparison
+    scatter!(
+        ax, d.hyperfitness, d.fitness, label="$(first(d.rep))", markersize=8
+    )
+end # for
+
+# add legend
+axislegend(ax, position=:rb)
+
+
+# Add axis
+ax2 = Axis(
+    fig[1, 2],
+    xlabel="fitness replicate R1",
+    ylabel="fitness replicate R2",
+)
+
+scatter!(
+    ax2,
+    DF.sort(df_group[1], :barcode).fitness,
+    DF.sort(df_group[2], :barcode).fitness,
+    markersize=8
+)
+
+save("./output/figs/hyperfitness_vs_fitness_truth.pdf", fig)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% # 
 # Save data to memory
@@ -398,3 +480,5 @@ open("$(out_dir)/README.md", "w") do file
 end
 
 CSV.write("$(out_dir)/tidy_data.csv", df)
+
+##
