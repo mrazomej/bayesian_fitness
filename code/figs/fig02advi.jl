@@ -269,8 +269,7 @@ for row in 1:n_row
         ]
 
         # Add title
-        ax.title = L"s^{(m)} = %$(vals[1]){\pm%$(vals[2])}"
-        # ax.titlesize = 18
+        ax.title = "s⁽ᵐ⁾= $(vals[1])±$(vals[2])"
 
         ## == Plot format == ##
 
@@ -327,7 +326,7 @@ scatter!(ax, df_fitness.fitness, df_fitness.mean, markersize=8)
 # Add axis
 ax = Axis(
     gl_comp[2, 1],
-    xlabel="|mean - true value|",
+    xlabel="|mean - ground truth fitness|",
     ylabel="ECDF",
     aspect=AxisAspect(1),
     xticks=LinearTicks(4),
