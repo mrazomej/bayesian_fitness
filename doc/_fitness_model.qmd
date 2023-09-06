@@ -7,7 +7,7 @@ csl: ieee.csl
 
 ## Preliminaries on mathematical notation
 Before jumping directly into the Bayesian inference pipeline, let us establish
-the mathematical notation to be used throughout this paper. We define
+the mathematical notation used throughout this paper. We define
 (column) vectors as underlined lowercase symbols such as
 $$
 \underline{x} = \begin{bmatrix}
@@ -17,9 +17,17 @@ $$
     x_N
 \end{bmatrix}.
 $${#eq-vec_def}
-
 In the same way, we define matrices as double-underline uppercase symbols such
-as $\underline{\underline{A}}$.
+as
+$$
+\underline{\underline{A}} =
+\begin{bmatrix}
+    A_{11} & A_{12} & \cdots & A_{1N}\\
+    A_{21} & A_{22} & \cdots & A_{2N}\\
+    \vdots & \vdots & \ddots & \vdots\\
+    A_{M1} & A_{M2} & \cdots & A_{MN}\\
+\end{bmatrix}.
+$${#eq-mat_def}
 
 ## Fitness model {#sec-fitness_model}
 
@@ -40,8 +48,7 @@ $${#eq-logfreq}
 latent parameters we want to infer from the data---the population mean fitness
 and the barcode relative fitness. This is ultimately the functional form used in
 our inference pipeline. Therefore, the relative fitness is computed by knowing
-the barcode log frequency ratio of each barcode throughout the growth-dilution
-cycles.
+the log frequency ratio of each barcode throughout the growth-dilution cycles.
 
 It is important to notice that the frequencies $f_{t}^{(b)}$ are not the allele
 frequencies in the population (most of the culture is not sequenced since the
@@ -71,14 +78,14 @@ $${#eq-r_to_n_norm}
 This is the frequency @eq-fitness describes.
 
 Our ultimate objective is to infer the relative fitness $s^{(m)}$ for each of
-the $M$ mutants in the experiment. To do so, we account the three main sources
-of uncertainty in our model:
+the $M$ relevant barcodes in the experiment. To do so, we account for the three
+primary sources of uncertainty in our model:
 
 1. Uncertainty in the determination of frequencies. Our model relates
 frequencies between adjacent time points to the fitness of the corresponding
 strain. However, we do not directly measure frequencies. Instead, our data for
-each barcode consists of a vector of counts $\underline{r}^{(b)}_t$ for each of
-the $T$ time points in which the measurements were taken.
+each barcode consists of a length $T$ vector of counts $\underline{r}^{(b)}$ for
+each of the $T$ time points in which the measurements were taken.
 2. Uncertainty in the value of the population mean fitness. We define neutral
 lineages to have fitness $s^{(n)} = 0$, helping us anchor the value of the
 population mean fitness $\bar{s}_t$ for each pair of adjacent time points. 
@@ -89,5 +96,5 @@ fitness with their uncertainty that must be propagated to the value of
 the mutants' relative fitness.
 3. Uncertainty in each of the mutants' fitness values. 
 
-To account for all these sources of uncertainty in a principled way, we develop
-a Bayesian inference pipeline.
+To account for all these sources of uncertainty in a principled way, in the next
+section, we develop a Bayesian inference pipeline.

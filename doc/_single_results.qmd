@@ -8,49 +8,47 @@ csl: ieee.csl
 ### Inference on a single dataset
 
 To assess the inference pipeline performance we applied it to a simulated
-dataset with known ground truth (See `[ref to SI]` for details on simulation).
-@fig-02(A) shows the structure of the synthetic dataset. The majority of
-barcodes of interest (dim color lines) are adaptive compared to the neutral
-barcodes ($s^{(m)} > 0$). This experimental condition is required to reliably
-measure the relative fitness since all barcodes of interest occupy a small
-fraction of the population at the beginning of the experiment `[ref SI section
-on detrimental mutants]`. Although the barcode frequency trajectories look
-relatively smooth, our fitness model requires the computation of the log
-frequency ratio between adjacent time points. @fig-02(B) shows such data
-transformation. Here, we can better appreciate the variability in the input that
-goes into our model. This is especially clear for the darker lines representing
-the neutral barcodes since they are supposed to be identically distributed under
-the log frequency ratio transformation.
+dataset with known ground truth relative fitness values (See `[ref to SI]` for
+details on simulation). @fig-02(A) shows the structure of the synthetic dataset.
+The majority of barcodes of interest (dim color lines) are adaptive compared to
+the neutral barcodes ($s^{(m)} > 0$). This experimental condition is required to
+reliably measure the relative fitness since all barcodes of interest occupy a
+small fraction of the population at the beginning of the experiment `[ref SI
+section on detrimental mutants]`. Although the barcode frequency trajectories
+look relatively smooth, our fitness model requires the computation of the log
+frequency ratio between adjacent time points as derived in @eq-logfreq.
+@fig-02(B) shows such data transformation where we can better appreciate the
+observational noise input into our statistical model. This noise is
+evident for the darker lines representing the neutral barcodes since
+all of these lineages are assumed to be identically distributed under this log
+frequency ratio transformation.
 
 A way to visualize the performance of our inference pipeline in fitting our
 fitness model to the observed data is to compute the so-called posterior
 predictive checks (PPC). In short, the PPC consists of bootstrapping the
 generation of synthetic datasets in agreement with the results from the
 inference results. In other words, we use the resulting parameter values from
-the MCMC chain to generate possible datasets in agreement with the inferred
+the ADVI inference to generate possible datasets in agreement with the inferred
 values. @fig-02(C) shows these results for all neutral lineages (upper left
-corner plot) and a few representative non–neutral barcodes. The dark color line
+corner plot) and a few representative non-neutral barcodes. The dark color line
 shows the median value we would expect the data to be found, while the shaded
-regions show the 68\% and 95\% credible region, i.e. the regions where we expect
-to find the data with the corresponding probability---or in terms of our
+regions show the 68\% and 95\% credible regions, i.e., the regions where we
+expect to find the data with the corresponding probability---or in terms of our
 parameter, the $X\%$ credible region is the interval where we expect the true
-parameter to lie with $X\%$ probability. The main advantage of our method is the
-natural interpretability of these credible regions. A common mistake in the
-literature is to confuse frequentist confidence intervals with Bayesian credible
-regions when they are not equivalent @morey2016.
+parameter to lie with $X\%$ probability. The main advantage of our method is
+this natural interpretability of these credible regions since a common mistake
+in the literature is to interpret frequentist confidence intervals as Bayesian
+credible regions when they are not equivalent [@morey2016].
 
 To capture the global performance of the model, @fig-02(D) compares the known
-groud truth with the inferred relative fitness value for all barcodes of
-interest. There is a great degree of correspondence between these values, with
-the error bars, representing the 68\% credible region for the parameter value
-crossing the identity line for most barcodes. This latter point is made clear
-with @fig-02(E) where the empirical cumulative distribution function (ECDF) of
-the absolute differences between the median inferred value and the true value
-shows that all median inferred values are within 0.3 units of relative fitness
-from the ground truth. Furthermore, because of the Bayesian scope of our method,
-we do not need to limit ourselves to a point estimate of this quantity, but
-report (asymmetric) error bars that fully quantify our degree of belief in the
-inferred value as shown on top of the panels in @fig-02(C).
+ground truth with the inferred relative fitness value for all barcodes of
+interest. There is an excellent degree of correspondence between these values,
+with the error bars, representing the 68\% credible region for the parameter
+value crossing the identity line for most barcodes. This latter point is made
+clear with @fig-02(E) where the empirical cumulative distribution function
+(ECDF) of the absolute differences between the median inferred value and the
+actual value shows that all median inferred values are within 0.3 units of
+relative fitness from the ground truth.
 
 
 ![**Single dataset inference**. (A) Frequency trajectories that represent the

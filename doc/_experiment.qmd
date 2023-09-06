@@ -19,7 +19,7 @@ culture being left for the ensemble of genotypes of interest.
 To determine the relative fitness of the ensemble of genotypes, a series of
 growth-dilution cycles are performed on either a single or multiple
 environments. In other words, the cultures are grown for some time to then
-dilute the culture back into fresh media and repeat for roughly 4-6 cycles,
+dilute the culture back into fresh media and repeat for roughly 4-7 cycles,
 depending on the initial abundances of the mutants, and their relative growth
 rates. The DNA barcodes are sequenced at the end of each growth cycle to
 quantify the relative abundance of each of the barcodes. We point the reader to
@@ -35,4 +35,8 @@ generate a library for amplicon sequencing. (B) Typical barcode trajectory
 dataset. From each time point, the relative frequency of each barcode is
 determined from the total number of reads. Different shades of blue represent
 different relative fitness. Darker gray lines define the typical trajectory of
-neutral lineages.](./figs/fig01){#fig-01}
+neutral lineages. (C) Bayesian network defining the statistical dependence
+between observations (filled circles) and latent variables (empty circles). The
+dotted line highlights the set of variables we are interested in. See
+@sec-bayesian_inference for specific definitions of each
+variable.](./figs/fig01){#fig-01}

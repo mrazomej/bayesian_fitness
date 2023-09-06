@@ -22,3 +22,4 @@ format:
     documentclass: scrreprt
     default-image-extension: pdf
     pdf-engine: pdflatex
+    cite-method: biblatex
