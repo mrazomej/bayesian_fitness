@@ -68,7 +68,7 @@ bc_ids = BayesFitness.utils.data_to_arrays(data)[:bc_ids]
 
 println("Loading ADVI results...")
 # Define file
-file = first(Glob.glob("./output/advi_meanfield*3000*"))
+file = first(Glob.glob("./output/advi_meanfield*10000*"))
 
 # Convert results to tidy dataframe
 df_advi = CSV.read(file, DF.DataFrame)
@@ -344,14 +344,14 @@ for row in 1:n_row
         # Define dictionary with corresponding parameters for variables needed
         # for the posterior predictive checks
         local param = Dict(
-            :mutant_mean_fitness => Symbol(bc_var_dict[bc_plot[counter]]),
-            :mutant_std_fitness => Symbol(
+            :bc_mean_fitness => Symbol(bc_var_dict[bc_plot[counter]]),
+            :bc_std_fitness => Symbol(
                 replace(bc_var_dict[bc_plot[counter]], "s" => "logσ")
             ),
             :population_mean_fitness => Symbol("s̲ₜ"),
         )
         # Compute posterior predictive checks
-        local ppc_mat = BayesFitness.stats.logfreq_ratio_mutant_ppc(
+        local ppc_mat = BayesFitness.stats.logfreq_ratio_bc_ppc(
             df_samples[:, Symbol.(vars_bc)],
             n_ppc;
             model=:normal,

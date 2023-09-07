@@ -28,7 +28,7 @@ import Makie
 CairoMakie.activate!()
 
 # Set PBoC Plotting style
-BayesFitUtils.viz.pboc_makie!()
+BayesFitUtils.viz.theme_makie!()
 
 # Set random seed
 Random.seed!(42)
@@ -37,8 +37,6 @@ Random.seed!(42)
 
 # Define if plots should be generated
 gen_plots = true
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Define simulated experiment parameters
@@ -52,10 +50,10 @@ gen_plots = true
 κ = 10.0^10
 # Define number of generations
 n_gen = 8
-# Define number of neutral lineages
-n_neutral = 100
-# Define the number of mutants
-n_mut = 1100
+# Define number of neutral and mutants
+n_neutral, n_mut = [100, 900]
+# Define number of barcodes
+n_bc = n_neutral + n_mut
 # Define number of genotypes
 n_geno = Int64(n_mut / 10)
 # Define the number of barcodes per genotype
@@ -105,7 +103,6 @@ n₀ = [
 
 # Set neutral growth rates
 λ̲_geno[1:n_neutral+1] .= λ_a
-# λ̲[1:n_neutral+1] .= λ_a
 
 # Define mutant fitness distribution mean
 λ_bc_mean = λ_a * 1.005
@@ -135,8 +132,6 @@ for (i, lam) in enumerate(λ̲_geno[n_neutral+2:end])
     push!(λ̲, repeat([lam], n_geno_bc[i])...)
 end # for
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Simulate datasets 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -149,8 +144,6 @@ n_mat = BayesFitUtils.sim.logistic_fitness_measurement(
 n_mat_noise = BayesFitUtils.sim.logistic_fitness_measurement(
     λ̲, n₀; n_gen=n_gen, κ=κ, σ_lognormal=σ_lognormal, poisson_noise=true
 )
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Compute frequencies and log-frequency ratios
@@ -180,16 +173,22 @@ bc_names = [
 logγ_mat = log.(γ_mat)
 
 # Obtain population mean fitness given the neutrals
-pop_mean_fitness = StatsBase.mean(-logγ_mat[:, 1:n_neutral], dims=2)
+pop_mean_fitness = [
+    StatsBase.mean(x[.!isinf.(x)])
+    for x in eachrow(-logγ_mat[:, 1:n_neutral])
+]
 
 # Compute fitness by extracting the population mean fitness from the log
 # frequency ratios and computing the mean of this quantity over time.
-fitness = vec(StatsBase.mean(logγ_mat .- pop_mean_fitness, dims=1))
+fitness = vec([
+    StatsBase.mean(x[.!isinf.(x)] .+ pop_mean_fitness[.!isinf.(x)])
+    for x in eachcol(logγ_mat)
+])
 
 # Create dataframe with relative fitness, growth rate, and genotype information
 df_fit = DF.DataFrame(
     :barcode => bc_names,
-    :fitness => fitness .- StatsBase.mean(fitness[1:n_neutral]),
+    :fitness => fitness,
     :growth_rate => λ̲[2:end],
     :genotype => [
         repeat(["genotype000"], n_neutral)
@@ -197,7 +196,8 @@ df_fit = DF.DataFrame(
             repeat(["genotype$(lpad(i, 3, "0"))"], n_geno_bc[i])
             for i in 1:n_geno
         ]...)
-    ])
+    ]
+)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Convert data to tidy dataframe
@@ -312,8 +312,6 @@ if gen_plots
 
     fig
 end # if
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% # 
 # Save data to memory
