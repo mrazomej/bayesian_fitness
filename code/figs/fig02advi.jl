@@ -326,7 +326,7 @@ scatter!(ax, df_fitness.fitness, df_fitness.mean, markersize=8)
 # Add axis
 ax = Axis(
     gl_comp[2, 1],
-    xlabel="|mean - ground truth fitness|",
+    xlabel="ground truth fitness |z-score|",
     ylabel="ECDF",
     aspect=AxisAspect(1),
     xticks=LinearTicks(4),
@@ -336,7 +336,7 @@ ax = Axis(
 # Plot ECDF
 ecdfplot!(
     ax,
-    abs.(df_fitness.mean .- df_fitness.fitness),
+    abs.((df_fitness.mean .- df_fitness.fitness) ./ df_fitness.std),
     linewidth=2
 )
 

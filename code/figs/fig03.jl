@@ -188,7 +188,7 @@ end # for
 # Add axis for true hyperfiness vs true fitness
 ax = Axis(
     gl_hyper_vs_fit_true[1, 1],
-    xlabel="ground truth hyperfitness",
+    xlabel="ground truth hyper-fitness",
     ylabel="ground truth replicate fitness",
     aspect=AxisAspect(1)
 )
@@ -212,8 +212,8 @@ axislegend(ax, position=:rb)
 # Add axis for true vs inferred hyperfitness 
 ax = Axis(
     gl_comp[1, 1],
-    xlabel="ground truth hyperfitness",
-    ylabel="inferred hyperfitness",
+    xlabel="ground truth hyper-fitness",
+    ylabel="inferred hyper-fitness",
     aspect=AxisAspect(1)
 )
 
@@ -301,7 +301,7 @@ axislegend(ax, position=:rb)
 # Add axis for hyperfitness ECDF
 ax = Axis(
     gl_ecdf[1, 1],
-    xlabel="|mean - ground truth hyperfitness|",
+    xlabel="ground truth hyper-fitness |z-score|",
     ylabel="ECDF",
     aspect=AxisAspect(1)
 )
@@ -311,7 +311,7 @@ data = df_fitness[(df_fitness.rep.=="R1"), :]
 # Plot hyperfitness ECDF
 ecdfplot!(
     ax,
-    abs.(data.mean_h .- data.hyperfitness),
+    abs.((data.mean_h .- data.hyperfitness) ./ data.std_h),
     color=ColorSchemes.seaborn_colorblind[3]
 )
 
@@ -319,7 +319,7 @@ ecdfplot!(
 # Add axis for hyperfitness ECDF
 ax = Axis(
     gl_ecdf[1, 2],
-    xlabel="|mean - ground truth fitness|",
+    xlabel="ground truth fitness |z-score|",
     ylabel="ECDF",
     aspect=AxisAspect(1)
 )
@@ -332,7 +332,11 @@ for (i, data) in enumerate(df_group)
     # Extract replicate
     rep = first(data.rep)
     # Plot hyperfitness ECDF
-    ecdfplot!(ax, abs.(data.mean_h .- data.hyperfitness), label="$(rep)")
+    ecdfplot!(
+        ax,
+        abs.((data.mean .- data.fitness) ./ data.std),
+        label="$(rep)"
+    )
 end # for
 
 # Add legend
