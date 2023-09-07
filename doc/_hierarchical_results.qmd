@@ -5,7 +5,7 @@ bibliography: references.bib
 csl: ieee.csl
 ---
 
-### Accounting for experimental replicates via hierarchical models
+## Accounting for experimental replicates via hierarchical models
 
 Our inference pipeline can be extended to account for multiple experimental
 replicates via Bayesian hierarchical models [@betancourt2013]. Briefly, when
@@ -24,11 +24,68 @@ problem.
 
 Hierarchical models present a middle ground between these extremes. First,
 hierarchical models rely on the definition of so-called *hyper-parameters*, that
-capture the ultimate parameter we are interested in---in our case we have a
+capture the ultimate parameter we are interested in---for our case we have a
 hyper-fitness value $\theta^{(m)}$ for each mutant. Second, each experiment
 draws randomly from the distribution of this hyper-parameter, allowing for
 subtle variability between experiments to be accounted for---for our inference
 pipeline, each experimental replicate gets assigned a fitness value $s^{(m,i)}$,
-where the extra index indicates the $i$-th experimental replicate.
+where the extra index indicates the $i$-th experimental replicate. As
+schematized by the Bayesian network on @fig-03(A) and further detailed in
+`[point to SI section]`, our statistical model can easily be extended to a
+hierarchical structure, where the fitness of each relevant barcode on each
+experimental replicate is a sample from a global hyper-fitness parameter.
 
-![**Hierarchical model on experimental replicates**.](./figs/fig03){#fig-03}
+To test the performance of this model, we simulated two experimental replicates
+with 1000 unique barcodes (see @fig-03(B-C)) where we randomly sampled a ground
+truth hyper-fitness value $\theta^{(m)}$ for each barcode. To capture
+experimental batch effects, we sampled a variation from this hyper-fitness value
+for each experimental replicate $s^{(m, i)}$. @fig-03(D) shows the relationship
+between hyper-fitness and replicate fitness values for this simulation. As shown
+by the posterior predictive checks examples in @fig-03(E), the hierarchical
+model can correctly fit the data for each experimental replicate. Furthermore,
+@fig-03(F-G) show a high degree of correlation between the ground truth and the
+inferred fitness values. The ECDFs shown in @fig-03(H-I) reveal that for
+$\approx 75\%$ of the non-neutral barcodes, the ground truth hyper-fitness
+values fall within one standard deviation from the mean value in the posterior
+distributions.
+
+![**Hierarchical model on experimental replicates**. (A) Bayesian network
+schematizing the statistical dependence between observations (filled circles)
+and latent variables (empty circles). The replicates are connected via the
+hyper-parameters $\underline{\theta}^M$. See `point to SI` for detailed
+definitions of each variable. (B-C) Simulated replicate datasets with 900
+barcodes of interest and 100 neutral lineages. (D) Comparison between the
+simulation ground truth hyper-fitness and each replicate ground truth fitness.
+The scatter between parameters captures experimental batch effects. (E) Examples
+of the posterior predictive checks for all neutral lineages (upper left panels)
+and a subset of representative mutant lineages. Shaded regions from light to
+dark represent the 95\%, 68\% and 5\% credible regions. (F-G) Comparison between
+the ground truth hyperfitness (F) and replicate fitness (G) values from the
+simulation and the inferred parameters. Gray error bars represent the 68\%
+posterior credible region. (H-I) The empirical cumulative distribution function
+(ECDF) for the absolute z-score value of the ground truth parameter value within
+the inferred hyper-fitness posterior distribution (H) and replicate fitness
+(I).](./figs/fig03){#fig-03}
+
+As shown in @fig-04, the structure imposed by the hierarchical model, where we
+explicitly account for the connection between experimental replicates can
+improve the quality of the inference.  Inferred fitness values between
+experimental replicate exhibit a stronger degree of correlation in the
+hierarchical model (@fig-04(A)) compared to conducting inference on each
+replicate independently (@fig-04(B)). Moreover, when comparing the inferred
+hyper-fitness values---the objective parameter when performing multiple
+experimental measurements---the hierarchical model outperforms averaging the
+independent experimental replicates as shown in @fig-04(C) and (D).
+
+![**Comparison between hierarchical model and single dataset model**. (A-B)
+comparison of inferred fitness values between experimental replicates when
+fitting a hierarchical model (A) or independently fitting each dataset (B). Gray
+error bars represent the 68\% credible regions. (C) Comparison between the
+ground truth hyper-fitness value and the inferred parameters. The blue dots show
+the inferred hyper-fitness values when assuming a hierarchical model. Gray error
+bars show the 68\% credible region for this inference. The yellow dots show the
+average of the mean inferred fitness values for the two experimental replicates.
+No error bars are shown for these as it is inappropriate to compute one with two
+data points. (D) Empirical cumulative distribution function (ECDF) of the
+absolute difference between the inferred mean and the ground truth
+hyper-fitness.](./figs/fig04){#fig-04}

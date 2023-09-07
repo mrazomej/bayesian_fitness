@@ -5,7 +5,7 @@ bibliography: references.bib
 csl: ieee.csl
 ---
 
-### Inference on a single dataset
+## Inference on a single dataset
 
 To assess the inference pipeline performance we applied it to a simulated
 dataset with known ground truth relative fitness values (See `[ref to SI]` for
@@ -45,11 +45,9 @@ ground truth with the inferred relative fitness value for all barcodes of
 interest. There is an excellent degree of correspondence between these values,
 with the error bars, representing the 68\% credible region for the parameter
 value crossing the identity line for most barcodes. This latter point is made
-clear with @fig-02(E) where the empirical cumulative distribution function
-(ECDF) of the absolute differences between the median inferred value and the
-actual value shows that all median inferred values are within 0.3 units of
-relative fitness from the ground truth.
-
+clear with @fig-02(E) where $\approx 90\%$ of ground truth fitness values fall
+within one standard deviation of the mean in the inferred posterior
+distributions.
 
 ![**Single dataset inference**. (A) Frequency trajectories that represent the
 raw data going into the inference. (B) Log frequency ratio between two adjacent
@@ -57,12 +55,10 @@ time points used by the inference pipeline. Darker lines represent the neutral
 barcodes. Notice that these transformed data are much more noisy than the
 seemingly smooth frequency trajectories. (B) Examples of the posterior
 predictive checks for all neutral lineages (upper left panel) and a subset of
-representative mutant lineages. Asymmetric error bars represent the 68\%
-credible region on the mutant relative fitness marginal distribution. (C)
-Comparison between the ground truth fitness value from the logistic-growth
-simulation and the inferred fitness value. Gray error bars represent the 68\%
-posterior credible region. (D) The empirical cumulative distribution function of
-the absolute inference between the ground truth fitness value and the median of
-the marginal distributions for each mutant. This plot reveals that all median
-inferred values are within 0.3 units of relative fitness from the ground
-truth.](./figs/fig02){#fig-02}
+representative mutant lineages. Error bars represent the 68\% credible region on
+the mutant relative fitness marginal distribution. (C) Comparison between the
+ground truth fitness value from the logistic-growth simulation and the inferred
+fitness value. Gray error bars represent the 68\% posterior credible region. (D)
+The empirical cumulative distribution function (ECDF) for the absolute z-score
+value of the ground truth parameter value within the inferred fitness
+posterior distribution.](./figs/fig02){#fig-02}
