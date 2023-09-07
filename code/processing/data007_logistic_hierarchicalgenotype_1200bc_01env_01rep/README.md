@@ -9,3 +9,7 @@
   genotypes.
 - `viz_inference.jl`: Series of plotting functions to visualize the performance
   of the inference pipeline.
+- `advi_meanfield_joint_inference.jl`: Script to perform variational inference
+  using a one-dataset model for each barcode
+- `advi_meanfield_pool_inference.jl`: Script to perform variational inference
+  using a one-dataset model with all barcodes pooled by genotype.
