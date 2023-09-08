@@ -14,5 +14,8 @@ title: "Results"
 <!-- Single dataset -->
 {{< include _single_results.qmd >}}
 
-<!-- Hierarchical model -->
-{{< include _hierarchical_results.qmd >}}
+<!-- Hierarchical model for experimental replicates -->
+{{< include _hierarchical_replicates_results.qmd >}}
+
+<!-- Hierarchical model for genotypes-->
+{{< include _hierarchical_genotypes_results.qmd >}}
