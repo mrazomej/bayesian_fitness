@@ -1,0 +1,11 @@
+---
+editor:
+    render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
+---
+
+## Accounting for multiple barcodes per genotype via hierarchical models
+
+![**Hierarchical model for multiple barcodes per
+genotype**](./figs/fig05){#fig-05}

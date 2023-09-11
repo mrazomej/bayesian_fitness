@@ -1,0 +1,314 @@
+---
+editor:
+    render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
+---
+
+## Primer on Variational Inference
+
+In this section, we will briefly introduce the idea behind variational
+inference. Recall that any Bayesian inference problem deals with the joint
+distribution between observations $\underline{x}$ and unobserved latent
+variables $\underline{\theta}$. This joint distribution can be written as the
+product of a distribution of the observations $\underline{x}$ conditioned on the
+$\underline{\theta}$ and the marginal distribution of these latent variables,
+i.e.,
+$$
+\pi(\underline{x}, \underline{\theta}) =
+\pi(\underline{x} \mid \underline{\theta}) \pi(\underline{\theta}).
+$${#eq-vi_joint_dist}
+A Bayesian inference pipeline's objective is to compute the latent variables'
+posterior probability given a set of observations. This computation is
+equivalent to updating our prior beliefs about the set of values that the latent
+variables take after taking in new data. We write this as Bayes theorem
+$$
+\pi(\underline{\theta} \mid \underline{x}) = 
+\frac{
+        \pi(\underline{x} \mid \underline{\theta})\pi(\underline{\theta})
+    }{
+        \pi(\underline{x})
+    }.
+$${#eq-vi_bayes_theorem}
+The main technical challenge for working with @eq-vi_bayes_theorem comes from
+the computation of the denominator, also known as the *evidence* or the
+*marginalized likelihood*. The reason computing this term is challenging is
+because it involves a (potentially) high-dimensional integral of the form
+$$
+\pi(\underline{x}) = 
+\int\cdots\int d\underline{\theta}^K \pi(\underline{x}, \underline{\theta}) = 
+\int\cdots\int d\underline{\theta}^K \pi(\underline{x} \mid \underline{\theta})
+\pi(\underline{\theta}),
+$${#eq-vi_evidence_int}
+where $K$ is the dimesionality of the $\underline{\theta}$ vector. Here, the
+integrals are taken over the support---the set of values valid for the
+distribution---of $\pi(\underline{\theta})$. However, only a few selected
+distributions have a closed analytical form; thus, in most cases
+@eq-vi_evidence_int must be solved numerically.
+
+Integration in high-dimensional spaces can be computationally extremely
+challenging. For a naive numerical quadrature procedure, integrating over a grid
+of values for each dimension of $\underline{\theta}$ comes with an exponential
+explosion of the number of required grid point evaluations, most of which do not
+contribute significantly to the integration. To gain visual intuition about this
+challenge, imagine integrating the function depicted in @fig-SI01. If the
+location of the high-density region (dark peak) is unknown, numerical quadrature
+requires many grid points to ensure we capture this peak. However, most of the
+numerical evaluations of the function on the grid points do not contribute
+significantly to the integral. Therefore, our computational resources are wasted
+on insignificant evaluations. This only gets worse as the number of dimensions
+increases since the number of grid point evaluation scales exponentially.
+
+![**High-dimensional numerical quadrature does not scale with dimensionality.**
+Schematic depiction of the problem with naive numerical quadrature to integrate
+over an unknown density. While the density is concentrated on the dark peak,
+most of the evaluations over the $x_1-x_2$ grid do not contribute to the value
+of the integral](./figs/figSIX_gaussian_peak.png){#fig-SI01}
+
+Modern Markov Chain Monte Carlo algorithms, such as Hamiltonian Monte Carlo, can
+efficiently perform this high-dimensional integration by utilizing gradient
+information from the target density @betancourt2017. Nevertheless, these
+sampling-based methods become prohibitively slow for the number of dimensions
+our present inference problem presents. Thus, there is a need to find scalable
+methods for the inference problem in @eq-vi_bayes_theorem.
+
+Variational inference circumvents these technical challenges by proposing an
+approximate solution to the problem. Instead of working with the posterior
+distribution in its full glory $\pi(\underline{\theta} \mid \underline{x})$, let
+us propose an approximate posterior distribution $q_\phi$ that belongs to a
+distribution family fully parametrized by $\phi$. For example, let us say that
+the distribution $q_\phi$ belongs to the family of multivariate Normal
+distributions such that $\phi = (\underline{\mu},
+\underline{\underline{\Sigma}})$, where $\underline{\mu}$ is the vector of means
+and $\underline{\underline{\Sigma}}$ is the covariance matrix. If we replace
+$\pi$ by $q_\phi$, we want $q_\phi$ to resemble the original posterior as much
+as possible. Mathematically, this can be expressed as minimizing a "*distance
+metric*"---the Kullback-Leibler (KL) divergence, for example---between the
+distributions. Note that we use quotation marks because, formally, the KL
+divergence is not a distance metric since it is not symmetric. Nevertheless, the
+variational objective is set to find a distribution $q_\phi^*$ such that
+$$
+q_\phi^*(\underline{\theta} \mid \underline{x}) =
+\min_\phi D_{KL}\left(
+    q_\phi(\underline{\theta} \mid \underline{x}) \vert\vert 
+    \pi(\underline{\theta} \mid \underline{x})
+\right),
+$${#eq-vi_objective}
+where $D_{KL}$ is the KL divergence. We alert the reader that in the literature
+$q_\phi$ is usually  written not conditioned on the observations, i.e.,
+$q_\phi(\underline{\theta})$. But we think that writing the conditioning
+reflects that the selection of the distribution $q_\phi^*$ out of the parametric
+family depends on having the observations $\underline{x}$ in hand. Furthermore,
+we highlight that the KL divergence is a strictly positive number, i.e.,
+$$
+D_{KL}\left(
+    q_\phi(\underline{\theta} \mid \underline{x}) \vert\vert 
+    \pi(\underline{\theta} \mid \underline{x})
+\right) \geq 0,
+$${#eq-vi_kl_pos}
+as this property will become important later on.
+
+At first sight, @eq-vi_objective does not improve the situation but only
+introduces further technical complications. After all, the definition of the KL
+divergence
+$$
+D_{KL}\left(
+    q_\phi(\underline{\theta} \mid \underline{x}) \vert\vert 
+    \pi(\underline{\theta} \mid \underline{x})
+\right) \equiv 
+\int \cdots \int d\underline{\theta}^K
+q_\phi(\underline{\theta} \mid \underline{x})
+\ln \frac{
+    q_\phi(\underline{\theta} \mid \underline{x})
+}{
+    \pi(\underline{\theta} \mid \underline{x})
+},
+$${#eq-vi_kl_div}
+includes the posterior distribution $\pi(\underline{\theta} \mid \underline{x})$
+we are trying to get around. However, let us manipulate @eq-vi_kl_div to beat it
+to a more reasonable form. First, we can use the properties of the logarithms to
+write
+$$
+D_{KL}\left(
+    q_\phi(\underline{\theta} \mid \underline{x}) \vert\vert 
+    \pi(\underline{\theta} \mid \underline{x})
+\right) = 
+\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+\ln q_\phi(\underline{\theta} \mid \underline{x}) -
+\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+\ln \pi(\underline{\theta} \mid \underline{x}),
+$${#eq-vi_step01}
+where, for convenience, we write a single integration sign
+($d\underline{\theta}^K$ still represents a multi-dimensional differential). For
+the second term in @eq-vi_step01, we can substitute the term inside the
+logarithm using @eq-vi_bayes_theorem. This results in
+$$
+\begin{aligned}
+D_{KL}\left(
+    q_\phi(\underline{\theta} \mid \underline{x}) \vert\vert 
+    \pi(\underline{\theta} \mid \underline{x})
+\right) &= 
+\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+\ln q_\phi(\underline{\theta} \mid \underline{x}) \\
+&- \int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+\ln \left( 
+    \frac{
+        \pi(\underline{x} \mid \underline{\theta})\pi(\underline{\theta})
+    }{
+        \pi(\underline{x})
+    }
+\right).
+\end{aligned}
+$${#eq-vi_step02}
+Again, using the properties of logarithms, we can split @eq-vi_step02, obtaining
+$$
+\begin{aligned}
+D_{KL}\left(
+    q_\phi(\underline{\theta} \mid \underline{x}) \vert\vert 
+    \pi(\underline{\theta} \mid \underline{x})
+\right) &= 
+\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+\ln q_\phi(\underline{\theta} \mid \underline{x}) \\
+&-\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+\ln \pi(\underline{x} \mid \underline{\theta}) \\
+&-\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+\ln \pi(\underline{\theta}) \\
+&+\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+\ln \pi(\underline{x}).
+\end{aligned}
+$${#eq-vi_step03}
+It is convenient to write @eq-vi_step03 as
+$$
+\begin{aligned}
+D_{KL}\left(
+    q_\phi(\underline{\theta} \mid \underline{x}) \vert\vert 
+    \pi(\underline{\theta} \mid \underline{x})
+\right) &= 
+\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+\ln \frac{
+    q_\phi(\underline{\theta} \mid \underline{x})
+    }{
+        \pi(\underline{\theta})
+    } \\
+&-\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+\ln \pi(\underline{x} \mid \underline{\theta}) \\
+&+ \ln \pi(\underline{x}) 
+\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x}),
+\end{aligned}
+$${#eq-vi_step04}
+where for the last term, we can take $\ln \pi(\underline{x})$ out of the
+integral since it does not depend on $\underline{\theta}$. Lastly, we utilize
+two properties:
+
+1. The proposed approximate distribution must be normalized, i.e.,
+$$
+\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x}) = 1.
+$${#eq-vi_q_norm}
+2. The law of the unconscious statistician (LOTUS) establishes that for any
+probability density function, it must be true that
+$$
+\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+f(\underline{\theta}) = \left\langle 
+    f(\underline{\theta}) 
+\right\rangle_{q_\phi},
+$${#eq-vi_lotus}
+where $\left\langle\cdot\right\rangle_{q_\phi}$ is the expected value over the
+$q_\phi$ distribution.
+
+Using these two properties, the positivity constraint on the KL divergence in
+@eq-vi_kl_pos, and the definition of the KL divergence in @eq-vi_kl_div we can
+rewrite @eq-vi_step04 as
+$$
+D_{KL}\left( 
+    q_\phi(\underline{\theta} \mid \underline{x}) \vert \vert
+    \pi(\underline{\theta}) 
+\right) -
+\left\langle
+    \ln \pi(\underline{x} \mid \underline{\theta})
+\right\rangle_{q_\phi}
+\geq - \ln \pi(\underline{x}).
+$${#eq-vi_step05}
+Multiplying by a minus one, we have the functional form of the so-called
+evidence lower bound (ELBO) @kingma2014,
+$$
+\underbrace{
+    \ln \pi(\underline{x})
+}_{\text{log evidence}} \geq
+\underbrace{
+    \left\langle
+        \ln \pi(\underline{x} \mid \underline{\theta})
+    \right\rangle_{q_\phi} -
+    D_{KL}\left( 
+        q_\phi(\underline{\theta} \mid \underline{x}) \vert \vert
+        \pi(\underline{\theta}) 
+    \right)
+}_{\text{ELBO}}.
+$${#eq-vi_elbo}
+
+Let us recapitulate where we are. We started by presenting the challenge of
+working with Bayes' theorem, as it requires a high-dimensional integral of the
+form in @eq-vi_evidence_int. As an alternative, variational inference posits to
+approximate the posterior distribution $\pi(\underline{\theta} \mid
+\underline{x})$ with a parametric distribution $q_\phi(\underline{\theta} \mid
+\underline{x})$. By minimizing the KL divergence between these distributions, we
+arrive at the result in @eq-vi_elbo, where the left-hand side---the log
+marginalized likelihood or log evidence---we cannot compute for
+technical/computational reasons. However, the right-hand side is composed of
+things we can easily evaluate. We can easily evaluate the log-likelihood $\ln
+\pi(\underline{x} \mid \underline{\theta})$ and the KL divergence between our
+proposed approximate distribution $q_\phi(\underline{\theta} \mid
+\underline{x})$ and the prior distribution $\pi(\underline{\theta})$. Moreover,
+we can compute the gradients of these functions with respect to the parameters
+of our proposed distribution. This last point implies that we can change the
+parameters of the proposed distribution to maximize the ELBO. And, although we
+cannot compute the left-hand side of @eq-vi_elbo, we know that however large we
+make the ELBO, it will always be smaller than (or equal) the log-marginal
+likelihood. Therefore, the larger we can make the ELBO by modifying the
+parameters $\phi$, the closer it gets to the log-marginal likelihood, and, as a
+consequence, the better our proposed distribution $q_\phi(\underline{\theta}
+\mid \underline{x})$ gets to the true posterior distribution
+$\pi(\underline{\theta} \mid \underline{x})$.
+
+In this sense, variational inference turns the intractable numerical integration
+problem to an optimization routine, for which there are several algorithms 
+available.
+
+### ADVI algorithm
+
+To maximize the right-hand side of @eq-vi_elbo, the Automatic Differentiation
+Variational Inference (ADVI) algorithm developed in [@kucukelbir2016] takes
+advantage of advances in probabilistic programming languages to generate a
+robust method to perform this optimization. Without going into the details of
+the algorithm implementation, for our purposes, it suffices to say that we define
+our joint distribution $\pi(\underline{\theta}, \underline{x})$ as the product
+defined in @eq-vi_joint_dist. ADVI then proposes an approximate variational
+distribution $q_\phi$ that can either be a multivariate Normal distribution with
+a diagonal covariance matrix, i.e.,
+$$
+\phi = (\underline{\mu}, \underline{\underline{I}}\;\underline{\sigma}^2),
+$${#eq-vi_meanfield}
+where $\underline{\underline{I}}$ is the identity matrix, and
+$\underline{\sigma}$ is the vector of standard deviations or a full-rank 
+multivariate Normal distribution
+$$
+\phi = (\underline{\mu}, \underline{\underline{\Sigma}}).
+$${#eq-vi_full}
+
+Then, the parameters are initialized in some value $\phi_o$. These parameters
+are iteratively updated by computing the gradient of the ELBO (right-hand side
+of @eq-vi_elbo), hereafter defined as $\mathcal{L}$, with respect to the
+parameters, 
+$$
+\nabla_\phi \mathcal{L} = \nabla_{\underline{\mu}} \mathcal{L} + 
+\nabla_{\underline{\sigma}}\mathcal{L},
+$${#eq-vi_elbo_gradient}
+and then computing
+$$
+\phi_{t+1} = \phi_{t} + \eta \nabla_\phi \mathcal{L},
+$$
+where $\eta$ defines the step size.
+
+This short explanation behind the ADVI algorithm is intended only to gain
+intuition on how the optimal variational distribution $q_\phi$ be computed.
+There are many nuances in the implementation of the ADVI algorithm. We invite
+the reader to look at the original reference for further details.
