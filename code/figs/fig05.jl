@@ -8,8 +8,14 @@ import Revise
 # Import project package
 import BayesFitUtils
 
-# Import Random
+# Import library to perform Bayesian inference
+import BayesFitness
+
+# Import basic math
 import Random
+import Distributions
+import LinearAlgebra
+import StatsBase
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -54,7 +60,7 @@ println("Loading ADVI results...")
 
 # Define file
 file = "$(git_root())/code/processing/" *
-       "data007_logistic_hierarchicalgenotype_1200bc_01env_01rep/" *
+       "data007_logistic_hierarchicalgenotype_1000bc_01env_01rep/" *
        "output/advi_meanfield_hierarchicalgenotypes_01samples_10000steps.csv"
 
 # Convert results to tidy dataframe
@@ -114,7 +120,7 @@ df_samples = DF.DataFrame(
 
 # Define file
 file = "$(git_root())/code/processing/" *
-       "data007_logistic_hierarchicalgenotype_1200bc_01env_01rep/" *
+       "data007_logistic_hierarchicalgenotype_1000bc_01env_01rep/" *
        "output/advi_meanfield_01samples_10000steps.csv"
 
 # Convert results to tidy dataframe
@@ -122,7 +128,7 @@ df_advi_single = CSV.read(file, DF.DataFrame)
 
 # Define file
 file = "$(git_root())/code/processing/" *
-       "data007_logistic_hierarchicalgenotype_1200bc_01env_01rep/" *
+       "data007_logistic_hierarchicalgenotype_1000bc_01env_01rep/" *
        "output/advi_meanfield_genotype-group_01samples_10000steps.csv"
 
 # Convert results to tidy dataframe
@@ -236,7 +242,7 @@ lines!(
     repeat(
         [[minimum(df_fitness.mean_h), maximum(df_fitness.mean_h)] .* 1.05], 2
     )...,
-    linestyle="--",
+    linestyle=:dash,
     color=:black
 )
 
@@ -275,7 +281,7 @@ lines!(
     repeat(
         [[minimum(df_fitness.mean_h), maximum(df_fitness.mean_h)] .* 1.05], 2
     )...,
-    linestyle="--",
+    linestyle=:dash,
     color=:black
 )
 
@@ -314,7 +320,7 @@ lines!(
     repeat(
         [[minimum(df_fitness.mean_h), maximum(df_fitness.mean_h)] .* 1.05], 2
     )...,
-    linestyle="--",
+    linestyle=:dash,
     color=:black
 )
 
@@ -432,7 +438,7 @@ for row in 1:n_row
             # Plot log-frequency ratio of neutrals
             BayesFitUtils.viz.logfreq_ratio_time_series!(
                 ax,
-                data[data.neutral, :];
+                df_counts[df_counts.neutral, :];
                 freq_col=:freq,
                 color=:black,
                 alpha=1.0,
@@ -452,7 +458,7 @@ for row in 1:n_row
 
         # Extract data
         data_bc = DF.sort(
-            data[data.barcode.==bc_plot[counter].id, :], :time
+            df_counts[df_counts.barcode.==bc_plot[counter].id, :], :time
         )
 
         # Define colors
