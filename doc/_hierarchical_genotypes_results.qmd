@@ -7,5 +7,50 @@ csl: ieee.csl
 
 ## Accounting for multiple barcodes per genotype via hierarchical models
 
-![**Hierarchical model for multiple barcodes per
-genotype**](./figs/fig05){#fig-05}
+Hierarchical models can also capture another experimental design in which
+multiple barcodes map to the same or an equivalent genotype. As we will show,
+this many-to-one mapping can improve the inference compared to the extreme cases
+of inferring the fitness of each barcode independently or pooling the data of
+all barcodes mapping to a single genotype. As shown in @fig-05(A), a small
+modification to our model allows us to map the structure of our original model
+to that of a hierarchical model with a fitness hyperparameter vector
+$\underline{\theta}^G$, where $G$ is the number of genotypes in the datsets.
+
+@fig-05(B) shows a single experimental replicate in which 90 genotypes were
+assigned a random number of barcodes (a multinomial distribution with a mean of
+ten barcodes per genotype) for a total of 900 non-neutral barcodes. To assess
+the performance of the hierarchical model proposed in @fig-05(A), we performed
+inference using this hierarchical model, as well as the two extreme cases of
+ignoring the connection between the barcodes belonging to the same genotype
+---equivalent to performing inference using the model presented in @fig-02(A)
+over the barcodes---or pooling the data of all barcodes belonging to the same
+genotype into a single count---equivalent to performing inference using the
+model presented in @fig-02(A) over the pooled barcodes. @fig-05(C-D) shows the
+comparison between the simulation ground truth and the inferred values for these
+three cases. Not only do the hierarchical model results show higher degrees of
+correlation with the ground truth, but the error bars (representing the 64\%
+credible regions) are smaller, meaning that the uncertainty in the estimate
+decreases when using the hierarchical model. The improvement in the prediction
+can be seen in @fig-05(F) where the empirical cumulative distribution function
+of the absolute difference between the mean inferred value and the simulation
+ground truth is shown for all three inference models. The hierarchical model's
+curve ascends more rapidly, showing that, in general, the inferred values are
+closer to the ground truth. For completeness, @fig-05(G) shows some examples of
+how the hierarchical model can capture the raw log-frequency count observations.
+
+![**Hierarchical model for multiple barcodes per genotype.** (A) Bayesian
+network schematizing the statistical dependence between observations (filled
+circles) and latent variables (empty circles). The barcodes belonging to
+equivalent genotypes are connected via the hyper-parameters
+$\underline{\theta}^G$. See `point to SI` for detailed definitions of each
+variable. (B) Simulated dataset with 100 neutral lineages and 900 barcodes of
+interest distributed among 90 genotypes. (C-E) Comparison between the inferred
+and ground truth fitness values for a hierarchical model (C), a model where each
+barcode is inferred independently (D), and a model where barcodes belonging to
+the same genotype are pooled together (E). Gray error bars represent the 68\%
+credible regions. (F) Empirical cumulative distribution function (ECDF) of the
+absolute difference between the inferred mean and the ground truth fitness
+values for all three models. (G) Examples of the posterior predictive checks for
+all neutral lineages (upper left panels) and a subset of representative mutant
+lineages. Shaded regions from light to dark represent the 95\%, 68\%, and 5\%
+credible regions.](./figs/fig05){#fig-05}
