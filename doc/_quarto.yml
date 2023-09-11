@@ -13,6 +13,7 @@ book:
     - index.qmd
     - intro.qmd
     - results.qmd
+    - SI.qmd
 
 format:
   html:
