@@ -118,22 +118,28 @@ df_samples = DF.DataFrame(
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Initialize figure
-fig = Figure(resolution=(1100, 800))
+fig = Figure(resolution=(1200, 1000))
 
-# Add global grid layout to control spacing
+# Add global GridLayout
 gl_fig = fig[1, 1] = GridLayout()
 
+# Add grid layout for illustrator diagram
+gl_illustrator = gl_fig[1, 1] = GridLayout()
+
 # Add grid lauout for datasets
-gl_data = gl_fig[1, 1:2] = GridLayout()
+gl_data = gl_fig[1, 2:3] = GridLayout()
+
+# Add grid layout for true hyperfitness vs true fitness
+gl_hyper_vs_fit_true = gl_fig[1, 4] = GridLayout()
 
 # Add grid layout for posterior predictive checks
-gl_ppc = gl_fig[1:3, 3:4] = GridLayout()
+gl_ppc = gl_fig[2:3, 1:2] = GridLayout()
 
 # Add grid layout for inference vs true
-gl_comp = gl_fig[2, 1:2] = GridLayout()
+gl_comp = gl_fig[2, 3:4] = GridLayout()
 
 # Add grid layout for ECDF plots
-gl_ecdf = gl_fig[3, 1:2] = GridLayout()
+gl_ecdf = gl_fig[3, 3:4] = GridLayout()
 
 # Select replicate color
 rep_color = ColorSchemes.seaborn_colorblind[1:length(unique(df_counts.rep))]
@@ -179,6 +185,30 @@ for (i, data) in enumerate(df_group)
     # Add title
     ax[i].title = "replicate $(first(data.rep))"
 end # for
+
+# ---------------------------------------------------------------------------- #
+
+# Add axis for true hyperfiness vs true fitness
+ax = Axis(
+    gl_hyper_vs_fit_true[1, 1],
+    xlabel="ground truth hyper-fitness",
+    ylabel="ground truth replicate fitness",
+    aspect=AxisAspect(1)
+)
+
+# Group data by replicate
+df_group = DF.groupby(df_fitness, :rep)
+
+# Loop through replicates
+for (i, data) in enumerate(df_group)
+    # Extract replicate
+    rep = first(data.rep)
+    # Plot true hyperfitness vs fitness
+    scatter!(ax, data.hyperfitness, data.fitness, markersize=8, label="$(rep)")
+end # for
+
+# Add legend
+axislegend(ax, position=:rb)
 
 # ---------------------------------------------------------------------------- #
 
@@ -267,7 +297,7 @@ for (i, data) in enumerate(df_group)
 end # for
 
 # Add legend
-axislegend(ax, position=:rb, framevisible=false)
+axislegend(ax, position=:rb)
 
 # ---------------------------------------------------------------------------- #
 
@@ -286,7 +316,7 @@ ecdfplot!(
     ax,
     abs.((data.mean_h .- data.hyperfitness) ./ data.std_h),
     color=ColorSchemes.seaborn_colorblind[3],
-    linewidth=2.5
+    linewidth=2.5,
 )
 
 
@@ -310,12 +340,12 @@ for (i, data) in enumerate(df_group)
         ax,
         abs.((data.mean .- data.fitness) ./ data.std),
         label="$(rep)",
-        linewidth=2.5
+        linewidth=2.5,
     )
 end # for
 
 # Add legend
-axislegend(ax, position=:rb, framevisible=false)
+axislegend(ax, position=:rb)
 
 fig
 
@@ -328,7 +358,7 @@ n_ppc = 500
 qs = [0.95, 0.675, 0.05]
 
 # Define number of rows and columns
-n_row, n_col = [3, 3]
+n_row, n_col = [2, 3]
 
 # Extract barcodes
 bc_ids = DF.sort(
@@ -355,10 +385,7 @@ for row in 1:n_row
         # Add GridLayout
         gl = gl_ppc[row, col] = GridLayout()
         # Add axis
-        local ax = [
-            Axis(gl[i, 1:6], aspect=AxisAspect(1.5))
-            for i = 1:length(unique(df_counts.rep))
-        ]
+        local ax = [Axis(gl[i, 1:6]) for i = 1:length(unique(df_counts.rep))]
 
         if (col == 1) & (row == 1)
             # Loop through replicates
@@ -452,7 +479,9 @@ for row in 1:n_row
                 )
 
                 # Compute mean and std for fitness values
-                mean_s = round(StatsBase.mean(df_samples[:, s_var]), sigdigits=2)
+                mean_s = round(
+                    StatsBase.mean(df_samples[:, s_var]), sigdigits=2
+                )
                 std_s = round(StatsBase.std(df_samples[:, s_var]), sigdigits=2)
 
                 # Add title
@@ -477,14 +506,11 @@ Label(gl_ppc[end, :, Bottom()], "time points", fontsize=20)
 # Add y-axis label
 Label(gl_ppc[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=20)
 
-# Change spacing between subplots in PPC
-colgap!(gl_ppc, 0)
-
 # ---------------------------------------------------------------------------- #
 
 # Add subplot labels
 Label(
-    gl_data[1, 1, TopLeft()], "(A)",
+    gl_illustrator[1, 1, TopLeft()], "(A)",
     fontsize=24,
     padding=(0, 5, 5, 0),
     halign=:right
@@ -492,7 +518,7 @@ Label(
 
 # Add subplot labels
 Label(
-    gl_data[1, 2, TopLeft()], "(B)",
+    gl_data[1, 1, TopLeft()], "(B)",
     fontsize=24,
     padding=(0, 5, 5, 0),
     halign=:right
@@ -500,7 +526,7 @@ Label(
 
 # Add subplot labels
 Label(
-    gl_comp[1, 1, TopLeft()], "(C)",
+    gl_data[1, 2, TopLeft()], "(C)",
     fontsize=24,
     padding=(0, 5, 5, 0),
     halign=:right
@@ -508,7 +534,7 @@ Label(
 
 # Add subplot labels
 Label(
-    gl_comp[1, 2, TopLeft()], "(D)",
+    gl_hyper_vs_fit_true[1, 1, TopLeft()], "(D)",
     fontsize=24,
     padding=(0, 5, 5, 0),
     halign=:right
@@ -516,7 +542,7 @@ Label(
 
 # Add subplot labels
 Label(
-    gl_ecdf[1, 1, TopLeft()], "(E)",
+    gl_ppc[1, 1, TopLeft()], "(E)",
     fontsize=24,
     padding=(0, 5, 5, 0),
     halign=:right
@@ -524,7 +550,7 @@ Label(
 
 # Add subplot labels
 Label(
-    gl_ecdf[1, 2, TopLeft()], "(F)",
+    gl_comp[1, 1, TopLeft()], "(F)",
     fontsize=24,
     padding=(0, 5, 5, 0),
     halign=:right
@@ -532,16 +558,32 @@ Label(
 
 # Add subplot labels
 Label(
-    gl_ppc[1, 1, TopLeft()], "(G)",
+    gl_comp[1, 2, TopLeft()], "(G)",
     fontsize=24,
     padding=(0, 5, 5, 0),
     halign=:right
 )
 
-colgap!(gl_fig, 0)
+# Add subplot labels
+Label(
+    gl_ecdf[1, 1, TopLeft()], "(H)",
+    fontsize=24,
+    padding=(0, 5, 5, 0),
+    halign=:right
+)
+
+# Add subplot labels
+Label(
+    gl_ecdf[1, 2, TopLeft()], "(I)",
+    fontsize=24,
+    padding=(0, 5, 5, 0),
+    halign=:right
+)
+
+# Change spacing between subplots
 rowgap!(gl_fig, 0)
+colgap!(gl_fig, 20)
 
-save("$(git_root())/doc/figs/fig03.pdf", fig)
-save("$(git_root())/doc/figs/fig03.png", fig)
+save("$(git_root())/doc/figs/fig03B-I.pdf", fig)
 
 fig
