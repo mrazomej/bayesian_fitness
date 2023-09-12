@@ -517,7 +517,7 @@ colgap!(gl_ppc, 4)
 # Add subplot labels
 Label(
     gl_illustrator[1, 1, TopLeft()], "(A)",
-    fontsize=26,
+    fontsize=24,
     padding=(0, 5, 5, 0),
     halign=:right
 )
@@ -525,7 +525,7 @@ Label(
 # Add subplot labels
 Label(
     gl_data[1, 1, TopLeft()], "(B)",
-    fontsize=26,
+    fontsize=24,
     padding=(0, 5, 5, 0),
     halign=:right
 )
@@ -533,7 +533,7 @@ Label(
 # Add subplot labels
 Label(
     gl_hyper_vs_fit_true[1, 1, TopLeft()], "(C)",
-    fontsize=26,
+    fontsize=24,
     padding=(0, 5, 5, 0),
     halign=:right
 )
@@ -541,7 +541,7 @@ Label(
 # Add subplot labels
 Label(
     gl_hyper_vs_fit_true[1, 2, TopLeft()], "(D)",
-    fontsize=26,
+    fontsize=24,
     padding=(0, 5, 5, 0),
     halign=:right
 )
@@ -549,7 +549,7 @@ Label(
 # Add subplot labels
 Label(
     gl_hyper_vs_fit_true[1, 3, TopLeft()], "(E)",
-    fontsize=26,
+    fontsize=24,
     padding=(0, 5, 5, 0),
     halign=:right
 )
@@ -557,7 +557,7 @@ Label(
 # Add subplot labels
 Label(
     gl_ecdf[1, 1, TopLeft()], "(F)",
-    fontsize=26,
+    fontsize=24,
     padding=(0, 5, 5, 0),
     halign=:right
 )
@@ -565,7 +565,7 @@ Label(
 # Add subplot labels
 Label(
     gl_ppc[1, 1, TopLeft()], "(G)",
-    fontsize=26,
+    fontsize=24,
     padding=(0, 5, 5, 0),
     halign=:right
 )
