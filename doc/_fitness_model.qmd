@@ -51,6 +51,18 @@ ultimately the functional form used in our inference pipeline. Therefore, the
 relative fitness is computed by knowing the log frequency ratio of each barcode
 throughout the growth-dilution cycles.
 
+The presence of the neutral lineages facilitates the determination of the 
+population mean fitness value $\bar{s}_t$. Since every relative fitness is 
+determined relative to the neutral lineage that dominates the culture, we define
+their fitness to be $s^{(n)} = 0$, where the subscript $(n)$ specifies their
+neutrality. This means that @eq-logfreq for a neutral lineage takes the simpler
+form
+$$
+\frac{1}{\tau}\ln \frac{f_{t+1}^{(n)}}{f_{t}^{(n)}} = - \bar{s}_t.
+$${#eq-logfreq_neutral}
+Therefore, we can use the data from these reference barcodes to directly infer
+the value of the population mean fitness.
+
 It is important to notice that the frequencies $f_{t}^{(b)}$ are not the allele
 frequencies in the population (most of the culture is not sequenced since the
 reference strain is not barcoded), but rather the relative frequencies in the

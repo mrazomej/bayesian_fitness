@@ -5,7 +5,7 @@ bibliography: references.bib
 csl: ieee.csl
 ---
 
-## Primer on Variational Inference
+## Primer on Variational Inference{#sec-vi_primer}
 
 In this section, we will briefly introduce the idea behind variational
 inference. Recall that any Bayesian inference problem deals with the joint
@@ -280,11 +280,11 @@ defined in @eq-vi_joint_dist. ADVI then proposes an approximate variational
 distribution $q_\phi$ that can either be a multivariate Normal distribution with
 a diagonal covariance matrix, i.e.,
 $$
-\phi = (\underline{\mu}, \underline{\underline{I}}\;\underline{\sigma}^2),
+\phi = (\underline{\mu}, \underline{\underline{D}}),
 $${#eq-vi_meanfield}
-where $\underline{\underline{I}}$ is the identity matrix, and
-$\underline{\sigma}$ is the vector of standard deviations or a full-rank 
-multivariate Normal distribution
+where $\underline{\underline{D}}$ is the identity matrix, with the diagonal
+elements given by the vector of variances $\underline{\sigma}^2$ for each
+variable or a full-rank multivariate Normal distribution
 $$
 \phi = (\underline{\mu}, \underline{\underline{\Sigma}}).
 $${#eq-vi_full}

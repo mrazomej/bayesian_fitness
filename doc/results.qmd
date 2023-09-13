@@ -19,3 +19,6 @@ title: "Results"
 
 <!-- Hierarchical model for genotypes-->
 {{< include _hierarchical_genotypes_results.qmd >}}
+
+<!-- Multi-environment results -->
+{{< include _multienv_results.qmd >}}

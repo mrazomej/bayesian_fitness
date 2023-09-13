@@ -129,27 +129,29 @@ $${#eq-bayes_full_marginal}
 
 The left-hand side of @eq-bayes_full is extremely difficult to work with.
 However, we can take advantage of the structure of our inference problem to
-rewrite it in a more manageable form. Specifically, as depicted in @fig-01(C),
-the statistical dependencies of our observations and latent variables allow us
-to factorize the joint distribution into the product of multiple conditional
-distributions. To exemplify this, let us focus on the variable
-$\underline{\underline{F}}^M$ within the diagram in @fig-01(C). The incoming
-arrows from $\underline{\bar{s}}_T$ and $\underline{s}^M$
-
-rewrite the joint probability distribution as a product of conditional
-distributions of the form
+rewrite it in a more manageable form. Specifically, the statistical dependencies
+of our observations and latent variables allow us to factorize the joint
+distribution into the product of multiple conditional distributions. To gain
+some intuition about this factorization, let us focus on the inference of the
+population mean fitness values $\underline{\bar{s}}_T$. @eq-logfreq_neutral
+relates the value of the population mean fitness to the neutral lineage
+frequencies and nothing else. This suggests that when writing the posterior for
+these population mean fitness parameters, we should be able to condition it only
+on the neutral lineage frequency values, i.e., $\pi(\underline{\bar{s}}_T \mid
+\underline{\underline{F}}^N)$. We point the reader to `[SI section]` for the
+full mathematical details on this factorization. For our purpose here, it
+suffices to say we can rewrite the joint probability distribution as a product
+of conditional distributions of the form
 $$
 \pi(
     \underline{s}^M, \underline{\bar{s}}_T, \underline{\underline{F}} \mid
     \underline{\underline{R}}
 ) =
 \pi(
-    \underline{s}^M \mid \underline{\bar{s}}_T, \underline{\underline{F}}^M,
-    \underline{\underline{R}}^M
+    \underline{s}^M \mid \underline{\bar{s}}_T, \underline{\underline{F}}^M
 )
 \pi(
-    \underline{\bar{s}}_T \mid \underline{\underline{F}}^N,
-    \underline{\underline{R}}^N
+    \underline{\bar{s}}_T \mid \underline{\underline{F}}^N
 )
 \pi(\underline{\underline{F}} \mid \underline{\underline{R}}).
 $${#eq-split_posterior}
@@ -181,28 +183,28 @@ development of the automatic differentiation variational inference algorithm
 (ADVI) [@kucukelbir2016]. Briefly, when performing ADVI, our target posterior
 distribution $\pi(\theta \mid \underline{\underline{R}})$, where $\theta =
 (\underline{s}^M, \underline{\bar{s}}_T, \underline{\underline{F}})$, is
-replaced by an approximate posterior distribution $q_\phi(\theta \mid
-\underline{\underline{R}})$, where $\phi$ fully parametrizes the approximate
-distribution. As further explained in `[point to SI section]`, the numerical
-integration problem is replaced by an optimization problem of the form
+replaced by an approximate posterior distribution $q_\phi(\theta)$, where $\phi$
+fully parametrizes the approximate distribution. As further explained in
+@sec-vi_primer, the numerical integration problem is replaced by an optimization
+problem of the form
 $$
-q^*_\phi(\theta \mid \underline{\underline{R}}) = \min _\phi
+q^*_\phi(\theta) = \min _\phi
 D_{KL}(
-    q_\phi(\theta \mid \underline{\underline{R}}) \lvert \lvert
+    q_\phi(\theta) \lvert \lvert
     \pi(\theta \mid \underline{\underline{R}})
 ),
 $${#eq-vi_objective}
-where $D_{KL}$ is the Kulback-Leibler divergence. In other words, the 
-complicated high-dimensional numerical integration problem is transformed into
-a gradient descent over the parameters of the approximate posterior distribution
-$\phi$ such that it minimizes the KL divergence with respect to the true 
-posterior distribution. Although to compute @eq-vi_objective, we require the
-posterior distribution we are trying to approximate $\pi(\theta \mid
+where $D_{KL}$ is the Kulback-Leibler divergence. In other words, the
+complicated high-dimensional numerical integration problem is transformed into a
+much simpler problem of finding the value of the parameters $\phi$ such that
+@eq-vi_objective is satisfied as best as possible within some finite computation
+time. Although to compute @eq-vi_objective, we require the posterior
+distribution we are trying to approximate $\pi(\theta \mid
 \underline{\underline{R}})$, it can be shown that maximizing the so-called
-evidence lower bound (ELBO) [@kingma2014]---equivalent to minimizing the 
-variational free energy [@buckley2017]---is mathematically equivalent to 
+evidence lower bound (ELBO) [@kingma2014]---equivalent to minimizing the
+variational free energy [@buckley2017]---is mathematically equivalent to
 performing the optimization prescribed by @eq-vi_objective. We direct the reader
-to `[point to SI section]` for a short primer on variational inference.
+to @sec-vi_primer for a short primer on variational inference.
 
 This work is accompanied by the Julia library `BayesFitness.jl` that makes use
 of the implementation of both MCMC-based integration as well as ADVI
