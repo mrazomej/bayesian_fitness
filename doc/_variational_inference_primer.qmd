@@ -88,21 +88,17 @@ distributions. Note that we use quotation marks because, formally, the KL
 divergence is not a distance metric since it is not symmetric. Nevertheless, the
 variational objective is set to find a distribution $q_\phi^*$ such that
 $$
-q_\phi^*(\underline{\theta} \mid \underline{x}) =
+q_\phi^*(\underline{\theta}) =
 \min_\phi D_{KL}\left(
-    q_\phi(\underline{\theta} \mid \underline{x}) \vert\vert 
+    q_\phi(\underline{\theta}) \vert\vert 
     \pi(\underline{\theta} \mid \underline{x})
 \right),
 $${#eq-vi_objective}
-where $D_{KL}$ is the KL divergence. We alert the reader that in the literature
-$q_\phi$ is usually  written not conditioned on the observations, i.e.,
-$q_\phi(\underline{\theta})$. But we think that writing the conditioning
-reflects that the selection of the distribution $q_\phi^*$ out of the parametric
-family depends on having the observations $\underline{x}$ in hand. Furthermore,
-we highlight that the KL divergence is a strictly positive number, i.e.,
+where $D_{KL}$ is the KL divergence. Furthermore, we highlight that the KL
+divergence is a strictly positive number, i.e.,
 $$
 D_{KL}\left(
-    q_\phi(\underline{\theta} \mid \underline{x}) \vert\vert 
+    q_\phi(\underline{\theta}) \vert\vert 
     \pi(\underline{\theta} \mid \underline{x})
 \right) \geq 0,
 $${#eq-vi_kl_pos}
@@ -113,13 +109,13 @@ introduces further technical complications. After all, the definition of the KL
 divergence
 $$
 D_{KL}\left(
-    q_\phi(\underline{\theta} \mid \underline{x}) \vert\vert 
+    q_\phi(\underline{\theta}) \vert\vert 
     \pi(\underline{\theta} \mid \underline{x})
 \right) \equiv 
 \int \cdots \int d\underline{\theta}^K
-q_\phi(\underline{\theta} \mid \underline{x})
+q_\phi(\underline{\theta})
 \ln \frac{
-    q_\phi(\underline{\theta} \mid \underline{x})
+    q_\phi(\underline{\theta})
 }{
     \pi(\underline{\theta} \mid \underline{x})
 },
@@ -130,12 +126,12 @@ to a more reasonable form. First, we can use the properties of the logarithms to
 write
 $$
 D_{KL}\left(
-    q_\phi(\underline{\theta} \mid \underline{x}) \vert\vert 
+    q_\phi(\underline{\theta}) \vert\vert 
     \pi(\underline{\theta} \mid \underline{x})
 \right) = 
-\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
-\ln q_\phi(\underline{\theta} \mid \underline{x}) -
-\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+\int d\underline{\theta}^K q_\phi(\underline{\theta})
+\ln q_\phi(\underline{\theta}) -
+\int d\underline{\theta}^K q_\phi(\underline{\theta})
 \ln \pi(\underline{\theta} \mid \underline{x}),
 $${#eq-vi_step01}
 where, for convenience, we write a single integration sign
@@ -145,12 +141,12 @@ logarithm using @eq-vi_bayes_theorem. This results in
 $$
 \begin{aligned}
 D_{KL}\left(
-    q_\phi(\underline{\theta} \mid \underline{x}) \vert\vert 
+    q_\phi(\underline{\theta}) \vert\vert 
     \pi(\underline{\theta} \mid \underline{x})
 \right) &= 
-\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
-\ln q_\phi(\underline{\theta} \mid \underline{x}) \\
-&- \int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+\int d\underline{\theta}^K q_\phi(\underline{\theta})
+\ln q_\phi(\underline{\theta}) \\
+&- \int d\underline{\theta}^K q_\phi(\underline{\theta})
 \ln \left( 
     \frac{
         \pi(\underline{x} \mid \underline{\theta})\pi(\underline{\theta})
@@ -164,16 +160,16 @@ Again, using the properties of logarithms, we can split @eq-vi_step02, obtaining
 $$
 \begin{aligned}
 D_{KL}\left(
-    q_\phi(\underline{\theta} \mid \underline{x}) \vert\vert 
+    q_\phi(\underline{\theta}) \vert\vert 
     \pi(\underline{\theta} \mid \underline{x})
 \right) &= 
-\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
-\ln q_\phi(\underline{\theta} \mid \underline{x}) \\
-&-\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+\int d\underline{\theta}^K q_\phi(\underline{\theta})
+\ln q_\phi(\underline{\theta}) \\
+&-\int d\underline{\theta}^K q_\phi(\underline{\theta})
 \ln \pi(\underline{x} \mid \underline{\theta}) \\
-&-\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+&-\int d\underline{\theta}^K q_\phi(\underline{\theta})
 \ln \pi(\underline{\theta}) \\
-&+\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+&+\int d\underline{\theta}^K q_\phi(\underline{\theta})
 \ln \pi(\underline{x}).
 \end{aligned}
 $${#eq-vi_step03}
@@ -181,19 +177,19 @@ It is convenient to write @eq-vi_step03 as
 $$
 \begin{aligned}
 D_{KL}\left(
-    q_\phi(\underline{\theta} \mid \underline{x}) \vert\vert 
+    q_\phi(\underline{\theta}) \vert\vert 
     \pi(\underline{\theta} \mid \underline{x})
 \right) &= 
-\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+\int d\underline{\theta}^K q_\phi(\underline{\theta})
 \ln \frac{
-    q_\phi(\underline{\theta} \mid \underline{x})
+    q_\phi(\underline{\theta})
     }{
         \pi(\underline{\theta})
     } \\
-&-\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+&-\int d\underline{\theta}^K q_\phi(\underline{\theta})
 \ln \pi(\underline{x} \mid \underline{\theta}) \\
 &+ \ln \pi(\underline{x}) 
-\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x}),
+\int d\underline{\theta}^K q_\phi(\underline{\theta}),
 \end{aligned}
 $${#eq-vi_step04}
 where for the last term, we can take $\ln \pi(\underline{x})$ out of the
@@ -202,12 +198,12 @@ two properties:
 
 1. The proposed approximate distribution must be normalized, i.e.,
 $$
-\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x}) = 1.
+\int d\underline{\theta}^K q_\phi(\underline{\theta}) = 1.
 $${#eq-vi_q_norm}
 2. The law of the unconscious statistician (LOTUS) establishes that for any
 probability density function, it must be true that
 $$
-\int d\underline{\theta}^K q_\phi(\underline{\theta} \mid \underline{x})
+\int d\underline{\theta}^K q_\phi(\underline{\theta})
 f(\underline{\theta}) = \left\langle 
     f(\underline{\theta}) 
 \right\rangle_{q_\phi},
@@ -220,7 +216,7 @@ Using these two properties, the positivity constraint on the KL divergence in
 rewrite @eq-vi_step04 as
 $$
 D_{KL}\left( 
-    q_\phi(\underline{\theta} \mid \underline{x}) \vert \vert
+    q_\phi(\underline{\theta}) \vert \vert
     \pi(\underline{\theta}) 
 \right) -
 \left\langle
@@ -239,7 +235,7 @@ $$
         \ln \pi(\underline{x} \mid \underline{\theta})
     \right\rangle_{q_\phi} -
     D_{KL}\left( 
-        q_\phi(\underline{\theta} \mid \underline{x}) \vert \vert
+        q_\phi(\underline{\theta}) \vert \vert
         \pi(\underline{\theta}) 
     \right)
 }_{\text{ELBO}}.
@@ -249,25 +245,24 @@ Let us recapitulate where we are. We started by presenting the challenge of
 working with Bayes' theorem, as it requires a high-dimensional integral of the
 form in @eq-vi_evidence_int. As an alternative, variational inference posits to
 approximate the posterior distribution $\pi(\underline{\theta} \mid
-\underline{x})$ with a parametric distribution $q_\phi(\underline{\theta} \mid
-\underline{x})$. By minimizing the KL divergence between these distributions, we
-arrive at the result in @eq-vi_elbo, where the left-hand side---the log
-marginalized likelihood or log evidence---we cannot compute for
-technical/computational reasons. However, the right-hand side is composed of
-things we can easily evaluate. We can easily evaluate the log-likelihood $\ln
-\pi(\underline{x} \mid \underline{\theta})$ and the KL divergence between our
-proposed approximate distribution $q_\phi(\underline{\theta} \mid
-\underline{x})$ and the prior distribution $\pi(\underline{\theta})$. Moreover,
-we can compute the gradients of these functions with respect to the parameters
-of our proposed distribution. This last point implies that we can change the
-parameters of the proposed distribution to maximize the ELBO. And, although we
-cannot compute the left-hand side of @eq-vi_elbo, we know that however large we
-make the ELBO, it will always be smaller than (or equal) the log-marginal
-likelihood. Therefore, the larger we can make the ELBO by modifying the
-parameters $\phi$, the closer it gets to the log-marginal likelihood, and, as a
-consequence, the better our proposed distribution $q_\phi(\underline{\theta}
-\mid \underline{x})$ gets to the true posterior distribution
-$\pi(\underline{\theta} \mid \underline{x})$.
+\underline{x})$ with a parametric distribution $q_\phi(\underline{\theta})$. By
+minimizing the KL divergence between these distributions, we arrive at the
+result in @eq-vi_elbo, where the left-hand side---the log marginalized
+likelihood or log evidence---we cannot compute for technical/computational
+reasons. However, the right-hand side is composed of things we can easily
+evaluate. We can easily evaluate the log-likelihood $\ln \pi(\underline{x} \mid
+\underline{\theta})$ and the KL divergence between our proposed approximate
+distribution $q_\phi(\underline{\theta})$ and the prior distribution
+$\pi(\underline{\theta})$. Moreover, we can compute the gradients of these
+functions with respect to the parameters of our proposed distribution. This last
+point implies that we can change the parameters of the proposed distribution to
+maximize the ELBO. And, although we cannot compute the left-hand side of
+@eq-vi_elbo, we know that however large we make the ELBO, it will always be
+smaller than (or equal) the log-marginal likelihood. Therefore, the larger we
+can make the ELBO by modifying the parameters $\phi$, the closer it gets to the
+log-marginal likelihood, and, as a consequence, the better our proposed
+distribution $q_\phi(\underline{\theta})$ gets to the true posterior
+distribution $\pi(\underline{\theta} \mid \underline{x})$.
 
 In this sense, variational inference turns the intractable numerical integration
 problem to an optimization routine, for which there are several algorithms 
