@@ -5,16 +5,17 @@ bibliography: references.bib
 csl: ieee.csl
 ---
 
-## Experimental setup
+## Experimental setup{#sec-experiment}
 
-Our inference pipeline is designed for the type of competition assays presented
-in @kinsler2020. In these experiments, an ensemble of genotypes is pooled
-together with an unlabeled reference strain that, initially, represents the vast
-majority ($\geq 90\%$) of the cells in the culture (see schematic in
-@fig-01(A)). Furthermore, a subfraction of labeled genotypes equivalent to
-the unlabeled reference strain---hereafter defined as *neutral* lineages---are
-spiked in at a relatively high abundance ($\approx 3-5\%$), the rest of the
-culture being left for the ensemble of genotypes of interest.
+The present work is designed to analyze time-series data of relative abundance
+of multiple microbial lineages uniquely identified by a DNA barcode
+[@kinsler2020; @ascensao2023]. In these competition assays, an ensemble of
+genotypes is pooled together with an unlabeled reference strain that, initially,
+represents the vast majority ($\geq 90\%$) of the cells in the culture (see
+schematic in @fig-01(A)). Furthermore, a fraction of labeled genotypes
+equivalent to the unlabeled reference strain---hereafter defined as *neutral*
+lineages---are spiked in at a relatively high abundance ($\approx 3-5\%$). The
+rest of the culture is left for the ensemble of genotypes of interest.
 
 To determine the relative fitness of the ensemble of genotypes, a series of
 growth-dilution cycles are performed on either a single or multiple
@@ -23,9 +24,13 @@ dilute the culture back into fresh media and repeat for roughly 4-7 cycles,
 depending on the initial abundances of the mutants, and their relative growth
 rates. The DNA barcodes are sequenced at the end of each growth cycle to
 quantify the relative abundance of each of the barcodes. We point the reader to
-@kinsler2020 for specific details on these assays for *S. cerevisiae*.
-@fig-01(B) presents a typical barcode trajectory where the darker barcode
-trajectories represent the neutral lineages.
+@kinsler2020 for specific details on these assays for *S. cerevisiae* and to
+@ascensao2023 for equivalent assays for *E. coli*. @fig-01(B) presents a typical
+barcode trajectory where the darker barcode trajectories represent the so-called
+*neutral lineages* that are genetically equivalent to the untagged ancestor
+strain that initially dominates the culture. These neutral lineages simplify the
+inference problem since the fitness of all relevant barcodes is quantified with
+respect to these barcodes.
 
 ![**Typical competitive fitness experiment**. (A) Schematic of the typical
 experimental design to determine the competitive fitness of an ensemble of
@@ -37,6 +42,9 @@ determined from the total number of reads. Different shades of blue represent
 different relative fitness. Darker gray lines define the typical trajectory of
 neutral lineages. (C) Bayesian network defining the statistical dependence
 between observations (filled circles) and latent variables (empty circles). The
-dotted line highlights the set of variables we are interested in. See
-@sec-bayesian_inference for specific definitions of each
-variable.](./figs/fig01){#fig-01}
+dotted circle highlights the set of variables we are interested in. One-way
+arrows depict the statistical dependence between variables. For example, the
+value of $\underline{\underline{F}}^N$ only depends on the value of
+$\underline{\bar{s}}_T$, while $\underline{\underline{F}}^M$ depends on
+$\underline{\bar{s}}_T$ and $\underline{s}^M$. See @sec-bayesian_inference for
+specific definitions of each variable.](./figs/fig01){#fig-01}

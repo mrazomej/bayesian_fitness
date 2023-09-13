@@ -13,7 +13,7 @@ $$
 $${#eq-fitness_mut_vec}
 where $^\dagger$ indicates the transpose. Our data consists of an $T \times B$
 matrix $\underline{\underline{R}}$, where $B = M + N$ is the number of unique
-barcodes given by the sum of the number of unique relevant barcodes we care
+barcodes given by the sum of the number of unique, relevant barcodes we care
 about (hereafter referred to as mutant barcodes), $M$, and the number of unique
 neutral barcodes, $N$, and $T$ is the number of time points where measurements
 were taken. The data matrix is then of the form
@@ -34,7 +34,7 @@ $$
 \underline{r}_t^{M}
 \end{bmatrix},
 $${#eq-r-vec_split}
-i.e., the vector containing the neutral lineages barcode counts
+i.e., the vector containing the neutral lineage barcode counts
 $\underline{r}_t^{N}$ and the corresponding vector containing the mutant barcode
 counts $\underline{r}_t^{M}$. Following the same logic, matrix
 $\underline{\underline{R}}$ can be split into two matrices as
@@ -49,9 +49,9 @@ $\underline{\underline{R}}^M$ is the equivalent $T \times M$ matrix for the
 mutant lineages.
 
 
-Our objective is to compute the joint probability
-distribution for all relative fitness values given our data. We can express this 
-joint posterior distribution using Bayes theorem as
+Our objective is to compute the joint probability distribution for all relative
+fitness values given our data. We can express this joint posterior distribution
+using Bayes theorem as
 $$
 \pi(\underline{s}^M \mid \underline{\underline{R}}) = \frac{
 \pi(\underline{\underline{R}} \mid \underline{s}^M) 
@@ -59,22 +59,27 @@ $$
 {\pi(\underline{\underline{R}})},
 $${#eq-bayes_obj}
 where hereafter $\pi(\cdot)$ defines a probability density function, unless
-otherwise stated. To develop our model, we can ignore the denominator on the
-right-hand side of @eq-bayes_obj, since it serves as a normalization constant
-that does not depend on our parameter of interest. However, computing this 
-normalization constant represents a major challenge we will have to overcome. 
-For now, we can simply write
+otherwise stated. When defining our statistical model, we need not to focus on
+the denominator on the right-hand side of @eq-bayes_obj, and write
 $$
 \pi(\underline{s}^M \mid \underline{\underline{R}}) \propto
 \pi(\underline{\underline{R}} \mid \underline{s}^M) 
 \pi(\underline{s}^M)
 $${#eq-bayes_obj_propto}
+However, when implementing the model computationally, the normalization constant
+on the right-hand side of @eq-bayes_obj must be computed via an integral of the
+form
+$$
+\pi(\underline{\underline{R}}) = \int d\underline{s}^M
+\pi(\underline{\underline{R}} \mid \underline{s}^M) 
+\pi(\underline{s}^M),
+$${#eq-bayes_evidence}
+also known as a marginalization integral.
 
 Although @eq-bayes_obj and @eq-bayes_obj_propto seem simple enough, recall that
 @eq-fitness relates barcode frequency values and the population mean fitness to
 the mutant relative fitness. Therefore, we must include these nuisance
-parameters as part of our inference problem. We can always marginalize the joint
-distribution to obtain the distribution we are interested in. To include these
+parameters as part of our inference problem. To include these nuisance
 parameters, let 
 $$
 \underline{\bar{s}}_T = (\bar{s}_1, \bar{s}_2, \ldots, \bar{s}_{T-1})^\dagger,
@@ -125,8 +130,13 @@ $${#eq-bayes_full_marginal}
 The left-hand side of @eq-bayes_full is extremely difficult to work with.
 However, we can take advantage of the structure of our inference problem to
 rewrite it in a more manageable form. Specifically, as depicted in @fig-01(C),
-the statistical dependencies of our observations and latent variables allows us
-to rewrite the joint probability distribution as a product of conditional
+the statistical dependencies of our observations and latent variables allow us
+to factorize the joint distribution into the product of multiple conditional
+distributions. To exemplify this, let us focus on the variable
+$\underline{\underline{F}}^M$ within the diagram in @fig-01(C). The incoming
+arrows from $\underline{\bar{s}}_T$ and $\underline{s}^M$
+
+rewrite the joint probability distribution as a product of conditional
 distributions of the form
 $$
 \pi(
@@ -144,14 +154,14 @@ $$
 \pi(\underline{\underline{F}} \mid \underline{\underline{R}}).
 $${#eq-split_posterior}
 Written in this form, @eq-split_posterior captures the three sources of 
-uncertainty listed in @sec-fitness_model in each of the terms. Starting from
+uncertainty listed in @sec-fitness_model in each term. Starting from
 right to left, the first term on the right-hand side of @eq-split_posterior
 accounts for the uncertainty when inferring the frequency values given the
 barcode reads. The second term accounts for the uncertainty in the values of
 the mean population fitness at different time points. The last term accounts for
 the uncertainty in the parameter we care about---the mutants' relative
-fitnesses. We invite the reader to check the supplementary material where we
-work through each of these terms to build the posterior distribution to sample
+fitnesses. We invite the reader to check the supplementary material, where we
+work through these terms to build the posterior distribution to sample
 from. We refer the reader to `[ref SI section]` for an extended description of
 the model with specific functional forms for each term on the left-hand side of
 @eq-split_posterior as well as `[ref SI on hierarchical]` where the model is
@@ -186,7 +196,7 @@ where $D_{KL}$ is the Kulback-Leibler divergence. In other words, the
 complicated high-dimensional numerical integration problem is transformed into
 a gradient descent over the parameters of the approximate posterior distribution
 $\phi$ such that it minimizes the KL divergence with respect to the true 
-posterior distribution. Although to compute @eq-vi_objective we require the
+posterior distribution. Although to compute @eq-vi_objective, we require the
 posterior distribution we are trying to approximate $\pi(\theta \mid
 \underline{\underline{R}})$, it can be shown that maximizing the so-called
 evidence lower bound (ELBO) [@kingma2014]---equivalent to minimizing the 

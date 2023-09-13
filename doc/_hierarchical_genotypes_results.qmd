@@ -5,7 +5,7 @@ bibliography: references.bib
 csl: ieee.csl
 ---
 
-## Accounting for multiple barcodes per genotype via hierarchical models
+## Accounting for multiple barcodes per genotype via hierarchical models{#sec-genotypes}
 
 Hierarchical models can also capture another experimental design in which
 multiple barcodes map to the same or an equivalent genotype. As we will show,

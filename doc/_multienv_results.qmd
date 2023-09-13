@@ -1,0 +1,10 @@
+---
+editor:
+    render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
+---
+
+## Fitness inference on multiple environments{#sec-multienv}
+
+![**Multi-environment fitness inference.**](./figs/fig06){#fig-06}

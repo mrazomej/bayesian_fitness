@@ -5,41 +5,58 @@ bibliography: references.bib
 csl: ieee.csl
 ---
 
-The advent of DNA barcoding and high-throughput sequencing has opened new venues
-to understand microbial evolutionary dynamics with an unprecedented level of
-temporal resolution [@levy2015; @nguyenba2019a; @ascensao2023]. These
-experimental efforts rely on our ability to reliably infer the relative fitness
-of an ensemble of diverse genotypes. Moreover, inferring these fitness values
-over an ensemble of environmental conditions can help us determine the
-phenotypic diversity of a rapid adaptation process [@kinsler2020].
+The advent of DNA barcoding---the ability to uniquely identify cell lineages
+with DNA sequences integrated at a specific locus---and high-throughput
+sequencing has opened new venues for understanding microbial evolutionary
+dynamics with an unprecedented level of temporal resolution [@levy2015;
+@nguyenba2019a; @ascensao2023]. These experimental efforts rely on our ability
+to reliably infer the relative fitness of an ensemble of diverse genotypes.
+Moreover, inferring these fitness values over an ensemble of environmental
+conditions can help us determine the phenotypic diversity of a rapid adaptation
+process [@kinsler2020].
 
 As with any other sequencing-based quantification, tracking lineages via DNA
 barcode sequencing is inexorably accompanied by noise sources coming from
 experimental manipulation of the microbial cultures, DNA extraction and
 sequencing library preparation that involves multiple rounds of PCR
 amplification, and the sequencing process itself. Thus, accounting for the
-uncertainty when inferring the parameters we care about from the data is a key
-step to drawing reliable conclusions. Bayesian statistics presents a paradigm
-with which to account for all known sources of uncertainty in a principled way
+uncertainty when inferring the relevant parameters from the data is a key step
+to draw reliable conclusions. Bayesian statistics presents a paradigm by which
+one can account for all known sources of uncertainty in a principled way
 [@eddy2004a]. This, combined with the development of modern Markov Chain Monte
 Carlo sampling algorithms [@betancourt2017] and approximate variational
 approaches [@kucukelbir2016] have boosted a resurgence of Bayesian methods in
 different fields [@efron2013a].
 
-We present a Bayesian inference pipeline to properly quantify our uncertainty
+We present a Bayesian inference pipeline to properly quantify the uncertainty
 about the parametric information we can extract from high-throughput competitive
 fitness assays. In these assays, the fitness of an ensemble of genotypes is
-determined relative to a reference genotype [@kinsler2020; @ascensao2023] (See
-@fig-01 for a schematic depiction of the experimental setup). Small changes to
-our model allows us to account for relevant experimental variations of these
-competition assays: determination of multiple fitness values per genotype for
-growth-dilution cycles on different environments, a hierarchical model to
-account for information from independent experimental replicates, and a
-hierarchical model for a within-experiment structure where multiple independent
-barcodes map to a specific genotype. We benchmark the ability of our pipeline to
-infer fitness parameters against synthetic data with known ground truth and
-re-analyze published data from @kinsler2020 to assess the method's performance
-on real experimental measurements. The method is accompanied by a `Julia`
-package to readily implement the inference pipeline with state-of-the-art
-scientific computing software. [`here mention something about the Python wrapper
-if appropriate`].
+determined relative to a reference genotype [@kinsler2020; @ascensao2023].
+@fig-01(A) shows a schematic of the experimental procedure in which an initial
+pool of barcoded strains are mixed with a reference strain and inoculated into
+fresh media. After some time---usually, enough time for the culture to
+saturate---an aliquot is transferred to fresh media, while the remaining culture
+is used for DNA sequencing of the lineage barcodes. The time-series information
+of the relative abundance of each lineage, i.e., the barcode frequency depicted
+in @fig-01(B), is used to infer the relative fitness---the growth advantage on a
+per-cycle basis---for each lineage with respect to the reference strain. The
+proposed statistical model accounts for multiple sources of uncertainty when
+inferring the lineages' relative fitness values (see @sec-experiment for details
+on sources of uncertainty accounted by the model). Furthermore, small changes to
+the core statistical model allow us to account for relevant experimental
+variations of these competition assays. More specifically, as described in
+@sec-replicates, our statistical model can account for batch-to-batch
+differences when jointly analyzing multiple experimental replicates using a
+Bayesian hierarchical model. Moreover, a variant of these hierarchical models,
+presented in @sec-genotypes, can account for variability within multiple
+barcodes mapping to equivalent genotypes within the same experiment. Finally, in
+@sec-multienv, we present a variation of the statistical model to infer fitness
+on growth-dilution cycles in multiple environments.
+
+For all the model variations presented in this paper, we benchmark the ability
+of our pipeline to infer relative fitness parameters against synthetic data with
+known ground truth. We also re-analyze published data from @kinsler2020 to
+assess the method's performance on experimental measurements. The present method
+is accompanied by a `Julia` package to readily implement the inference pipeline
+with state-of-the-art scientific computing software. [`here mention something
+about the Python wrapper if appropriate`].

@@ -32,7 +32,7 @@ $${#eq-mat_def}
 ## Fitness model {#sec-fitness_model}
 
 Empirically, the barcode relative frequency trajectories follow an exponential
-function of the form
+function of the form [@levy2015; @kinsler2020; @ascensao2023]
 $$
 f_{t+1}^{(b)} = f_{t}^{(b)} \mathrm{e}^{(s^{(b)} - \bar{s}_t)\tau},
 $${#eq-fitness}
@@ -44,11 +44,12 @@ $t$, and $\tau$ is the time pass between time $t$ and $t+1$. We can rewrite
 $$
 \frac{1}{\tau}\ln \frac{f_{t+1}^{(b)}}{f_{t}^{(b)}} = (s^{(b)} - \bar{s}_t).
 $${#eq-logfreq}
-@eq-logfreq separates the observables---the barcode frequencies---from the
-latent parameters we want to infer from the data---the population mean fitness
-and the barcode relative fitness. This is ultimately the functional form used in
-our inference pipeline. Therefore, the relative fitness is computed by knowing
-the log frequency ratio of each barcode throughout the growth-dilution cycles.
+@eq-logfreq separates the measurements---the barcode frequencies---from the
+unobserved---sometimes referred to as latent---parameters we want to infer from
+the data---the population mean fitness and the barcode relative fitness. This is
+ultimately the functional form used in our inference pipeline. Therefore, the
+relative fitness is computed by knowing the log frequency ratio of each barcode
+throughout the growth-dilution cycles.
 
 It is important to notice that the frequencies $f_{t}^{(b)}$ are not the allele
 frequencies in the population (most of the culture is not sequenced since the
@@ -67,7 +68,7 @@ $$
 r_{t}^{(b)} \propto N_{t}^{(b)},
 $${#eq-r_to_n}
 where, importantly, the proportionality constant depends on the total number of
-reads for the time $t$ library, which might vary from library to library.
+reads for the library at time $t$, which might vary from library to library.
 Therefore, to compare the number of reads between libraries at different time
 points, we must normalize the number of reads to the same scale. The simplest
 form is to define a relative abundance, i.e., a frequency with respect to the
