@@ -1,0 +1,58 @@
+---
+editor:
+    render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
+---
+
+Experimental evolution of microbial systems has dramatically advanced our
+understanding of the basic principles of biological evolution [@kussell2013].
+From questions related to the optimal fine-tuning of gene expression programs
+[@Dekel2005], to the dimensionality, geometry, and accessibility of the adaptive
+fitness landscape explored by these rapidly adapting populations
+[@kinsler2020;@maeda2020], to the emergence of eco-evolutionary dynamics in a
+long-term evolution experiment [@good2017]; for all of these and other cases,
+the microbial experimental platform combined with high-throughput sequencing has
+been essential to tackling these questions with empirical data. This exciting
+research area promises to improve as new culturing technologies [@jagdish2022]
+as well as more complex lineage barcoding schemes [@nguyenba2019a;@yang2022],
+are adopted.
+
+For this data-heavy field, properly accounting for the uncertainty in quantities
+inferred from experiments is vital to ensure the conclusions drawn are reliable.
+Bayesian statistics presents a principled way to quantify this uncertainty
+systematically [@gelman2010]. Moreover, Bayesian analysis offers a more
+natural way to interpret the role that probability theory plays when performing
+data analysis compared to the often-misinterpreted frequentist methods
+[@vanderplas2014]. Nevertheless, the technical challenges associated with
+Bayesian analysis has limited its application. This is set to change as
+recognition of the misuse of frequentist concepts such as the p-value is
+receiving more attention [@nuzzo2014]. Moreover, advances in numerical methods
+such as Hamiltonian Monte Carlo [@betancourt2017] and variational inference
+[@kucukelbir2016] allows for complex Bayesian models to be fit to empirical
+data.
+
+In this paper, we present a computational pipeline to analyze lineage-tracking
+time-series data for massive-parallel competition assays. More specifically, we
+fit a Bayesian model to infer the fitness of multiple genotypes relative to a
+reference [@kinsler2020;@ascensao2023]. The proposed model accounts for multiple
+sources of uncertainty with proper error propagation intrinsic to Bayesian
+methods. To scale the inference pipeline to large datasets with $> 10,000$
+barcodes, we use the ADVI algorithm [@kucukelbir2016] to fit a variational
+posterior distribution. The main difference between our method and previous
+inference pipelines, such as @li2023, is that the present analysis provides
+interpretable errors on the inferred fitness values. The reported uncertainty
+intervals---known as credible regions---can be adequately interpreted as
+capturing the corresponding probability mass of finding the true value of the
+parameter given the model, the prior information, and the data. Furthermore,
+minor modifications to the structure of the statistical model allow for the
+analysis of different experimental designs, such as growth-dilution cycles in
+different environments, joint analysis of multiple experimental replicates of
+the same experiment via hierarchical models, and a hierarchical model for
+multiple barcodes mapping to equivalent genotypes.
+
+We validate our analysis pipeline on simulated datasets with known ground truth,
+showing that the model fits the data adequately, capturing the ground truth
+parameters within the posterior distribution. Furthermore, `[talk about the
+Kinsler results.]`
+

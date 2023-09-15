@@ -6,11 +6,11 @@ title: "Supplementary Materials"
 {{< include _variational_inference_primer.qmd >}}
 
 <!-- Bayesian inference pipeline -->
-<!-- {{< include _bayes_freq.qmd >}}
+<!-- {{< include _bayes_freq.qmd >}} -->
 
-{{< include _bayes_meanfit.qmd >}}
+<!-- {{< include _bayes_meanfit.qmd >}} -->
 
-{{< include _bayes_mutfit.qmd >}} -->
+<!-- {{< include _bayes_mutfit.qmd >}} -->
 
 <!-- MCMC implementation -->
 <!-- {{< include _mcmc_sampling.qmd >}} -->

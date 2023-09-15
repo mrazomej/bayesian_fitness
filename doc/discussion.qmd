@@ -1,0 +1,9 @@
+---
+title: "Discussion"
+editor:
+    render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
+---
+
+{{< include _discussion.qmd >}}

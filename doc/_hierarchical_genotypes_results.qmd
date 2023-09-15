@@ -11,10 +11,10 @@ Hierarchical models can also capture another experimental design in which
 multiple barcodes map to the same or an equivalent genotype. As we will show,
 this many-to-one mapping can improve the inference compared to the extreme cases
 of inferring the fitness of each barcode independently or pooling the data of
-all barcodes mapping to a single genotype. As shown in @fig-05(A), a small
-modification to our model allows us to map the structure of our original model
-to that of a hierarchical model with a fitness hyperparameter vector
-$\underline{\theta}^G$, where $G$ is the number of genotypes in the datsets.
+all barcodes mapping to a single genotype. As schematized in @fig-05(A), a small
+modification allows us to map the structure of our original model to that of a
+hierarchical model with a fitness hyperparameter vector $\underline{\theta}^G$,
+where $G$ is the number of genotypes in the dataset.
 
 @fig-05(B) shows a single experimental replicate in which 90 genotypes were
 assigned a random number of barcodes (a multinomial distribution with a mean of
@@ -38,19 +38,20 @@ curve ascends more rapidly, showing that, in general, the inferred values are
 closer to the ground truth. For completeness, @fig-05(G) shows some examples of
 how the hierarchical model can capture the raw log-frequency count observations.
 
-![**Hierarchical model for multiple barcodes per genotype.** (A) Bayesian
-network schematizing the statistical dependence between observations (filled
-circles) and latent variables (empty circles). The barcodes belonging to
-equivalent genotypes are connected via the hyper-parameters
-$\underline{\theta}^G$. See `point to SI` for detailed definitions of each
-variable. (B) Simulated dataset with 100 neutral lineages and 900 barcodes of
-interest distributed among 90 genotypes. (C-E) Comparison between the inferred
-and ground truth fitness values for a hierarchical model (C), a model where each
-barcode is inferred independently (D), and a model where barcodes belonging to
-the same genotype are pooled together (E). Gray error bars represent the 68\%
-credible regions. (F) Empirical cumulative distribution function (ECDF) of the
-absolute difference between the inferred mean and the ground truth fitness
-values for all three models. (G) Examples of the posterior predictive checks for
-all neutral lineages (upper left panels) and a subset of representative mutant
-lineages. Shaded regions from light to dark represent the 95\%, 68\%, and 5\%
-credible regions.](./figs/fig05){#fig-05}
+![**Hierarchical model for multiple barcodes per genotype.** (A) Schematic
+depiction of the hierarchical structure for multiple barcodes mapping to a
+single genotype. A set of barcodes mapping to an equivalent genotype map to
+"local" fitness values $s^{(b)}$ that are connected via a hyper-fitness
+parameter for the genotype $\theta^{(g)}$. (B) Simulated dataset with 100
+neutral lineages and 900 barcodes of interest distributed among 90 genotypes.
+(C-E) Comparison between the inferred and ground truth fitness values for a
+hierarchical model (C), a model where each barcode is inferred independently
+(D), and a model where barcodes mapping to the same genotype are pooled
+together (E). Gray error bars represent the 68\% credible regions. (F) Empirical
+cumulative distribution function (ECDF) of the absolute difference between the
+inferred mean and the ground truth fitness values for all three models. (G)
+Examples of the posterior predictive checks for all neutral lineages (upper left
+panels) and a subset of representative mutant lineages. Shaded regions from
+light to dark represent the 95\%, 68\%, and 5\% credible
+regions.](./figs/fig05){#fig-05}
+  
