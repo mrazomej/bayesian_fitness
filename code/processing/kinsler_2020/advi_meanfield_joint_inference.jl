@@ -43,8 +43,6 @@ Random.seed!(42)
 n_samples = 1
 n_steps = 4_500
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate output directories
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -126,7 +124,7 @@ Threads.@threads for i in axes(df_include, 1)
     data = df[(df.env.==env).&(df.rep.==rep), :]
 
     # Compute naive priors from neutral strains
-    naive_priors = BayesFitness.stats.naive_prior(data)
+    naive_priors = BayesFitness.stats.naive_prior(data; rm_T0=rm_T0)
 
     # Select standard deviation parameters
     s_pop_prior = hcat(
