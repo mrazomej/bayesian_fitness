@@ -28,7 +28,7 @@ import PDFmerger
 CairoMakie.activate!()
 
 # Set PBoC Plotting style
-BayesFitUtils.viz.pboc_makie!()
+BayesFitUtils.viz.theme_makie!()
 
 import Random
 

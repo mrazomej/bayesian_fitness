@@ -42,17 +42,40 @@ barcodes, we use the ADVI algorithm [@kucukelbir2016] to fit a variational
 posterior distribution. The main difference between our method and previous
 inference pipelines, such as @li2023, is that the present analysis provides
 interpretable errors on the inferred fitness values. The reported uncertainty
-intervals---known as credible regions---can be adequately interpreted as
-capturing the corresponding probability mass of finding the true value of the
-parameter given the model, the prior information, and the data. Furthermore,
-minor modifications to the structure of the statistical model allow for the
-analysis of different experimental designs, such as growth-dilution cycles in
-different environments, joint analysis of multiple experimental replicates of
-the same experiment via hierarchical models, and a hierarchical model for
-multiple barcodes mapping to equivalent genotypes.
+intervals---known as credible regions---can be formally interpreted as capturing
+the corresponding probability mass of finding the true value of the parameter
+given the model, the prior information, and the data. Furthermore, minor
+modifications to the structure of the statistical model presented in this work
+allow for the analysis of different experimental designs, such as
+growth-dilution cycles in different environments, joint analysis of multiple
+experimental replicates of the same experiment via hierarchical models, and a
+hierarchical model for multiple barcodes mapping to equivalent genotypes.
 
 We validate our analysis pipeline on simulated datasets with known ground truth,
 showing that the model fits the data adequately, capturing the ground truth
 parameters within the posterior distribution. Furthermore, `[talk about the
 Kinsler results.]`
 
+It is important to highlight some of the consequences of the general
+experimental design and the implicit assumptions within the proposed statistical
+model to analyze the resulting data. First, the composition of the population is
+such that the initial fraction of the population occupied by the barcoded
+genotypes is small---usually >90\% of the initial population is the non-labeled
+reference strain. This constraint is important as the fitness model used to fit
+the time series data assumes that the tracked frequencies are $\ll 1$. Second,
+when computing log frequency ratios, we can run into the issue of dividing by
+zero. This is a common problem when dealing with molecular count data
+[@lovell2020]. Our model gets around this issue by assuming that the frequency
+of any barcode cannot be, but still can get arbitrarily close to, zero.
+Therefore, we implicitly assume that no lineage goes extinct during the
+experiment. Moreover, the statistical model directly accounts for the
+uncertainty associated with having zero barcode counts, increasing the
+corresponding uncertainty. Third, the models presented in this paper require the
+existence of a labeled sub-population of barcoded reference strains. These
+barcodes help determine the fitness baseline, as every fitness is quantified
+with respect to this reference genotype. This experimental design constraint
+facilitates the inference of the population mean fitness since most of the
+culture---the unlabeled reference genotype---is not tracked. Finally, the
+presented statistical model assumes that relative fitness is solely a constant
+of the environment and the genotype. Therefore, the model is not designed to
+analyze data with time-varying or frequency-dependent fitness values.
