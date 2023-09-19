@@ -184,7 +184,7 @@ s^{(m)} \sim \mathcal{N}(0, \sigma_{s^{(m)}}),
 $${#eq-mutfit_eq3}
 and
 $$
-\sigma^{(m)} \sim \operatorname{Half}-\mathcal{N}(0, \sigma_{\sigma^{(m)}}),
+\sigma^{(m)} \sim \log\mathcal{N}(\mu_{\sigma^{(m)}}, \sigma_{\sigma^{(m)}}),
 $${#eq-mutfit_eq4}
-where $\sigma_{s^{(m)}}$ and $\sigma_{\sigma^{(m)}}$ are free parameters we can
-choose.
+where $\sigma_{s^{(m)}}$, $\mu_{\sigma^{(m)}}$, and $\sigma_{\sigma^{(m)}}$ are
+user-defined parameters.

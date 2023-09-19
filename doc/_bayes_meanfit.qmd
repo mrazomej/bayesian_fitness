@@ -72,7 +72,7 @@ frequencies conditioned on the population mean fitness. However, rewriting our
 fitness model in @eq-fitness for a neutral lineage to leave frequencies on one
 side and fitness on the other results in
 $$
-\frac{f_{t+1}^{(n)}}{f_t^{(n)}} = \mathrm{e}^{- \bar{s}_t}\tau.
+\frac{f_{t+1}^{(n)}}{f_t^{(n)}} = \mathrm{e}^{- \bar{s}_t\tau}.
 $${#eq-fitness_ratio_neutral}
 @eq-fitness_ratio_neutral implies that our fitness model only relates **the
 ratio** of frequencies and not the individual values. To get around this 
@@ -125,8 +125,8 @@ $$
 $${#eq-log_ratio_neutral}
 where, for simplicity, we set $\tau = 1$. Note that we added an extra term,
 $\varepsilon_t^{(n)}$, characterizing the deviations of the measurements from
-the theoretical model. It is common to assume that these errors are normally
-distributed with mean zero and some standard deviation $\sigma_t$, implying that
+the theoretical model. We assume these errors are normally distributed with mean
+zero and some standard deviation $\sigma_t$, implying that
 $$
 \ln \gamma_t^{(n)} \mid \bar{s}_t, \sigma_t  \sim 
 \mathcal{N}\left(-\bar{s}_t, \sigma_t \right),
@@ -213,7 +213,7 @@ $$
 $${#eq-meanfit_eq3}
 and
 $$
-\sigma_t \sim \operatorname{Half}-\mathcal{N}(0, \sigma_{\sigma_t}),
+\sigma_t \sim \log\mathcal{N}(\mu_{\sigma_t}, \sigma_{\sigma_t}),
 $${#eq-meanfit_eq4}
-where $\sigma_{\bar{s}_t}$ and $\sigma_{\sigma_t}$ are free parameters we can
-choose.
+where $\sigma_{\bar{s}_t}$, $\mu_{\sigma_t}$, and $\sigma_{\sigma_t}$ are
+user-defined parameters.

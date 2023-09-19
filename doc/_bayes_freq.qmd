@@ -3,6 +3,12 @@ editor:
     render-on-save: true
 ---
 
+## Defining the Bayesian model
+
+Let us now define each of the terms in @eq-split_posterior described in
+@sec-bayesian_inference of the main text. The following sections will specify 
+the functional form each of these terms takes.
+
 ### Frequency uncertainty $\pi(\underline{\underline{F}} \mid \underline{\underline{R}})$ {#sec-bayes_freq}
 
 We begin with the probability of the frequency values given the raw barcode
@@ -21,7 +27,7 @@ Poisson sample from the "true" underlying number of barcodes within the pool.
 This translates to assuming that the number of reads for each barcode at any
 time point $r^{(b)}_t$ is an independent Poisson random variable, i.e.,
 $$
-r^{(b)}_t \sim \text{Poiss}(\lambda^{(b)}_t),
+r^{(b)}_t \sim \operatorname{Poiss}(\lambda^{(b)}_t),
 $${#eq-freq_poisson_reads}
 where the symbol "$\sim$" is read "distributed as." Furthermore, for a Poisson
 distribution, we have that
@@ -34,15 +40,15 @@ $${#eq-freq_poisson_lambda}
 where $\left\langle \cdot \right\rangle$ is the expected value. In other words
 the Poisson parameter is equal to the mean and variance of the distribution. The
 Poisson distribution has the convenient property that for two Poisson 
-distributed random variables $X \sim \text{Poiss}(\lambda_x)$ and 
-$Y \sim \text{Poiss}(\lambda_y)$, we have that
+distributed random variables $X \sim \operatorname{Poiss}(\lambda_x)$ and 
+$Y \sim \operatorname{Poiss}(\lambda_y)$, we have that
 $$
-Z \equiv X + Y \sim \text{Poiss}(\lambda_x + \lambda_y).
+Z \equiv X + Y \sim \operatorname{Poiss}(\lambda_x + \lambda_y).
 $${#eq-freq_additivity}
 This additivity allows us to write the total number of reads at time $t$ $n_t$
 also as a Poisson-distributed random variable of the form
 $$
-n_t \sim \text{Poiss}\left( \sum_{b=1}^B \lambda^{(b)}_t \right),
+n_t \sim \operatorname{Poiss}\left( \sum_{b=1}^B \lambda^{(b)}_t \right),
 $${#eq-freq_poisson_total}
 where the sum is taken over all $B$ barcodes.
 
@@ -50,7 +56,7 @@ If the total number of reads is given by @eq-freq_poisson_total, the array with
 the number of reads for each barcode at time $t$, $\underline{r}_t$ is then
 distributed as
 $$
-\underline{r}_t \sim \text{Multinomial}(n_t, \underline{f}_t),
+\underline{r}_t \sim \operatorname{Multinomial}(n_t, \underline{f}_t),
 $${#eq-freq_multinomial}
 where each of the $B$ entries of the frequency vector $\underline{f}_t$ is a
 function of the $\underline{\lambda}_t$ vector, given by
@@ -82,18 +88,19 @@ $${#eq-freq_n_sum_r}
 But adding the variable allows us to factorize @eq-freq_lambda_bayes as
 $$
 \pi(\underline{\lambda}_t \mid n_t, \underline{r}_t) \propto
-\pi(n_t, \underline{r}_t \mid \underline{\lambda}_t) 
-\pi(n_t \mid \underline{\lambda}_t) \pi(\underline{\lambda}_t).
+\pi(\underline{r}_t \mid n_t, \underline{\lambda}_t)
+\pi(n_t \mid \underline{\lambda}_t)
+\pi(\underline{\lambda}_t)
 $${#eq-freq_lambda_bayes_factorized}
 We then have
 $$
 \underline{r}_t \mid n_t, \underline{\lambda}_t \sim
-\text{Multinomial}(n_t, \underline{f}_t(\underline{\lambda}_t)).
+\operatorname{Multinomial}(n_t, \underline{f}_t(\underline{\lambda}_t)).
 $${#eq-freq_r_bayes}
 Furthermore, we have
 $$
 n_t \mid \underline{\lambda}_t \sim 
-\text{Poiss}(\sum_{b=1}^B \lambda_t^{(b)}).
+\operatorname{Poiss}\left(\sum_{b=1}^B \lambda_t^{(b)}\right).
 $${#eq=freq_n_bayes}
 Finally, for our prior $\pi(\underline{\lambda}_t)$, we first assume each 
 parameter is independent, i.e.,
@@ -109,6 +116,35 @@ these constraints; therefore, for the prior, we assume
 $$
 \lambda_t^{(b)} \sim 
 \log\mathcal{N}(\mu_{\lambda_t^{(b)}}, \sigma_{\lambda_t^{(b)}}),
-$$
+$${#eq-freq_lambda_prior}
 with $\mu_{\lambda_t^{(b)}}, \sigma_{\lambda_t^{(b)}}$ as the user-defined 
 parameters that characterize the prior distribution.
+
+#### Summary
+
+Putting all the pieces developed in this section together gives a term for our
+inference of the form
+$$
+\pi(\underline{\underline{F}} \mid \underline{\underline{R}}) \propto
+\prod_{t=1}^T\left\{
+    \pi(\underline{r}_t \mid n_t, \underline{\lambda}_t)
+    \pi(n_t \mid \underline{\lambda}_t)
+    \left[ 
+        \prod_{b=1}^B \pi(\lambda_t^{(b)})
+    \right]
+\right\}
+$${#eq-freq_final_01}
+where
+$$
+\underline{r}_t \mid n_t, \underline{\lambda}_t \sim
+\operatorname{Multinomial}(n_t, \underline{f}_t(\underline{\lambda}_t)),
+$${#eq-freq_final_02}
+$$
+n_t \mid \underline{\lambda}_t \sim 
+\operatorname{Poiss}\left(\sum_{b=1}^B \lambda_t^{(b)}\right).
+$${#eq-freq_final_03}
+and
+$$
+\lambda_t^{(b)} \sim 
+\log\mathcal{N}(\mu_{\lambda_t^{(b)}}, \sigma_{\lambda_t^{(b)}}),
+$${#eq-freq_final_04}
