@@ -31,13 +31,13 @@ $$
 f_{t+1}^{(m)} = f_t^{(m)} \mathrm{e}^{(s^{(m)} - \bar{s}_t)\tau},
 $${#eq-logistic_fitness_fn}
 where $s^{(m)}$ is the relative fitness for strain $i$ compared to the ancestral
-strain and $\bar{s}_t$ is the mean fitness of the population at cycle $t$. We
-implemented a numerical experiment following the logistic growth model described
-in @eq-logistic_fn to test this assumption. @fig-SIX_logistic_growth_01 shows an
-example of the deterministic trajectories for 50 labeled neutral lineages and
-1000 lineages of interest. The upper red curve that dominates the culture 
-represents the unlabeled ancestral strain included in the experimental design
-described in @sec-experiment.
+strain and $\bar{s}_t$ is the mean fitness of the population at cycle $t$. To
+test this assumption, we implemented a numerical experiment following the
+logistic growth model described in @eq-logistic_fn. @fig-SIX_logistic_growth_01
+shows an example of the deterministic trajectories for 50 labeled neutral
+lineages and 1000 lineages of interest. The upper red curve that dominates the
+culture represents the unlabeled ancestral strain included in the experimental
+design described in @sec-experiment.
 
 ![**Logistic growth simulation over single growth cycle**. The dashed line
 represents the neutral lineages, with the upper curve being the unlabeled
@@ -48,7 +48,7 @@ lineage.](./figs/figSIX_logistic_growth_01){#fig-SIX_logistic_growth_01}
 To simulate multiple growth-dilution cycles, we take the population composition
 at the final time point and use it to initialize a new logistic growth
 simulation. @fig-SIX_logistic_growth_02 shows the resulting number of cells at
-the final time point of a cycle over multiple growth-dilution cycles for the
+the last time point of a cycle over multiple growth-dilution cycles for the
 genotypes in @@fig-SIX_logistic_growth_01. We can see that the adaptive lineages
 (blue curves) increase in abundance, while detrimental lineages (red curves)
 decrease.
@@ -58,7 +58,7 @@ represents the final number of cells after a growth cycle for each lineage.
 Colors are the same as in
 @fig-SIX_logistic_growth_01.](./figs/figSIX_logistic_growth_02){#fig-SIX_logistic_growth_02}
 
-In @sec-fitness_model we derive the functional form to infer the relative 
+In @sec-fitness_model, we derive the functional form to infer the relative 
 fitness of each lineage as
 $$
 \frac{1}{\tau}\ln \frac{f_{t+1}^{(b)}}{f_{t}^{(b)}} = (s^{(b)} - \bar{s}_t).
@@ -76,7 +76,7 @@ To simulate the experimental noise, we add two types of noise:
 
 1. Poisson noise between dilutions. For this, we take the final point of the
 logistic growth simulation and sample a random Poisson number based on this
-final point to set the initial condition for the next cycle.
+last point to set the initial condition for the next cycle.
 2. Gaussian noise when performing the measurements. When translating the 
 underlying population composition to the number of reads, we can add a custom 
 amount of Gaussian noise.
@@ -89,3 +89,4 @@ as the ground truth to be compared with the resulting inference.
 
 ![**Logistic growth-dilution simulations with and without
 noise**](./figs/figSIX_logistic_growth_04){#fig-SIX_logistic_growth_04}
+  
