@@ -1,0 +1,91 @@
+---
+editor:
+    render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
+---
+
+## Logistic growth simulation
+
+In this section, we explain the simulations used to assess the validity of our
+inference pipeline. Let us begin by assuming that, since the strains are grown
+for two full days in the experiment, having left behind the exponential phase
+for almost an entire day, a simple exponential growth of the form
+$$
+\frac{dn_i}{dt} = \lambda_i n_i,
+$${#eq-logistic_expo}
+where $n_i$ is the number of cells of strain $i$, and $\lambda_i$ is the
+corresponding growth rate is not enough. Instead, we will assume that the cells
+follow the logistic growth equation of the form
+$$
+\frac{dn_i}{dt} = \lambda_i n_i 
+\left( 1 - \frac{\sum_{j=1}^{N}n_i}{\kappa}\right),
+$${#eq-logistic_fn}
+where $\kappa$ is the carrying capacity, and $N$ is the total number of strains
+in the culture.
+
+The inference method is based on the model that assumes that the time passed
+between dilutions $\tau \approx 8$ generations, the change in frequency for a
+mutant barcode can be approximated from cycle $t$ to the next cycle $t + 1$ as
+$$
+f_{t+1}^{(m)} = f_t^{(m)} \mathrm{e}^{(s^{(m)} - \bar{s}_t)\tau},
+$${#eq-logistic_fitness_fn}
+where $s^{(m)}$ is the relative fitness for strain $i$ compared to the ancestral
+strain and $\bar{s}_t$ is the mean fitness of the population at cycle $t$. We
+implemented a numerical experiment following the logistic growth model described
+in @eq-logistic_fn to test this assumption. @fig-SIX_logistic_growth_01 shows an
+example of the deterministic trajectories for 50 labeled neutral lineages and
+1000 lineages of interest. The upper red curve that dominates the culture 
+represents the unlabeled ancestral strain included in the experimental design
+described in @sec-experiment.
+
+![**Logistic growth simulation over single growth cycle**. The dashed line
+represents the neutral lineages, with the upper curve being the unlabeled
+neutral strain. Color curves represent the genotypes of interest colored by
+growth rate relative to the neutral
+lineage.](./figs/figSIX_logistic_growth_01){#fig-SIX_logistic_growth_01}
+
+To simulate multiple growth-dilution cycles, we take the population composition
+at the final time point and use it to initialize a new logistic growth
+simulation. @fig-SIX_logistic_growth_02 shows the resulting number of cells at
+the final time point of a cycle over multiple growth-dilution cycles for the
+genotypes in @@fig-SIX_logistic_growth_01. We can see that the adaptive lineages
+(blue curves) increase in abundance, while detrimental lineages (red curves)
+decrease.
+
+![**Growth-dilution cycles for logistic growth simulation**. Each point
+represents the final number of cells after a growth cycle for each lineage.
+Colors are the same as in
+@fig-SIX_logistic_growth_01.](./figs/figSIX_logistic_growth_02){#fig-SIX_logistic_growth_02}
+
+In @sec-fitness_model we derive the functional form to infer the relative 
+fitness of each lineage as
+$$
+\frac{1}{\tau}\ln \frac{f_{t+1}^{(b)}}{f_{t}^{(b)}} = (s^{(b)} - \bar{s}_t).
+$${#eq-logistic_logfreq}
+@fig-SIX_logistic_growth_03 shows the corresponding log frequency ratio curves
+for the logistic growth simulation. The displacement of these curves with 
+respect to the neutral lineages determines the ground truth relative fitness
+value for these simulations.
+
+![**Log frequency ratio for logistic growth simulations**. The relative distance
+of the color curves from the black dashed line determines the relative fitness
+of each linage.](./figs/figSIX_logistic_growth_03){#fig-SIX_logistic_growth_03}
+
+To simulate the experimental noise, we add two types of noise:
+
+1. Poisson noise between dilutions. For this, we take the final point of the
+logistic growth simulation and sample a random Poisson number based on this
+final point to set the initial condition for the next cycle.
+2. Gaussian noise when performing the measurements. When translating the 
+underlying population composition to the number of reads, we can add a custom 
+amount of Gaussian noise.
+
+@fig-SIX_logistic_growth_04 shows the frequency trajectories (left panels) and
+log frequency ratios (right panels) for a noiseless simulation (upper panels) 
+and a simulation with added noise (lower panels). The noiseless simulation is
+used to determine the relative fitness for each of the lineages, which serves
+as the ground truth to be compared with the resulting inference.
+
+![**Logistic growth-dilution simulations with and without
+noise**](./figs/figSIX_logistic_growth_04){#fig-SIX_logistic_growth_04}
