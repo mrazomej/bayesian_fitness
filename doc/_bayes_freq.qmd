@@ -6,105 +6,109 @@ editor:
 ### Frequency uncertainty $\pi(\underline{\underline{F}} \mid \underline{\underline{R}})$ {#sec-bayes_freq}
 
 We begin with the probability of the frequency values given the raw barcode
-reads. The first assumption we make is that the inference of the frequency
+reads. The first assumption is that the inference of the frequency
 values for time $t$ is independent of any other time. Therefore, we can write
 the joint probability distribution as a product of independent distributions of
 the form
 $$
 \pi(\underline{\underline{F}} \mid \underline{\underline{R}}) =
-\prod_{t=1}^T \pi(\underline{f}_t \mid \underline{r}_t).
+\prod_{t=1}^T \pi(\underline{f}_t \mid \underline{r}_t),
 $${#eq-freq_indep}
+where $\underline{f}_t$ and $\underline{r}_t$ are the $t$-th row of the matrix
+containing all of the measurements for time $t$. We imagine that when the 
+barcode reads are obtained via sequencing, the quantified number of reads is a
+Poisson sample from the "true" underlying number of barcodes within the pool. 
+This translates to assuming that the number of reads for each barcode at any
+time point $r^{(b)}_t$ is an independent Poisson random variable, i.e.,
+$$
+r^{(b)}_t \sim \text{Poiss}(\lambda^{(b)}_t),
+$${#eq-freq_poisson_reads}
+where the symbol "$\sim$" is read "distributed as." Furthermore, for a Poisson
+distribution, we have that
+$$
+\lambda^{(b)}_t = \left\langle r^{(b)}_t \right\rangle = 
+\left\langle 
+    \left( r^{(b)}_t - \left\langle r^{(b)}_t \right\rangle \right)^2
+\right\rangle,
+$${#eq-freq_poisson_lambda}
+where $\left\langle \cdot \right\rangle$ is the expected value. In other words
+the Poisson parameter is equal to the mean and variance of the distribution. The
+Poisson distribution has the convenient property that for two Poisson 
+distributed random variables $X \sim \text{Poiss}(\lambda_x)$ and 
+$Y \sim \text{Poiss}(\lambda_y)$, we have that
+$$
+Z \equiv X + Y \sim \text{Poiss}(\lambda_x + \lambda_y).
+$${#eq-freq_additivity}
+This additivity allows us to write the total number of reads at time $t$ $n_t$
+also as a Poisson-distributed random variable of the form
+$$
+n_t \sim \text{Poiss}\left( \sum_{b=1}^B \lambda^{(b)}_t \right),
+$${#eq-freq_poisson_total}
+where the sum is taken over all $B$ barcodes.
 
-Writing Bayes' theorem for one of these independent terms results in
+If the total number of reads is given by @eq-freq_poisson_total, the array with
+the number of reads for each barcode at time $t$, $\underline{r}_t$ is then
+distributed as
 $$
-\pi(\underline{f}_t \mid \underline{r}_t) \propto
-\pi(\underline{r}_t \mid \underline{f}_t)
-\pi(\underline{f}_t).
-$${#eq-bayes_freq}
-To model the prior uncertainty in the value of the frequencies, we assume a very
-simple model. Notice that the frequencies at any time point must satisfy the
-normalization constraint
+\underline{r}_t \sim \text{Multinomial}(n_t, \underline{f}_t),
+$${#eq-freq_multinomial}
+where each of the $B$ entries of the frequency vector $\underline{f}_t$ is a
+function of the $\underline{\lambda}_t$ vector, given by
 $$
-\sum_{b = 1}^B f_t^{(b)} = 1, \;\; \forall \; f_t^{(b)} \in [0, 1].
-$${#eq-freq_norm}
-This means that the probability distribution of the $B$ frequency values lies on
-the $B$-simplex, i.e., the $B$ dimensional space constrained such that the sum
-of all the dimensions must add up to one. A natural choice for a probability
-that satisfies the constraint in @eq-freq_norm is the so-called Dirichlet
-distribution. The Dirichlet distribution is parametrized by a vector
+f_t^{(b)} \equiv f_t^{(b)}(\underline{\lambda}_t) = 
+\frac{\lambda_t^{(b)}}{\sum_{b'=1}^B \lambda_t^{(b')}}.
+$${#eq-freq_freq_lambda}
+In other words, we can think of the $B$ barcode counts as independent Poisson
+samples or as a single multinomial draw with a random number of total draws,
+$n_t$, and the frequency vector $\underline{f}_t$ we are interested in. Notice
+that @eq-freq_freq_lambda is a deterministic function that connects the Poisson
+parameters to the frequencies. Therefore, we have the equivalence that
 $$
-\underline{\alpha}_t = (\alpha^{(1)}_t, \cdots, \alpha^{(B)}_t)^\dagger, 
-\;\; \alpha_t^{(k)} > 0 \;\; \forall \; k.
-$${#eq-alpha_dir}
-We then choose as a prior distribution for the barcode frequency values
-$\pi(\underline{f}_t)$ a Dirichlet distribution of the form
+\pi(\underline{f}_t \mid \underline{r}_t) = 
+\pi(\underline{\lambda}_t \mid \underline{r}_t),
+$${#eq-freq_f_lambda_equiv}
+meaning that the uncertainty comes from the $\underline{\lambda}_t$ vector. By
+Bayes theorem, we therefore write
 $$
-\pi(\underline{f}_t) = \frac{
-    \Gamma\left(\sum_{b=1}^B\alpha_t^{(b)}\right)
-}{
-    \prod_{b=1}^B\Gamma(\alpha_t^{(b)})
-} 
-\prod_{b=1}^B (f_t^{(b)})^{\alpha_t^{(b)}-1},
-$${#eq-dirichlet}
-where $\Gamma(\cdot)$ is the gamma function. @eq-dirichlet can be much more
-compactly written as
+\pi(\underline{\lambda}_t \mid n_t, \underline{r}_t) \propto
+\pi(n_t, \underline{r}_t \mid \underline{\lambda}_t) \pi(\underline{\lambda}_t),
+$${#eq-freq_lambda_bayes}
+where we explicitly include the dependence on $n_t$. This does not affect the
+distribution or brings more uncertainty because $\underline{r}_t$ already 
+contains all the information to compute $n_t$ since
 $$
-\underline{f}_t \sim \operatorname{Dirichlet}(\underline{\alpha}_t),
-$${#eq-freq_prior}
-where the symbol "$\sim$" is read "distributed as". Again, since the ultimate
-calculation will be performed numerically, we can hide all of the mathematical
-details in @eq-dirichlet with the simple expression in @eq-freq_prior. We are
-free to choose the value of the parameters $\underline{\alpha}_t$ according to
-our prior information. A reasonable choice is to assume that before observing
-any data at all, we have no reason to believe any barcode is in higher abundance
-compared to any other. This might not be entirely true at the beginning of the
-experiment, where we expect the neutral barcodes to be in much higher frequency
-compared to the mutant barcodes. Nevertheless, we have less certainty about the
-following time points, making our "uniform prior over the simplex" a reasonable
-choice. Therefore, we define
+n_t = \sum_{b=1}^B r_t^{(b)}.
+$${#eq-freq_n_sum_r}
+But adding the variable allows us to factorize @eq-freq_lambda_bayes as
 $$
-\alpha_t^{(b)} = 1 \;\; \forall \; b.
-$${#eq-alpha_choice}
-
-For the likelihood term $\pi(\underline{r}_t \mid \underline{f}_t)$, we assume a
-very simple multinomial model. The story behind this choice goes as follows:
-Given a "true" underlying barcode frequency, when the sequencing machine reads a
-particular barcode, this is equivalent to having thrown a $B$-sided die, where
-the face of the die indicates the barcode that is read. This die is then rolled
-$R_t = \sum_b r_t^{(b)}$ times, giving the values of the reads we observe at
-time $t$. Notice that this model does not account for noise that might come from
-sources such as genetic drift, DNA extraction, and PCR amplification. Although
-these sources of noise are important, it is not clear that we have enough
-statistical power to make meaningful statements about them given our data (more
-on this later on). We can then compactly write the likelihood function as
+\pi(\underline{\lambda}_t \mid n_t, \underline{r}_t) \propto
+\pi(n_t, \underline{r}_t \mid \underline{\lambda}_t) 
+\pi(n_t \mid \underline{\lambda}_t) \pi(\underline{\lambda}_t).
+$${#eq-freq_lambda_bayes_factorized}
+We then have
 $$
-\underline{r}_t \mid \underline{f}_t \sim
-\operatorname{Multinomial}(R_t, \underline{f}_t),
-$${#eq-freq_likelihood}
-which again is simply read as the number of reads at time $t$ $\underline{r}_t$
-given the frequencies at the same time $\underline{f}_t$ is distributed with
-a multinomial distribution parametrized by $R_t$, the total number of reads, and
-the frequency vector.
-
-This simple Multinomial-Dirichlet model for the probability of the frequency
-values is convenient because it is analytically tractable. Specifically, the
-Dirichlet distribution is the so-called *conjugate prior* to the multinomial
-distribution. This means the posterior distribution $\pi(\underline{f}_t \mid
-\underline{r}_t)$ has a closed-form solution of the same form as the prior
-$\pi(\underline{f}_t)$, but with updated parameters. In other words, we can
-write (without proof) the posterior distribution as
+\underline{r}_t \mid n_t, \underline{\lambda}_t \sim
+\text{Multinomial}(n_t, \underline{f}_t(\underline{\lambda}_t)).
+$${#eq-freq_r_bayes}
+Furthermore, we have
 $$
-\underline{f}_t \mid \underline{r}_t \sim
-\operatorname{Dirichlet}(\underline{\beta}_t),
-$${#eq-freq_posterior}
-where the $\underline{\alpha}_t$ parameters are updated to $\underline{\beta}_t$
-after observing the data. These updated parameters are of the form
+n_t \mid \underline{\lambda}_t \sim 
+\text{Poiss}(\sum_{b=1}^B \lambda_t^{(b)}).
+$${#eq=freq_n_bayes}
+Finally, for our prior $\pi(\underline{\lambda}_t)$, we first assume each 
+parameter is independent, i.e.,
 $$
-\beta_t^{(b)} = \alpha_t^{(b)} + r_t^{(b)}.
+\pi(\underline{\lambda}_t) = \prod_{b=1}^B \pi(\lambda_t^{(b)}).
 $$
-Simply put, when the likelihood function is multinomial, and the prior 
-distribution is Dirichlet, the posterior distribution is also Dirichlet, where
-the parameters of the posterior are the parameters of the prior plus the number
-of observations of the corresponding output. This fact will become handy
-as we build the entire posterior distribution for our inference as defined in
-@eq-split_posterior.
+A reasonable prior for each $\lambda_t^{(b)}$ representing the expected number
+of reads for barcode $b$ should span several orders of magnitude. Furthermore,
+we assume that no barcode in the dataset ever goes extinct. Thus, no frequency
+can equal zero, facilitating the computation of the log frequency ratios
+needed to infer the relative fitness. The log-normal distribution satisfies 
+these constraints; therefore, for the prior, we assume
+$$
+\lambda_t^{(b)} \sim 
+\log\mathcal{N}(\mu_{\lambda_t^{(b)}}, \sigma_{\lambda_t^{(b)}}),
+$$
+with $\mu_{\lambda_t^{(b)}}, \sigma_{\lambda_t^{(b)}}$ as the user-defined 
+parameters that characterize the prior distribution.
