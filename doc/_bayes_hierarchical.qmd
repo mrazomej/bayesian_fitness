@@ -1,0 +1,249 @@
+---
+editor:
+    render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
+---
+
+### Hierarchical models for multiple experimental replicates
+
+As detailed in @sec-replicates of the main text, we define a Bayesian
+hierarchical model to analyze data from multiple experimental replicates. The
+implementation requires only slightly modifying the base model detailed in the
+previous sections. The hierarchical model defines a hyper-fitness parameter
+$\theta^{(m)}$ for every non-neutral barcode. We can thus collect all of the $M$
+hyperparameters in an array of the form
+$$
+\underline{\theta}^M = (\theta^{(1)}, \ldots, \theta^{(M)})^\dagger.
+$${#eq-hier_hyper_vector}
+Our data now consists of a series of matrices $\underline{\underline{R}}_{[j]}$,
+where the subindex $[j]$ refers to the $j$-th experimental replicate. These
+matrices need not have the same number of rows, as the time points measured for
+each replicate can vary. The statistical model we must define is then of the
+form
+$$
+\begin{aligned}
+\pi(
+    \underline{\theta}^M, 
+    \{\underline{s}^M_{[j]}\},
+    \{\underline{\bar{s}}_{T[j]}\},
+    \{\underline{\underline{F}}_{[j]}\} \mid
+    \{\underline{\underline{R}}_{[j]}\}
+) \propto \;
+&\pi(
+    \{\underline{\underline{R}}_{[j]}\} \mid
+    \underline{\theta}^M, 
+    \{\underline{s}^M_{[j]}\},
+    \{\underline{\bar{s}}_{T[j]}\},
+    \{\underline{\underline{F}}_{[j]}\} 
+) \times \\\
+&\pi(
+    \underline{\theta}^M, 
+    \{\underline{s}^M_{[j]}\},
+    \{\underline{\bar{s}}_{T[j]}\},
+    \{\underline{\underline{F}}_{[j]}\} 
+)
+\end{aligned}
+$${#eq-hier_bayes_full}
+where the parameters within curly braces with subindex $[j]$ indicate one set of
+parameters per experimental replicate. For example,
+$$
+\{\underline{s}^M_{[j]}\} = \{
+    \underline{s}^M_{[1]}, \underline{s}^M_{[2]}, \ldots \underline{s}^M_{[E]}
+\},
+$${#eq-hier_array}
+where $E$ is the number of experimental replicates.
+
+Given the dependencies between the variables, we can factorize
+@eq-hier_bayes_full to be of the form
+$$
+\begin{aligned}
+\pi(
+    \underline{\theta}^M, 
+    \{\underline{s}^M_{[j]}\},
+    \{\underline{\bar{s}}_{T[j]}\},
+    \{\underline{\underline{F}}_{[j]}\} \mid
+    \{\underline{\underline{R}}_{[j]}\}
+) =
+&\pi(
+    \underline{\theta}^M, 
+    \{\underline{s}^M_{[j]}\} \mid
+    \{\underline{\bar{s}}_{T[j]}\},
+    \{\underline{\underline{F}}_{[j]}\} 
+) \times \\
+&\pi(
+    \{\underline{\bar{s}}_{T[j]}\} \mid
+    \{\underline{\underline{F}}_{[j]}\}
+) \times \\
+&\pi(
+    \{\underline{\underline{F}}_{[j]}\} \mid
+    \{\underline{\underline{R}}_{[j]}\}
+)
+\end{aligned}
+$${#eq-hier_factorized}
+Furthermore, the hierarchical structure only connects the replicates via the
+relative fitness parameters. This means that the population mean fitness values
+and the frequencies can be independently inferred for each dataset. This allows
+us to rewrite the right-hand side of @eq-hier_factorized as
+$$
+\begin{aligned}
+\pi(
+    \underline{\theta}^M, 
+    \{\underline{s}^M_{[j]}\},
+    \{\underline{\bar{s}}_{T[j]}\},
+    \{\underline{\underline{F}}_{[j]}\} \mid
+    \{\underline{\underline{R}}_{[j]}\}
+) =
+&\pi(
+    \underline{\theta}^M, 
+    \{\underline{s}^M_{[j]}\} \mid
+    \{\underline{\bar{s}}_{T[j]}\},
+    \{\underline{\underline{F}}_{[j]}\} 
+) \times \\
+&\prod_{j=1}^E \left[
+    \pi(
+        \underline{\bar{s}}_{T[j]} \mid
+        \underline{\underline{F}}_{[j]}
+    )
+    \pi(
+        \underline{\underline{F}}_{[j]} \mid
+        \underline{\underline{R}}_{[j]}
+    )
+\right].
+\end{aligned}
+$${#eq-hier_bayes_factorized_replicate}
+The terms inside the square brackets in @eq-hier_bayes_factorized_replicate take
+the same functional form as those derived in @sec-bayes_meanfit and
+@sec-bayes_freq. Therefore, to implement the desired hierarchical model, we only
+need to focus on the first term on the right-hand side of
+@eq-hier_bayes_factorized_replicate. A way to think about the structure of the
+hierarchical model is as follows: imagine each genotype as a "*true*" relative
+fitness value. However, every time we perform an experiment, small variations in
+the biotic and abiotic conditions---also known as batch effects---might result
+in small deviations from this value. We model this by defining a distribution
+for the hyper-fitness parameter---the ground truth we are interested in---and
+having each experimental replicate sample from this hyper-parameter distribution
+to determine the "*local*" fitness value. The wider the hyper-parameter
+distribution is the more variability between experimental replicates. 
+
+Writing Bayes' theorem for the first term in @eq-hier_bayes_factorized_replicate
+results in
+$$
+\pi(
+    \underline{\theta}^M, 
+    \{\underline{s}^M_{[j]}\} \mid
+    \{\underline{\underline{F}}_{[j]}\},
+    \{\underline{\bar{s}}_{T[j]}\}
+) \propto
+\pi(
+    \{\underline{\underline{F}}_{[j]}\} \mid
+    \underline{\theta}^M, 
+    \{\underline{s}^M_{[j]}\},
+    \{\underline{\bar{s}}_{T[j]}\}
+)
+\pi(
+    \underline{\theta}^M, 
+    \{\underline{s}^M_{[j]}\} \mid
+    \{\underline{\bar{s}}_{T[j]}\}
+),
+$${#eq-hier_bayes}
+where we leave the conditioning on the population mean fitness as we did in
+@seq-bayes_mutfit. This expression can be simplified in two ways. First, the
+frequency values for each experimental replicate depend directly on the local
+fitness values and the corresponding population mean fitness, as the
+relationship between experimental replicates only occurs through the relative
+fitness values. Therefore, we can write
+$$
+\pi(
+    \underline{\theta}^M, 
+    \{\underline{s}^M_{[j]}\} \mid
+    \{\underline{\underline{F}}_{[j]}\},
+    \{\underline{\bar{s}}_{T[j]}\}
+) \propto
+\prod_{j=1}^E\left[
+    \pi(
+        \underline{\underline{F}}_{[j]} \mid
+        \underline{s}^M_{[j]},
+        \underline{\bar{s}}_{T[j]}
+    )
+\right]
+\pi(
+    \underline{\theta}^M, 
+    \{\underline{s}^M_{[j]}\} \mid
+    \{\underline{\bar{s}}_{T[j]}\}
+).
+$${#eq-hier_bayes_exp_indep}
+Second, the relationship between the hyper-fitness and the local fitness values
+allows us to write their joint distribution as a conditional distribution where
+local fitness values depend on the global hyper-fitness value, obtaining
+$$
+\pi(
+    \underline{\theta}^M, 
+    \{\underline{s}^M_{[j]}\} \mid
+    \{\underline{\underline{F}}_{[j]}\},
+    \{\underline{\bar{s}}_{T[j]}\}
+) \propto
+\prod_{j=1}^E\left[
+    \pi(
+        \underline{\underline{F}}_{[j]} \mid
+        \underline{s}^M_{[j]},
+        \underline{\bar{s}}_{T[j]}
+    )
+    \pi(
+        \underline{s}^M_{[j]} \mid
+        \underline{\theta}^M
+    )
+\right] 
+\pi(
+    \underline{\theta}^M
+).
+$${#eq-hier_bayes_exp_indep}
+Notice we removed the conditioning on the population mean fitness as our prior
+expectations of what the global hyper-fitness or local fitness value might be do
+not depend on these nuisance parameters. 
+
+The first term on the right-hand side of @eq-hier_bayes_exp_indep takes the same
+functional form as the one derived in @seq-bayes_mutfit. Therefore, all we are
+left with is to determine the functional forms for the hyper–prior
+$\pi(\underline{\theta}^M)$, and the conditional probability
+$\pi(\underline{s}^M_{[j]} \mid \underline{\theta}^M)$. In analogy to the 
+assumptions used for the fitness values in @seq-bayes_mutfit, we define the 
+value of each hyper-fitness as independent. This means that we have
+$$
+\pi(\underline{\theta}^M) = \prod_{m=1}^M \pi(\theta^{(m)}).
+$${#eq-hier_hyper_prior}
+Furthermore, we assume this prior is of the form
+$$
+\theta^{(m)} \sim \mathcal{N}(\mu_{\theta^{(m)}}, \sigma_{\theta^{(m)}}),
+$${#eq-hier_hyper_prior_02}
+where $\mu_{\theta^{(m)}}$ and $\sigma_{\theta^{(m)}}$ are user-defined 
+parameters encoding the prior expectations on the fitness values.
+
+For the conditional distribution $\pi(\underline{s}^M_{[j]} \mid
+\underline{\theta}^M)$, we use the so-called non-centered parametrization that
+avoids some of the intrinsic degeneracies associated with hierarchical models
+[@betancourt2013]. We invite the reader to check [this excellent
+blog](https://betanalpha.github.io/assets/case_studies/hierarchical_modeling.html)
+explaining the difficulties of working with hierarchical models. This 
+non-centered parameterization implies that we introduce two nuisance parameters
+such that the local fitness $s_{[j]}^{(m)}$ is computed as
+$$
+s_{[j]}^{(m)} = \theta^{(m)} + 
+(\tau_{[j]}^{(m)} \times \xi_{[j]}^{(m)}),
+$${#eq-hier_noncentered}
+where $\theta^{(m)}$ is the corresponding genotype hyper-fitness value,
+$\xi_{[j]}^{(m)}$ is a standard normal random variable, i.e.,
+$$
+\xi_{[j]}^{(m)} \sim \mathcal{N}(0, 1),
+$${#eq-hier_stdnormal}
+that allows deviations from the hyper-fitness value to be either positive or
+negative, and $\tau_{[j]}^{(m)}$ is a strictly positive random variable that
+characterizes the deviation of the local fitness value from the global
+hyper-fitness. We assume
+$$
+\tau_{[j]}^{(m)} \sim \log\mathcal{N}(
+    \mu_{\tau_{[j]}^{(m)}}, \sigma_{\tau_{[j]}^{(m)}}
+)
+$${#eq-hier_tau}
+where $\mu_{\tau_{[j]}^{(m)}}$ and $\sigma_{\tau_{[j]}^{(m)}}$ are user-defined
+parameters capturing the expected magnitude of the batch effects.
