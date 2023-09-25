@@ -69,6 +69,8 @@ df_counts = CSV.read(
 # Listing ADVI files and metadata
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Loading ADVI results")
+
 # Define directory
 out_dir = "./output/advi_meanfield_joint_inference"
 
@@ -111,11 +113,211 @@ end # for
 # Plotting PPC 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+println("Plotting posterior predictive checks")
+
 # Group data by environment and replicate
 df_group = DF.groupby(df_advi, [:env, :rep])
 
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Generate single plot so that we can run the rest in parallel
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+println("Generating first plot...")
+# Extract data 
+df_env = df_group[1]
+
+# Extract metadata
+env = first(df_env.env)
+rep = first(df_env.rep)
+rm_T0 = first(df_env.rm_T0)
+
+# Extract mutant fitness
+df_fitness = df_env[(df_env.vartype.=="bc_fitness"), :]
+
+println("$(env) | $(rep)")
+
+# Define number of samples
+n_samples = 2_500
+
+# Sample from posterior MvNormal
+df_samples = DF.DataFrame(
+    Random.rand(
+        Distributions.MvNormal(
+            df_env.mean, LinearAlgebra.Diagonal(df_env.std .^ 2)
+        ),
+        n_samples
+    )',
+    df_env.varname
+)
+
+# Extract data
+data = df_counts[
+    (df_counts.env.==first(df_env.env)).&(df_counts.rep.==first(df_env.rep)),
+    :]
+
+# Remove T0 if necessary
+if rm_T0
+    data = data[(data.time.>first(sort(unique(data.time)))), :]
+end # if
+
+
+# Initialize figure
+fig = Figure(resolution=(600, 600))
+
+# Add grid layout for posterior predictive checks
+gl_ppc = fig[1, 1] = GridLayout()
+
+# Define number of posterior predictive check samples
+n_ppc = 500
+# Define quantiles to compute
+qs = [0.95, 0.675, 0.05]
+
+# Define number of rows and columns
+n_row, n_col = [4, 4]
+
+# List example barcodes to plot
+bc_plot = StatsBase.sample(
+    eachrow(DF.sort(df_fitness, :mean)),
+    n_row * n_col,
+    replace=false,
+    ordered=true
+)
+
+# Initialize plot counter
+counter = 1
+
+# Loop through rows
+for row in 1:n_row
+    # Loop through columns
+    for col in 1:n_col
+        # Add axis
+        local ax = Axis(gl_ppc[row, col], aspect=AxisAspect(1.25))
+
+        # Check if first first entry
+        if (row == 1) & (col == 1)
+            # Define dictionary with corresponding parameters for variables
+            # needed for the posterior predictive checks
+            param = Dict(
+                :population_mean_fitness => :s̲ₜ,
+                :population_std_fitness => :σ̲ₜ,
+            )
+
+            # Define colors
+            local colors = get(
+                ColorSchemes.Purples_9, LinRange(0.5, 1.0, length(qs))
+            )
+
+            # Compute posterior predictive checks
+            local ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
+                df_samples, n_ppc; model=:normal, param=param
+            )
+
+            if rm_T0
+                # Define time
+                t = vec(collect(axes(ppc_mat, 2)) .+ 1)
+            else
+                t = vec(collect(axes(ppc_mat, 2)) .+ 0)
+            end # if
+
+            # Plot posterior predictive checks
+            BayesFitUtils.viz.ppc_time_series!(
+                ax, qs, ppc_mat; colors=colors, time=t
+            )
+
+            # Plot log-frequency ratio of neutrals
+            BayesFitUtils.viz.logfreq_ratio_time_series!(
+                ax,
+                data[data.neutral, :];
+                time_col=:time,
+                freq_col=:freq,
+                color=:black,
+                alpha=1.0,
+                linewidth=1.5
+            )
+
+            # Hide axis decorations
+            hidedecorations!.(ax, grid=false)
+
+            ax.title = "neutral lineages"
+            ax.titlesize = 10
+
+            global counter += 1
+
+            continue
+        end # if
+
+        # Extract data
+        data_bc = DF.sort(
+            data[string.(data.barcode).==bc_plot[counter].id, :], :time
+        )
+
+        # Define colors
+        local colors = get(
+            ColorSchemes.Blues_9, LinRange(0.5, 1.0, length(qs))
+        )
+
+        # Define dictionary with corresponding parameters for variables
+        # needed for the posterior predictive checks
+        local param = Dict(
+            :bc_mean_fitness => Symbol(bc_plot[counter].varname),
+            :bc_std_fitness => Symbol(
+                replace(bc_plot[counter].varname, "s" => "logσ")
+            ),
+            :population_mean_fitness => :s̲ₜ,
+        )
+        # Compute posterior predictive checks
+        local ppc_mat = BayesFitness.stats.logfreq_ratio_bc_ppc(
+            df_samples, n_ppc; model=:normal, param=param
+        )
+        # Plot posterior predictive checks
+        BayesFitUtils.viz.ppc_time_series!(
+            ax, qs, ppc_mat; colors=colors
+        )
+
+        # Add scatter of data
+        scatterlines!(
+            ax, diff(log.(data_bc.freq)), color=:black, linewidth=2.0
+        )
+
+        # Define fitness ranges to display in title
+        vals = [
+            round(bc_plot[counter].mean; sigdigits=2),
+            round(bc_plot[counter].std; sigdigits=2),
+        ]
+
+        # Add title
+        ax.title = "bc $(bc_plot[counter].id) | s⁽ᵐ⁾= $(vals[1])±$(vals[2])"
+        ax.titlesize = 10
+
+        ## == Plot format == ##
+
+        # Hide axis decorations
+        hidedecorations!.(ax, grid=false)
+
+        # Update counter
+        global counter += 1
+    end  # for
+end # for
+
+# Add x-axis label
+Label(gl_ppc[end, :, Bottom()], "time points", fontsize=15)
+# Add y-axis label
+Label(gl_ppc[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=15)
+# Add title
+Label(gl_ppc[0, :], "$(env) | $(rep)", fontsize=15)
+# Set spacing
+rowgap!(gl_ppc, 0)
+colgap!(gl_ppc, 4)
+
+save("$(fig_dir)/ppc_$(env)env_$(rep)rep_$(rm_T0)rmT0.pdf", fig)
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Plot in parallel
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+println("Plotting rest in parallel...")
 # Loop through datasets
-Threads.@threads for d = 1:length(df_group)
+Threads.@threads for d = 2:length(df_group)
     # Extract data 
     df_env = df_group[d]
 
@@ -123,6 +325,9 @@ Threads.@threads for d = 1:length(df_group)
     env = first(df_env.env)
     rep = first(df_env.rep)
     rm_T0 = first(df_env.rm_T0)
+
+    # Extract mutant fitness
+    df_fitness = df_env[(df_env.vartype.=="bc_fitness"), :]
 
     println("$(env) | $(rep)")
 
@@ -241,10 +446,12 @@ Threads.@threads for d = 1:length(df_group)
             )
 
             # Define colors
-            local colors = get(ColorSchemes.Blues_9, LinRange(0.5, 1.0, length(qs)))
+            local colors = get(
+                ColorSchemes.Blues_9, LinRange(0.5, 1.0, length(qs))
+            )
 
-            # Define dictionary with corresponding parameters for variables needed
-            # for the posterior predictive checks
+            # Define dictionary with corresponding parameters for variables
+            # needed for the posterior predictive checks
             local param = Dict(
                 :bc_mean_fitness => Symbol(bc_plot[counter].varname),
                 :bc_std_fitness => Symbol(
@@ -262,7 +469,9 @@ Threads.@threads for d = 1:length(df_group)
             )
 
             # Add scatter of data
-            scatterlines!(ax, diff(log.(data_bc.freq)), color=:black, linewidth=2.0)
+            scatterlines!(
+                ax, diff(log.(data_bc.freq)), color=:black, linewidth=2.0
+            )
 
             # Define fitness ranges to display in title
             vals = [
