@@ -4,44 +4,37 @@ println("Loading packages...")
 # Load project package
 @load_pkg BayesFitUtils
 
-# Import package to revise package
 import Revise
 # Import project package
 import BayesFitUtils
-
-# Import library package
+# Import package for Bayesian inference
 import BayesFitness
-
-# Import basic math
-import StatsBase
 
 # Import libraries to manipulate data
 import DataFrames as DF
 import CSV
-import MCMCChains
-
-# Import library to list files
 import Glob
 
-# Import library to load files
-import JLD2
+# Import basic math
+import StatsBase
+import Distributions
+import LinearAlgebra
 
 # Import plotting libraries
 using CairoMakie
 import ColorSchemes
-import PDFmerger
+import ColorTypes
 
 # Activate backend
 CairoMakie.activate!()
 
 # Set PBoC Plotting style
-BayesFitUtils.viz.pboc_makie!()
+BayesFitUtils.viz.theme_makie!()
 
+# Import library to set random seed
 import Random
 
 Random.seed!(42)
-
-##
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Loading data
@@ -57,283 +50,250 @@ if !isdir("./output/figs/")
     mkdir("./output/figs/")
 end # if
 
+# Define directory for this specific analysis
+fig_dir = "./output/figs/advi_meanfield_joint_inference/"
+
+# Generate directory for single dataset inference
+if !isdir(fig_dir)
+    mkdir(fig_dir)
+end # if
+
 println("Loading data...")
 
-# Import data
-df = CSV.read(
+# 
+df_counts = CSV.read(
     "$(git_root())/data/kinsler_2020/tidy_counts_no_anc.csv", DF.DataFrame
 )
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Listing MCMC files and metadata
+# Listing ADVI files and metadata
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-# List Inference files available
-mcmc_files = Glob.glob("./output/kinsler*.jld2")
+# Define directory
+out_dir = "./output/advi_meanfield_joint_inference"
 
-# Initialize dataframe to save metadata
-df_files = DF.DataFrame()
+# List files
+files = Glob.glob("$(out_dir)/*csv")
+
+# Initialize dataframe to save ADVI results
+df_advi = DF.DataFrame()
 
 # Loop through files
-for f in mcmc_files
-    # Split and keep metadata variables
-    vars = split(split(f, "/")[end], "_")
-    # Extract metadata variables
-    env = replace(vars[2], "env" => "")
-    rep = replace(vars[3], "rep" => "")
-    rm_T0 = parse(Bool, replace(vars[4], "rmT0.jld2" => ""))
+for f in files
+    # Split file name
+    f_split = split(split(f, "/")[end], "_")
 
-    # Add info to dataframe
-    DF.append!(
-        df_files,
-        DF.DataFrame(
-            [[env], [rep], [rm_T0], [f]], ["env", "rep", "rm_T0", "file"]
-        )
+    # Extract file metadata
+    env = replace(f_split[2], "env" => "")
+    rep = replace(f_split[3], "rep" => "")
+    rmT0 = parse(Bool, replace(f_split[4], "rmT0" => ""))
+    n_samples = parse(Int64, replace(f_split[5], "samples" => ""))
+    n_steps = parse(Int64, replace(f_split[6], "steps.csv" => ""))
+
+    # Load ADVI results into memory removing redundant columns
+    df_tmp = CSV.read(f, DF.DataFrame)[:, DF.Not([:rep, :env])]
+
+    # Add metadata information
+    DF.insertcols!(
+        df_tmp,
+        :env .=> env,
+        :rep .=> rep,
+        :rm_T0 .=> rmT0,
+        :n_samples .=> n_samples,
+        :n_steps .=> n_steps
     )
+
+    # Add to df_advi
+    DF.append!(df_advi, df_tmp)
 end # for
 
-##
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Plotting PPC for population mean fitness
+# Plotting PPC 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-# Define dictionary with corresponding parameters for variables needed for the
-# posterior predictive checks
-param = Dict(
-    :population_mean_fitness => :s̲ₜ,
-    :population_std_fitness => :σ̲ₜ,
-)
+# Group data by environment and replicate
+df_group = DF.groupby(df_advi, [:env, :rep])
 
-# Define number of posterior predictive check samples
-n_ppc = 500
+# Loop through datasets
+Threads.@threads for d = 1:length(df_group)
+    # Extract data 
+    df_env = df_group[d]
 
-# Define quantiles to compute
-qs = [0.68, 0.95, 0.997]
+    # Extract metadata
+    env = first(df_env.env)
+    rep = first(df_env.rep)
+    rm_T0 = first(df_env.rm_T0)
 
-# Define colors
-colors = get(ColorSchemes.Blues_9, LinRange(0.25, 0.75, length(qs)))
+    println("$(env) | $(rep)")
 
-# Remove old version of file
-rm("./output/figs/logfreqratio_ppc_neutral.pdf", force=true)
-# Loop through files
-for d in eachrow(df_files)
-    # Select data
-    data = df[(df.env.==d.env).&(df.rep.==d.rep), :]
+    # Define number of samples
+    n_samples = 2_500
 
-    # Establish time for x-axis
-    if d.rm_T0
-        time = sort(unique(data.time))[3:end]
-    else
-        time = sort(unique(data.time))[2:end]
+    # Sample from posterior MvNormal
+    df_samples = DF.DataFrame(
+        Random.rand(
+            Distributions.MvNormal(
+                df_env.mean, LinearAlgebra.Diagonal(df_env.std .^ 2)
+            ),
+            n_samples
+        )',
+        df_env.varname
+    )
+
+    # Extract data
+    data = df_counts[
+        (df_counts.env.==first(df_env.env)).&(df_counts.rep.==first(df_env.rep)),
+        :]
+
+    # Remove T0 if necessary
+    if rm_T0
+        data = data[(data.time.>first(sort(unique(data.time)))), :]
     end # if
 
-    # Load chain
-    chn = JLD2.load(d.file)["chain"]
-
-    # Compute posterior predictive checks
-    ppc_mat = BayesFitness.stats.logfreq_ratio_mean_ppc(
-        chn, n_ppc; param=param
-    )
 
     # Initialize figure
-    fig = Figure(resolution=(450, 350))
+    fig = Figure(resolution=(600, 600))
 
-    # Add axis
-    ax = Axis(
-        fig[1, 1],
-        xlabel="time point",
-        ylabel="ln(fₜ₊₁/fₜ)",
-        title="PPC $(d.env) | $(d.rep)"
+    # Add grid layout for posterior predictive checks
+    gl_ppc = fig[1, 1] = GridLayout()
+
+    # Define number of posterior predictive check samples
+    n_ppc = 500
+    # Define quantiles to compute
+    qs = [0.95, 0.675, 0.05]
+
+    # Define number of rows and columns
+    n_row, n_col = [4, 4]
+
+    # List example barcodes to plot
+    bc_plot = StatsBase.sample(
+        eachrow(DF.sort(df_fitness, :mean)),
+        n_row * n_col,
+        replace=false,
+        ordered=true
     )
 
-    # Plot posterior predictive checks
-    BayesFitUtils.viz.ppc_time_series!(
-        ax, qs, ppc_mat; time=time, colors=colors
-    )
+    # Initialize plot counter
+    counter = 1
+    # Loop through rows
+    for row in 1:n_row
+        # Loop through columns
+        for col in 1:n_col
+            # Add axis
+            local ax = Axis(gl_ppc[row, col], aspect=AxisAspect(1.25))
 
-    # Add plot for median (we use the 5 percentile to have a "thicker" line showing
-    # the median)
-    BayesFitUtils.viz.ppc_time_series!(
-        ax, [0.05], ppc_mat; time=time, colors=ColorSchemes.Blues_9[end:end]
-    )
+            # Check if first first entry
+            if (row == 1) & (col == 1)
+                # Define dictionary with corresponding parameters for variables
+                # needed for the posterior predictive checks
+                param = Dict(
+                    :population_mean_fitness => :s̲ₜ,
+                    :population_std_fitness => :σ̲ₜ,
+                )
 
-    # Plot log-frequency ratio of neutrals
-    BayesFitUtils.viz.logfreq_ratio_time_series!(
-        ax,
-        data[data.neutral, :];
-        freq_col=:freq,
-        color=:black,
-        alpha=1.0,
-        linewidth=2
-    )
+                # Define colors
+                local colors = get(
+                    ColorSchemes.Purples_9, LinRange(0.5, 1.0, length(qs))
+                )
 
-    # Save figure into pdf
-    save("./output/figs/temp.pdf", fig)
+                # Compute posterior predictive checks
+                local ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
+                    df_samples, n_ppc; model=:normal, param=param
+                )
 
-    # Append pdf
-    PDFmerger.append_pdf!(
-        "./output/figs/logfreqratio_ppc_neutral.pdf",
-        "./output/figs/temp.pdf",
-        cleanup=true
-    )
-end # for
+                if rm_T0
+                    # Define time
+                    t = vec(collect(axes(ppc_mat, 2)) .+ 1)
+                else
+                    t = vec(collect(axes(ppc_mat, 2)) .+ 0)
+                end # if
 
-##
+                # Plot posterior predictive checks
+                BayesFitUtils.viz.ppc_time_series!(
+                    ax, qs, ppc_mat; colors=colors, time=t
+                )
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Plot PPC for a few mutants
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+                # Plot log-frequency ratio of neutrals
+                BayesFitUtils.viz.logfreq_ratio_time_series!(
+                    ax,
+                    data[data.neutral, :];
+                    time_col=:time,
+                    freq_col=:freq,
+                    color=:black,
+                    alpha=1.0,
+                    linewidth=1.5
+                )
 
-# Define number of plots
-n_plots_row = 4
-n_plots_col = 4
+                # Hide axis decorations
+                hidedecorations!.(ax, grid=false)
 
-# Define number of posterior predictive check samples
-n_ppc = 500
+                ax.title = "neutral lineages"
+                ax.titlesize = 10
 
-# Define quantiles to compute
-qs = [0.68, 0.95]
-# Define quantile for plot title
-q = 0.68
+                counter += 1
 
-# Define colors
-colors = get(ColorSchemes.Blues_9, LinRange(0.25, 0.75, length(qs)))
+                continue
+            end # if
 
-# Remove old version of file
-rm("./output/figs/logfreqratio_ppc_mutant.pdf", force=true)
+            # Extract data
+            data_bc = DF.sort(
+                data[string.(data.barcode).==bc_plot[counter].id, :], :time
+            )
 
-# Loop through files
-for d in eachrow(df_files)
-    # Select data
-    data = df[(df.env.==d.env).&(df.rep.==d.rep), :]
+            # Define colors
+            local colors = get(ColorSchemes.Blues_9, LinRange(0.5, 1.0, length(qs)))
 
-    # Establish time for x-axis
-    if d.rm_T0
-        time = sort(unique(data.time))[3:end]
-    else
-        time = sort(unique(data.time))[2:end]
-    end # if
+            # Define dictionary with corresponding parameters for variables needed
+            # for the posterior predictive checks
+            local param = Dict(
+                :bc_mean_fitness => Symbol(bc_plot[counter].varname),
+                :bc_std_fitness => Symbol(
+                    replace(bc_plot[counter].varname, "s" => "logσ")
+                ),
+                :population_mean_fitness => :s̲ₜ,
+            )
+            # Compute posterior predictive checks
+            local ppc_mat = BayesFitness.stats.logfreq_ratio_bc_ppc(
+                df_samples, n_ppc; model=:normal, param=param
+            )
+            # Plot posterior predictive checks
+            BayesFitUtils.viz.ppc_time_series!(
+                ax, qs, ppc_mat; colors=colors
+            )
 
-    # Compute naive fitness estimate
-    df_fit = BayesFitness.stats.naive_fitness(data; rm_T0=d.rm_T0)
-    # Sort by fitness
-    DF.sort!(df_fit, :fitness)
+            # Add scatter of data
+            scatterlines!(ax, diff(log.(data_bc.freq)), color=:black, linewidth=2.0)
 
-    # Select evenly-distributed barcodes to plot
-    bcs = df_fit.barcode[
-        1:size(df_fit, 1)÷(n_plots_col*n_plots_row):end
-    ][1:(n_plots_col*n_plots_row)]
+            # Define fitness ranges to display in title
+            vals = [
+                round(bc_plot[counter].mean; sigdigits=2),
+                round(bc_plot[counter].std; sigdigits=2),
+            ]
 
-    # Load chain and mutants order
-    chn, mutnames = values(JLD2.load(d.file))
+            # Add title
+            ax.title = "bc $(bc_plot[counter].id) | s⁽ᵐ⁾= $(vals[1])±$(vals[2])"
+            ax.titlesize = 10
 
-    # Initialize figure
-    fig = Figure(resolution=(700, 700))
+            ## == Plot format == ##
 
-    # Add grid layout to have better manipulation
-    gl = fig[1, 1:4] = GridLayout()
+            # Hide axis decorations
+            hidedecorations!.(ax, grid=false)
 
-    # Add axis
-    axes = [
-        Axis(
-            gl[i, j],
-        ) for i = 1:n_plots_row for j = 1:n_plots_col
-    ]
-
-    # Add x-axis label
-    Label(fig[end, :, Bottom()], "time points", fontsize=20)
-    # Add y-axis label
-    Label(fig[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=20)
-    # Add Plot title
-    Label(fig[0, 2:3], text="PPC $(d.env) | $(d.rep)", fontsize=20)
-    # Set row and col gaps
-    colgap!(gl, 10)
-    rowgap!(gl, 10)
-
-
-    # # Loop through barcodes
-    for (i, bc) in enumerate(bcs)
-        # Define dictionary with corresponding parameters for variables needed
-        # for the posterior predictive checks
-        param = Dict(
-            :population_mean_fitness => :s̲ₜ,
-            :mutant_mean_fitness => Symbol("s̲⁽ᵐ⁾[$(findfirst(mutnames.==bc))]"),
-            :mutant_std_fitness => Symbol("σ̲⁽ᵐ⁾[$(findfirst(mutnames.==bc))]")
-        )
-        # Compute posterior predictive checks
-        ppc_mat = BayesFitness.stats.logfreq_ratio_mutant_ppc(
-            chn, n_ppc; param=param
-        )
-
-        # Plot posterior predictive checks
-        BayesFitUtils.viz.ppc_time_series!(
-            axes[i], qs, ppc_mat; time=time, colors=colors
-        )
-
-        # Add plot for median (we use the 5 percentile to have a "thicker" line
-        # showing the median)
-        BayesFitUtils.viz.ppc_time_series!(
-            axes[i],
-            [0.05],
-            ppc_mat;
-            time=time,
-            colors=ColorSchemes.Blues_9[end:end]
-        )
-
-        # Plot log-frequency ratio of neutrals
-        BayesFitUtils.viz.logfreq_ratio_time_series!(
-            axes[i],
-            data[data.barcode.==bc, :];
-            freq_col=:freq,
-            color=:black,
-            alpha=1.0,
-            linewidth=2,
-            markersize=10
-        )
-
-        # Compute mutant fitness median for title
-        s_median = round(
-            StatsBase.median(chn[param[:mutant_mean_fitness]]), sigdigits=2
-        )
-        # Compute quantiles
-        s_q = StatsBase.quantile(
-            chn[param[:mutant_mean_fitness]],
-            [(1.0 - q) / 2.0, 1.0 - (1.0 - q) / 2.0]
-        )
-        # Compute error
-        s_err = string.(round.([s_median - s_q[1], s_q[2] - s_median], sigdigits=1))
-
-
-        # Compute upper and lower percentile
-
-        # Add title
-        axes[i].title = rich(
-            "BC $(bc)",
-            "|s=$(s_median)",
-            "₋",
-            subscript(s_err[1]),
-            "⁺",
-            superscript(s_err[2])
-        )
-        axes[i].titlesize = 11
-
-        # Hide axis decorations
-        hidedecorations!(axes[i], grid=false)
+            # Update counter
+            counter += 1
+        end  # for
     end # for
 
+    # Add x-axis label
+    Label(gl_ppc[end, :, Bottom()], "time points", fontsize=15)
+    # Add y-axis label
+    Label(gl_ppc[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=15)
+    # Add title
+    Label(gl_ppc[0, :], "$(env) | $(rep)", fontsize=15)
+    # Set spacing
+    rowgap!(gl_ppc, 0)
+    colgap!(gl_ppc, 4)
 
-    # Save figure into pdf
-    save("./output/figs/temp.pdf", fig)
-
-    # Append pdf
-    PDFmerger.append_pdf!(
-        "./output/figs/logfreqratio_ppc_mutant.pdf",
-        "./output/figs/temp.pdf",
-        cleanup=true
-    )
+    save("$(fig_dir)/ppc_$(env)env_$(rep)rep_$(rm_T0)rmT0.pdf", fig)
 
 end # for
-
