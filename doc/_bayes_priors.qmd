@@ -11,17 +11,17 @@ One aspect commonly associated---in both positive and negative ways---to
 Bayesian analysis is the definition of prior probabilities. On the one hand, the
 naive textbook version of Bayesian analysis defines the prior as encoding the
 information we have about the inference in question before acquiring any data.
-This is the "ideal" use of priors that, whenever possible, should be used. On
-the other hand, for most practitioners of Bayesian statistics in the age of big
-data, the definition of prior becomes a tool to ensure the convergence of
-sampling algorithms such as MCMC [@gelman2017]. However, for our particular
-problem, although we deal with large amounts of data (inferences can be made for
-> 10K barcodes over multiple time points, resulting in > 100K parameters), each
-barcode has very little data, as they are measured only once per time point over
-< 10 times. Furthermore, understanding the sources of noise having to do with
-culturing conditions, DNA extraction, library preparation, and so on and
-encoding them into reasonable prior distributions becomes incredibly
-challenging.
+This is the "ideal" use of priors that, whenever possible, should be
+implemented. On the other hand, for most practitioners of Bayesian statistics in
+the age of big data, the definition of prior becomes a tool to ensure the
+convergence of sampling algorithms such as MCMC [@gelman2017]. However, for our
+particular problem, although we deal with large amounts of data (inferences can
+be made for > 10K barcodes over multiple time points, resulting in > 100K
+parameters), each barcode has very little data, as they are measured only once
+per time point over < 10 growth-dilution cycles. Furthermore, it is incredibly
+challenging to understand the noise sources related to culturing conditions, DNA
+extraction, library preparation, etc., and encode them into reasonable
+prior distributions.
 
 Empirically, our approach for this work defined the priors based solely on the
 neutral lineage data, as they represent the only repeated measurements of a
@@ -34,14 +34,13 @@ indeed, one might argue that as scientists we learn the most from the anomalies
 and reassessments associated with episodes of incoherence.
 
 With this in mind, we leave it to the reader to judge the selection of priors.
-Furthermore, the present package `BayesFitness.jl` is written so that users can
-experiment with different prior selection criteria that fit their needs. We
-strongly advocate that statistics should not be done in a black-box fit-all tool
-mindset but rather as a formal way to encode the assumptions behind the
-analysis, subject to constructive criticism.
-
-With this philosophical baggage behind us, let us now focus on how the priors
-used for this work were selected.
+Furthermore, the software package associated with this work, `BayesFitness.jl`,
+is written so that users can experiment with different prior selection criteria
+that fit their needs. We strongly advocate that statistics should not be done in
+a black-box fit-all tool mindset but rather as a formal way to encode the
+assumptions behind the analysis, subject to constructive criticism. With this
+philosophical baggage behind us, let us now focus on how the priors used for
+this work were selected.
 
 #### Naive neutral lineage-based priors
 
@@ -91,6 +90,9 @@ lineages, i.e.,
 $$
 \mu_{\sigma_t} = \sqrt{
     \operatorname{Var}\left(\frac{r_{t+1}^{(n)}}{r_t^{(n)}}\right)
-}.
+},
 $${#eq-prior_meanfit_var_data}
-This same value was utilized for the
+where $\operatorname{Var}$ is the sample variance. This same value was utilized
+for the mean of the non-neutral barcode variance $\mu_{\sigma^{(m)}}$. While we
+assigne the corresponding variances to be $\sigma_{\sigma_t} =
+\sigma_{\sigma^{(m)}} = 1$.
