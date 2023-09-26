@@ -14,9 +14,9 @@ $${#eq-fitness_mut_vec}
 where $^\dagger$ indicates the transpose. Our data consists of an $T \times B$
 matrix $\underline{\underline{R}}$, where $B = M + N$ is the number of unique
 barcodes given by the sum of the number of unique, relevant barcodes we care
-about (hereafter referred to as mutant barcodes), $M$, and the number of unique
-neutral barcodes, $N$, and $T$ is the number of time points where measurements
-were taken. The data matrix is then of the form
+about, $M$, and the number of unique neutral barcodes, $N$, and $T$ is the
+number of growth cycles where measurements were taken. The data matrix is then
+of the form
 $$
 \underline{\underline{R}} = \begin{bmatrix}
 - & \underline{r}_1 & - \\
@@ -25,12 +25,12 @@ $$
 - & \underline{r}_T & - \\
 \end{bmatrix},
 $${#eq-R_mat}
-where each row $\underline{r}_t$ is a $B$-dimensional array containing the
-raw barcode counts at time $t$. We can further split each vector
-$\underline{r}_t$ into two vectors of the form
+where each row $\underline{r}_t$ is a $B$-dimensional array containing the raw
+barcode counts at cycle $t$. We can further split each vector $\underline{r}_t$
+into two vectors of the form
 $$
 \underline{r}_t = \begin{bmatrix}
-\underline{r}_t^{N} \;
+\underline{r}_t^{N} \\
 \underline{r}_t^{M}
 \end{bmatrix},
 $${#eq-r-vec_split}
@@ -43,11 +43,9 @@ $$
 \underline{\underline{R}}^N \; \underline{\underline{R}}^M
 \right],
 $${#eq-R-mat_split}
-where $\underline{\underline{R}}^N$ is a $T \times N$ matrix with the
-barcode reads time series for each neutral lineage and
-$\underline{\underline{R}}^M$ is the equivalent $T \times M$ matrix for the
-mutant lineages.
-
+where $\underline{\underline{R}}^N$ is a $T \times N$ matrix with the barcode
+reads time series for each neutral lineage and $\underline{\underline{R}}^M$ is
+the equivalent $T \times M$ matrix for the non-neutral lineages.
 
 Our objective is to compute the joint probability distribution for all relative
 fitness values given our data. We can express this joint posterior distribution
@@ -60,21 +58,22 @@ $$
 $${#eq-bayes_obj}
 where hereafter $\pi(\cdot)$ defines a probability density function, unless
 otherwise stated. When defining our statistical model, we need not to focus on
-the denominator on the right-hand side of @eq-bayes_obj, and write
+the denominator on the right-hand side of @eq-bayes_obj. Thus, we can write
 $$
 \pi(\underline{s}^M \mid \underline{\underline{R}}) \propto
 \pi(\underline{\underline{R}} \mid \underline{s}^M) 
-\pi(\underline{s}^M)
+\pi(\underline{s}^M).
 $${#eq-bayes_obj_propto}
 However, when implementing the model computationally, the normalization constant
-on the right-hand side of @eq-bayes_obj must be computed via an integral of the
-form
+on the right-hand side of @eq-bayes_obj must be computed. This can be done from
+the definition of the model via an integral of the form
 $$
-\pi(\underline{\underline{R}}) = \int d\underline{s}^M
+\pi(\underline{\underline{R}}) = \int d^M \underline{s}^M
 \pi(\underline{\underline{R}} \mid \underline{s}^M) 
 \pi(\underline{s}^M),
 $${#eq-bayes_evidence}
-also known as a marginalization integral.
+also known as a marginalization integral. Hereafter, differentials of the form
+$d^n$ imply a $n$-dimensional integral.
 
 Although @eq-bayes_obj and @eq-bayes_obj_propto seem simple enough, recall that
 @eq-fitness relates barcode frequency values and the population mean fitness to
@@ -86,18 +85,18 @@ $$
 $${#eq-pop_fitness_vec}
 be the vector containing the $T-1$ population mean fitness we compute from the
 $T$ time points where measurements were taken. We have $T-1$ since the value
-of any $\bar{s}_t$ requires time points $t$ and $t+1$. Furthermore, let the
+of any $\bar{s}_t$ requires cycle numbers $t$ and $t+1$. Furthermore, let the
 matrix $\underline{\underline{F}}$ be a $T \times B$ matrix containing all
-frequency values. As with @eq-R_mat, we can split $\underline{\underline{F}}$
-into two matrices of the form
+frequency values. As with @eq-R-mat_split, we can split
+$\underline{\underline{F}}$ into two matrices of the form
 $$
 \underline{\underline{F}} = \left[ 
 \underline{\underline{F}}^N \; \underline{\underline{F}}^M
 \right],
 $${#eq-F-mat_split}
-to separate the corresponding mutant and neutral barcode frequencies. With these
-nuisance variables in hand, the full inference problem we must solve takes the
-form
+to separate the corresponding neutral and non-neutral barcode frequencies. With
+these nuisance variables in hand, the full inference problem we must solve takes
+the form
 $$
 \pi(
     \underline{s}^M, \underline{\bar{s}}_T, \underline{\underline{F}} \mid
@@ -111,8 +110,8 @@ $$
     \underline{s}^M, \underline{\bar{s}}_T, \underline{\underline{F}}
 ).
 $${#eq-bayes_full}
-We can numerically integrate out all nuisance parameters to recover the marginal
-distribution we care about, i.e.,
+To recover the marginal distribution over the non-neutral barcodes relative
+fitness values, we can numerically integrate out all nuisance parameters, i.e.,
 $$
 \pi(\underline{s}^M \mid \underline{\underline{R}}) =
 \int d^{T-1}\underline{\bar{s}}_T
@@ -138,7 +137,7 @@ relates the value of the population mean fitness to the neutral lineage
 frequencies and nothing else. This suggests that when writing the posterior for
 these population mean fitness parameters, we should be able to condition it only
 on the neutral lineage frequency values, i.e., $\pi(\underline{\bar{s}}_T \mid
-\underline{\underline{F}}^N)$. We point the reader to `[SI section]` for the
+\underline{\underline{F}}^N)$. We point the reader to @sec-bayes_def for the
 full mathematical details on this factorization. For our purpose here, it
 suffices to say we can rewrite the joint probability distribution as a product
 of conditional distributions of the form
@@ -155,19 +154,17 @@ $$
 )
 \pi(\underline{\underline{F}} \mid \underline{\underline{R}}).
 $${#eq-split_posterior}
-Written in this form, @eq-split_posterior captures the three sources of 
-uncertainty listed in @sec-fitness_model in each term. Starting from
-right to left, the first term on the right-hand side of @eq-split_posterior
-accounts for the uncertainty when inferring the frequency values given the
-barcode reads. The second term accounts for the uncertainty in the values of
-the mean population fitness at different time points. The last term accounts for
-the uncertainty in the parameter we care about---the mutants' relative
-fitnesses. We invite the reader to check the supplementary material, where we
-work through these terms to build the posterior distribution to sample
-from. We refer the reader to `[ref SI section]` for an extended description of
-the model with specific functional forms for each term on the left-hand side of
-@eq-split_posterior as well as `[ref SI on hierarchical]` where the model is
-extended to account for multiple experimental replicates.
+Written in this form, @eq-split_posterior captures the three sources of
+uncertainty listed in @sec-fitness_model in each term. Starting from right to
+left, the first term on the right-hand side of @eq-split_posterior accounts for
+the uncertainty when inferring the frequency values given the barcode reads. The
+second term accounts for the uncertainty in the values of the mean population
+fitness at different time points. The last term accounts for the uncertainty in
+the parameter we care about---the mutants' relative fitnesses. We refer the
+reader to @sec-bayes_def for an extended description of the model with specific
+functional forms for each term on the left-hand side of @eq-split_posterior as
+well as the extension of the model to account for multiple experimental
+replicates or hierarchical genotypes.
 
 ### Variational Inference
 
@@ -175,8 +172,8 @@ One of the technical challenges to the adoption of Bayesian methods is the
 analytical intractability of integrals such as that of @eq-bayes_full_marginal.
 Furthermore, even though efficient Markov Chain Monte Carlo (MCMC) algorithms
 such as Hamiltonian Montecarlo can numerically perform this integration
-[@betancourt2017], the dimensionality of the problem in @eq-split_posterior makes
-an MCMC-based approach prohibitively slow.
+[@betancourt2017], the dimensionality of the problem in @eq-split_posterior
+makes an MCMC-based approach prohibitively slow.
 
 To overcome this computational limitation, in this work, we rely on the recent
 development of the automatic differentiation variational inference algorithm
