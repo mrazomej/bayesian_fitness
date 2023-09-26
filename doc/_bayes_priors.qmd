@@ -1,0 +1,96 @@
+---
+editor:
+    render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
+---
+
+### Defining prior probabilities
+
+One aspect commonly associated---in both positive and negative ways---to
+Bayesian analysis is the definition of prior probabilities. On the one hand, the
+naive textbook version of Bayesian analysis defines the prior as encoding the
+information we have about the inference in question before acquiring any data.
+This is the "ideal" use of priors that, whenever possible, should be used. On
+the other hand, for most practitioners of Bayesian statistics in the age of big
+data, the definition of prior becomes a tool to ensure the convergence of
+sampling algorithms such as MCMC [@gelman2017]. However, for our particular
+problem, although we deal with large amounts of data (inferences can be made for
+> 10K barcodes over multiple time points, resulting in > 100K parameters), each
+barcode has very little data, as they are measured only once per time point over
+< 10 times. Furthermore, understanding the sources of noise having to do with
+culturing conditions, DNA extraction, library preparation, and so on and
+encoding them into reasonable prior distributions becomes incredibly
+challenging.
+
+Empirically, our approach for this work defined the priors based solely on the
+neutral lineage data, as they represent the only repeated measurements of a
+single genotype in our experimental design. We acknowledge that defining the
+priors after observing the data might be considered an incoherent inference.
+However, as expressed by @gelman2017
+
+> Incoherence is an unavoidable aspect of much real-world data analysis; and,
+indeed, one might argue that as scientists we learn the most from the anomalies
+and reassessments associated with episodes of incoherence.
+
+With this in mind, we leave it to the reader to judge the selection of priors.
+Furthermore, the present package `BayesFitness.jl` is written so that users can
+experiment with different prior selection criteria that fit their needs. We
+strongly advocate that statistics should not be done in a black-box fit-all tool
+mindset but rather as a formal way to encode the assumptions behind the
+analysis, subject to constructive criticism.
+
+With this philosophical baggage behind us, let us now focus on how the priors
+used for this work were selected.
+
+#### Naive neutral lineage-based priors
+
+For the base model presented in this work, the user-defined prior parameters
+include the following:
+
+- Prior on population mean fitness (one per pair of adjacent time points)
+$$
+\bar{s}_t \sim \mathcal{N}(\mu_{\bar{s}_t}, \sigma_{{\bar{s}_t}}).
+$${#eq-prior_meanfit_mean}
+
+- Prior on standard deviation associated with neutral lineages likelihood
+function (one per pair of adjacent time points)
+$$
+\sigma_t \sim \log\mathcal{N}(\mu_{\sigma_t}, \sigma_{\sigma_t}).
+$${#eq-prior_meanfit_var}
+
+- Prior on relative fitness (one per non-neutral barcode)
+$$
+s^{(m)} \sim \mathcal{N}(\mu_{s^{(m)}}, \sigma_{s^{(m)}}).
+$${#eq-prior_fit_mean}
+
+- Prior on standard deviation associated with non-neutral lineages likelihood
+function (one per non-neutral barcode)
+$$
+\sigma^{(m)} \sim \log\mathcal{N}(\mu_{\sigma^{(m)}}, \sigma_{\sigma^{(m)}})
+$${#eq-prior_fit_var}
+
+The `BayesFitness.jl` package includes a function `naive_prior` within the
+`stats` module. This function utilizes the data from the neutral lineages to
+determine some of the prior parameters to facilitate the inference algorithm's
+numerical convergence. In particular, it defines the population mean fitness
+parameter $\mu_{\bar{s}_t}$ as
+$$
+\mu_{\bar{s}_t} = \frac{1}{N} \sum_{n=1}^N 
+-\ln\left( \frac{r_{t+1}^{(n)}}{r_t^{(n)}} \right),
+$${#eq-prior_meanfit_mean_data}
+where $N$ is the number of neutral lineages and $r_t^{(n)}$ is the number of
+neutral lineages. In other words, it defines the mean of the prior distribution
+as the mean of what one naively would compute from the neutral lineages,
+discarding cases where the ratio diverges because the denominator $r_t^{(n)} =
+0$. For the variance parameter, we chose a value $\sigma_{\bar{s}_t} = 0.05$.
+
+Furthermore, the `naive_prior` function defines the mean of the variance
+parameter as the standard deviation of the log frequency ratios for the neutral
+lineages, i.e.,
+$$
+\mu_{\sigma_t} = \sqrt{
+    \operatorname{Var}\left(\frac{r_{t+1}^{(n)}}{r_t^{(n)}}\right)
+}.
+$${#eq-prior_meanfit_var_data}
+This same value was utilized for the

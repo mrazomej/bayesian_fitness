@@ -15,6 +15,9 @@ title: "Supplementary Materials"
 <!-- Hierarchical models -->
 {{< include _bayes_hierarchical.qmd >}}
 
+<!-- Prior selection -->
+{{< include _bayes_priors.qmd >}}
+
 <!-- Logistic growth simulations -->
 {{< include _logistic_sim.qmd >}}
 
