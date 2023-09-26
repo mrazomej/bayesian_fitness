@@ -8,33 +8,29 @@ csl: ieee.csl
 ## Inference on a single dataset
 
 To assess the inference pipeline performance, we applied it to a simulated
-dataset with known ground truth relative fitness values (See `[ref to SI]` for
+dataset with known ground truth relative fitness values (See @sec-logistic for
 details on simulation). @fig-02(A) shows the structure of the synthetic dataset.
 The majority of barcodes of interest (faint color lines) are adaptive compared
-to the neutral barcodes ($s^{(m)} > 0$). This experimental condition is required
-to reliably measure the relative fitness since all barcodes of interest occupy a
-small fraction of the population at the beginning of the experiment `[ref SI
-section on detrimental mutants]`. Although the barcode frequency trajectories
-look relatively smooth, our fitness model requires the computation of the log
-frequency ratio between adjacent time points as derived in @eq-logfreq.
-@fig-02(B) shows such data transformation where we can better appreciate the
-observational noise input into our statistical model. This noise is evident for
-the darker lines representing the neutral barcodes since all of these lineages
-are assumed to be identically distributed under this log frequency ratio
-transformation.
+to the neutral barcodes ($s^{(m)} > 0$). Although the barcode frequency
+trajectories look relatively smooth, our fitness model requires the computation
+of the log frequency ratio between adjacent time points as derived in
+@eq-logfreq. @fig-02(B) shows such data transformation where we can better
+appreciate the observational noise input into our statistical model. This noise
+is evident for the darker lines representing the neutral barcodes since all of
+these lineages are assumed to be identically distributed.
 
 To visualize the performance of our inference pipeline in fitting our fitness
 model to the observed data, we compute the so-called posterior predictive checks
 (PPC). In short, the PPC consists of repeatedly generating synthetic datasets in
 agreement with the results from the inference results. In other words, we use
 the resulting parameter values from the ADVI inference to generate possible
-datasets in agreement with the inferred values. @fig-02(C) shows these results
-for all neutral lineages (upper left corner plot) and a few representative
-non-neutral barcodes. The different color shades represent the 95\%, 68\%, and
-5\% credible regions, i.e., the regions where we expect to find the data with
-the corresponding probability---or in terms of our parameter, the $X\%$ credible
-region is the interval where we expect the true parameter to lie with $X\%$
-probability. 
+datasets in agreement with the inferred values (See @sec-ppc for further details
+on these computations). @fig-02(C) shows these results for all neutral lineages
+(upper left corner plot) and a few representative non-neutral barcodes. The
+different color shades represent the 95\%, 68\%, and 5\% credible regions, i.e.,
+the regions where we expect to find the data with the corresponding
+probability---or in terms of our parameter, the $X\%$ credible region is the
+interval where we expect the true parameter to lie with $X\%$ probability. 
 
 The main advantage of our method is this natural interpretability of these
 credible regions where an $X\%$ credible region indeed captures the region of
@@ -71,13 +67,13 @@ distributions.
 raw data going into the inference. (B) Log frequency ratio between two adjacent
 time points used by the inference pipeline. Darker lines represent the neutral
 barcodes. These transformed data are much more noisy than the seemingly smooth
-frequency trajectories. (B) Examples of the posterior predictive checks for all
+frequency trajectories. (C) Examples of the posterior predictive checks for all
 neutral lineages (upper left panel) and a subset of representative mutant
 lineages. Shaded regions represent the 95\%, 68\%, and 5\% credible regions for
 the data. The reported errors above the plot represent the 68\% credible region
-on the mutant relative fitness marginal distribution. (C) Comparison between the
+on the mutant relative fitness marginal distribution. (D) Comparison between the
 ground truth fitness value from the logistic-growth simulation and the inferred
-fitness value. Gray error bars represent the 68\% posterior credible region. (D)
-The empirical cumulative distribution function (ECDF) for the absolute z-score
-value of the ground truth parameter value within the inferred fitness posterior
-distribution.](./figs/fig02){#fig-02}
+fitness value. Gray error bars represent the 68\% posterior credible region for
+the relative fitness values. (E) The empirical cumulative distribution function
+(ECDF) for the absolute z-score value of the ground truth parameter value within
+the inferred fitness posterior distribution.](./figs/fig02){#fig-02}
