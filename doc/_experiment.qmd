@@ -27,9 +27,9 @@ end of each growth cycle to quantify the relative abundance of each of the
 barcodes. We point the reader to @kinsler2020 for specific details on these
 assays for *S. cerevisiae* and to @ascensao2023 for equivalent assays for *E.
 coli*. @fig-01(B) presents a typical barcode trajectory where the darker barcode
-trajectories represent the so-called *neutral lineages* that are genetically
-equivalent to the untagged ancestor strain that initially dominates the culture.
-These neutral lineages simplify the inference problem since the fitness of all
+trajectories represent the so-called *neutral lineages*, genetically equivalent
+to the untagged ancestor strain that initially dominates the culture. These
+neutral lineages simplify the inference problem since the fitness of all
 relevant barcodes is quantified with respect to these barcodes.
 
 ![**Typical competitive fitness experiment**. (A) Schematic of the typical
@@ -38,7 +38,9 @@ barcoded genotypes. Genotypes are pooled together and grown over multiple
 growth-dilution cycles. At the end of each cycle, a sample is processed to
 generate a library for amplicon sequencing. (B) Typical barcode trajectory
 dataset. From each time point, the relative frequency of each barcode is
-determined from the total number of reads. Different shades of blue represent
-different relative fitness. Darker gray lines define the typical trajectory of
-neutral lineages.](./figs/fig01){#fig-01}
+determined from the total number of reads. Shades of blue represent different
+relative fitness. Darker gray lines define the typical trajectory of neutral
+lineages.](./figs/fig01){#fig-01}
+  
+
   
