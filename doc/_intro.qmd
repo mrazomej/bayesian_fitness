@@ -17,12 +17,12 @@ process [@kinsler2020].
 
 As with any other sequencing-based quantification, tracking lineages via DNA
 barcode sequencing is inexorably accompanied by noise sources coming from
-experimental manipulation of the microbial cultures, DNA extraction and
+experimental manipulation of the microbial cultures, DNA extraction, and
 sequencing library preparation that involves multiple rounds of PCR
 amplification, and the sequencing process itself. Thus, accounting for the
-uncertainty when inferring the relevant parameters from the data is a key step
-to draw reliable conclusions. Bayesian statistics presents a paradigm by which
-one can account for all known sources of uncertainty in a principled way
+uncertainty when inferring the relevant parameters from the data is a crucial
+step to draw reliable conclusions. Bayesian statistics presents a paradigm by
+which one can account for all known sources of uncertainty in a principled way
 [@eddy2004a]. This, combined with the development of modern Markov Chain Monte
 Carlo sampling algorithms [@betancourt2017] and approximate variational
 approaches [@kucukelbir2016] have boosted a resurgence of Bayesian methods in
@@ -42,21 +42,20 @@ in @fig-01(B), is used to infer the relative fitness---the growth advantage on a
 per-cycle basis---for each lineage with respect to the reference strain. The
 proposed statistical model accounts for multiple sources of uncertainty when
 inferring the lineages' relative fitness values (see @sec-experiment for details
-on sources of uncertainty accounted by the model). Furthermore, small changes to
-the core statistical model allow us to account for relevant experimental
-variations of these competition assays. More specifically, as described in
-@sec-replicates, our statistical model can account for batch-to-batch
-differences when jointly analyzing multiple experimental replicates using a
-Bayesian hierarchical model. Moreover, a variant of these hierarchical models,
-presented in @sec-genotypes, can account for variability within multiple
-barcodes mapping to equivalent genotypes within the same experiment. Finally, in
+on sources of uncertainty accounted for by the model). Furthermore, minor
+changes to the core statistical model allow us to account for relevant
+experimental variations of these competition assays. More specifically, in
 @sec-multienv, we present a variation of the statistical model to infer fitness
-on growth-dilution cycles in multiple environments.
+on growth dilution cycles in multiple environments with proper error
+propagation. Furthermore, as described in @sec-replicates, our statistical model
+can account for batch-to-batch differences when jointly analyzing multiple
+experimental replicates using a Bayesian hierarchical model. Finally, a variant
+of these hierarchical models, presented in @sec-genotypes, can account for
+variability within multiple barcodes mapping to equivalent genotypes within the
+same experiment. 
 
 For all the model variations presented in this paper, we benchmark the ability
 of our pipeline to infer relative fitness parameters against synthetic data with
-known ground truth. We also re-analyze published data from @kinsler2020 to
-assess the method's performance on experimental measurements. The present method
-is accompanied by a `Julia` package to readily implement the inference pipeline
-with state-of-the-art scientific computing software. [`here mention something
-about the Python wrapper if appropriate`].
+known ground truth. A `Julia` package accompanies the present method to readily
+implement the inference pipeline with state-of-the-art scientific computing
+software.
