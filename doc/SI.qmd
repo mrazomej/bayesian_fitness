@@ -18,6 +18,10 @@ title: "Supplementary Materials"
 <!-- Prior selection -->
 {{< include _bayes_priors.qmd >}}
 
+<!-- Posterior predictive checks -->
+{{< include _ppc.qmd >}}
+
+
 <!-- Logistic growth simulations -->
 {{< include _logistic_sim.qmd >}}
 
