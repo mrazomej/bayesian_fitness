@@ -49,12 +49,10 @@ modifications to the structure of the statistical model presented in this work
 allow for the analysis of different experimental designs, such as
 growth-dilution cycles in different environments, joint analysis of multiple
 experimental replicates of the same experiment via hierarchical models, and a
-hierarchical model for multiple barcodes mapping to equivalent genotypes.
-
-We validate our analysis pipeline on simulated datasets with known ground truth,
+hierarchical model for multiple barcodes mapping to equivalent genotypes. We
+validate our analysis pipeline on simulated datasets with known ground truth,
 showing that the model fits the data adequately, capturing the ground truth
-parameters within the posterior distribution. Furthermore, `[talk about the
-Kinsler results.]`
+parameters within the posterior distribution. 
 
 It is important to highlight some of the consequences of the general
 experimental design and the implicit assumptions within the proposed statistical
