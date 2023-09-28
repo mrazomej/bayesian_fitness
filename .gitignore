@@ -99,3 +99,5 @@ code/analysis/*/output/
 code/processing/*/output/
 data/*/*
 *.jld2
+
+/.luarc.json
