@@ -1,13 +1,9 @@
 project:
   type: book
-  # title: "Bayesian inference of relative fitness on high-throughput pooled competition assays"
-  # render:
-    # - intro.qmd
-    # - bayesian_mean_fitness.ipynb
 
 book:
   title: "Bayesian inference of relative fitness on high-throughput pooled competition assays"
-  author: "Manuel Razo-Mejia, Dmitri Petrov"
+  author: "Manuel Razo-Mejia, Madhav Mani, Dmitri Petrov"
   page-navigation: true
   chapters:
     - index.qmd
