@@ -36,8 +36,9 @@ the computation of the denominator, also known as the *evidence* or the
 because it involves a (potentially) high-dimensional integral of the form
 $$
 \pi(\underline{x}) = 
-\int\cdots\int d\underline{\theta}^K \pi(\underline{x}, \underline{\theta}) = 
-\int\cdots\int d\underline{\theta}^K \pi(\underline{x} \mid \underline{\theta})
+\int\cdots\int d^K\underline{\theta}\; \pi(\underline{x}, \underline{\theta}) = 
+\int\cdots\int d^K\underline{\theta}\; 
+\pi(\underline{x} \mid \underline{\theta})
 \pi(\underline{\theta}),
 $${#eq-vi_evidence_int}
 where $K$ is the dimesionality of the $\underline{\theta}$ vector. Here, the
@@ -112,7 +113,7 @@ D_{KL}\left(
     q_\phi(\underline{\theta}) \vert\vert 
     \pi(\underline{\theta} \mid \underline{x})
 \right) \equiv 
-\int \cdots \int d\underline{\theta}^K
+\int \cdots \int d^K\underline{\theta}\;
 q_\phi(\underline{\theta})
 \ln \frac{
     q_\phi(\underline{\theta})
@@ -129,13 +130,13 @@ D_{KL}\left(
     q_\phi(\underline{\theta}) \vert\vert 
     \pi(\underline{\theta} \mid \underline{x})
 \right) = 
-\int d\underline{\theta}^K q_\phi(\underline{\theta})
+\int d^K\underline{\theta}\; q_\phi(\underline{\theta})
 \ln q_\phi(\underline{\theta}) -
-\int d\underline{\theta}^K q_\phi(\underline{\theta})
+\int d^K\underline{\theta}\; q_\phi(\underline{\theta})
 \ln \pi(\underline{\theta} \mid \underline{x}),
 $${#eq-vi_step01}
 where, for convenience, we write a single integration sign
-($d\underline{\theta}^K$ still represents a multi-dimensional differential). For
+($d^K\underline{\theta}\;$ still represents a multi-dimensional differential). For
 the second term in @eq-vi_step01, we can substitute the term inside the
 logarithm using @eq-vi_bayes_theorem. This results in
 $$
@@ -144,9 +145,9 @@ D_{KL}\left(
     q_\phi(\underline{\theta}) \vert\vert 
     \pi(\underline{\theta} \mid \underline{x})
 \right) &= 
-\int d\underline{\theta}^K q_\phi(\underline{\theta})
+\int d^K\underline{\theta}\; q_\phi(\underline{\theta})
 \ln q_\phi(\underline{\theta}) \\
-&- \int d\underline{\theta}^K q_\phi(\underline{\theta})
+&- \int d^K\underline{\theta}\; q_\phi(\underline{\theta})
 \ln \left( 
     \frac{
         \pi(\underline{x} \mid \underline{\theta})\pi(\underline{\theta})
@@ -163,13 +164,13 @@ D_{KL}\left(
     q_\phi(\underline{\theta}) \vert\vert 
     \pi(\underline{\theta} \mid \underline{x})
 \right) &= 
-\int d\underline{\theta}^K q_\phi(\underline{\theta})
+\int d^K\underline{\theta}\; q_\phi(\underline{\theta})
 \ln q_\phi(\underline{\theta}) \\
-&-\int d\underline{\theta}^K q_\phi(\underline{\theta})
+&-\int d^K\underline{\theta}\; q_\phi(\underline{\theta})
 \ln \pi(\underline{x} \mid \underline{\theta}) \\
-&-\int d\underline{\theta}^K q_\phi(\underline{\theta})
+&-\int d^K\underline{\theta}\; q_\phi(\underline{\theta})
 \ln \pi(\underline{\theta}) \\
-&+\int d\underline{\theta}^K q_\phi(\underline{\theta})
+&+\int d^K\underline{\theta}\; q_\phi(\underline{\theta})
 \ln \pi(\underline{x}).
 \end{aligned}
 $${#eq-vi_step03}
@@ -180,16 +181,16 @@ D_{KL}\left(
     q_\phi(\underline{\theta}) \vert\vert 
     \pi(\underline{\theta} \mid \underline{x})
 \right) &= 
-\int d\underline{\theta}^K q_\phi(\underline{\theta})
+\int d^K\underline{\theta}\; q_\phi(\underline{\theta})
 \ln \frac{
     q_\phi(\underline{\theta})
     }{
         \pi(\underline{\theta})
     } \\
-&-\int d\underline{\theta}^K q_\phi(\underline{\theta})
+&-\int d^K\underline{\theta}\; q_\phi(\underline{\theta})
 \ln \pi(\underline{x} \mid \underline{\theta}) \\
 &+ \ln \pi(\underline{x}) 
-\int d\underline{\theta}^K q_\phi(\underline{\theta}),
+\int d^K\underline{\theta}\; q_\phi(\underline{\theta}),
 \end{aligned}
 $${#eq-vi_step04}
 where for the last term, we can take $\ln \pi(\underline{x})$ out of the
@@ -198,12 +199,12 @@ two properties:
 
 1. The proposed approximate distribution must be normalized, i.e.,
 $$
-\int d\underline{\theta}^K q_\phi(\underline{\theta}) = 1.
+\int d^K\underline{\theta}\; q_\phi(\underline{\theta}) = 1.
 $${#eq-vi_q_norm}
 2. The law of the unconscious statistician (LOTUS) establishes that for any
 probability density function, it must be true that
 $$
-\int d\underline{\theta}^K q_\phi(\underline{\theta})
+\int d^K\underline{\theta}\; q_\phi(\underline{\theta})
 f(\underline{\theta}) = \left\langle 
     f(\underline{\theta}) 
 \right\rangle_{q_\phi},
