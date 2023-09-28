@@ -5,7 +5,7 @@ bibliography: references.bib
 csl: ieee.csl
 ---
 
-## Logistic growth simulation
+## Logistic growth simulation {#sec-logistic}
 
 In this section, we explain the simulations used to assess the validity of our
 inference pipeline. Let us begin by assuming that, since the strains are grown

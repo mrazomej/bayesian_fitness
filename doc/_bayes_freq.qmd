@@ -3,7 +3,7 @@ editor:
     render-on-save: true
 ---
 
-## Defining the Bayesian model
+## Defining the Bayesian model {#sec-bayes_def}
 
 Let us now define each of the terms in @eq-split_posterior described in
 @sec-bayesian_inference of the main text. The following sections will specify 
