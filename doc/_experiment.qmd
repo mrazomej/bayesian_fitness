@@ -29,8 +29,9 @@ assays for *S. cerevisiae* and to @ascensao2023 for equivalent assays for *E.
 coli*. @fig-01(B) presents a typical barcode trajectory where the darker barcode
 trajectories represent the so-called *neutral lineages*, genetically equivalent
 to the untagged ancestor strain that initially dominates the culture. These
-neutral lineages simplify the inference problem since the fitness of all
-relevant barcodes is quantified with respect to these barcodes.
+spiked-in neutral lineages simplify the inference problem since the fitness
+metric of all relevant barcodes is quantified with respect to these
+barcodes---thus referred to as *relative fitness*.
 
 ![**Typical competitive fitness experiment**. (A) Schematic of the typical
 experimental design to determine the competitive fitness of an ensemble of
