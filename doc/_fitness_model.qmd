@@ -31,8 +31,8 @@ $${#eq-mat_def}
 
 ## Fitness model {#sec-fitness_model}
 
-Empirically, the barcode relative frequency trajectories follow an exponential
-function of the form [@levy2015; @kinsler2020; @ascensao2023]
+Empirically, each barcode frequency trajectory follows an exponential function
+of the form [@levy2015; @kinsler2020; @ascensao2023]
 $$
 f_{t+1}^{(b)} = f_{t}^{(b)} \mathrm{e}^{(s^{(b)} - \bar{s}_t)\tau},
 $${#eq-fitness}
@@ -90,9 +90,11 @@ f_{t}^{(b)} \equiv \frac{r_{t}^{(b)}}{\sum_{b'} r_{t}^{(b')}}.
 $${#eq-r_to_n_norm}
 This is the frequency @eq-fitness describes.
 
-Our ultimate objective is to infer the relative fitness $s^{(m)}$ for each of
-the $M$ relevant barcodes in the experiment. To do so, we account for the three
-primary sources of uncertainty in our model:
+Our ultimate objective is to infer the relative fitness $s^{(b)}$ for each of
+the $M$ relevant barcodes in the experiment---hereafter referred to as $s^{(m)}$
+to distinguish from the general $s^{(b)}$ and the neutral lineages $s^{(n)}$
+relative fitness. To do so, we account for the three primary sources of
+uncertainty in our model:
 
 1. Uncertainty in the determination of frequencies. Our model relates
 frequencies between adjacent growth-dilution cycles to the fitness of the
