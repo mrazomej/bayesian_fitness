@@ -28,34 +28,35 @@ Carlo sampling algorithms [@betancourt2017] and approximate variational
 approaches [@kucukelbir2016] have boosted a resurgence of Bayesian methods in
 different fields [@efron2013a].
 
-We present a Bayesian inference pipeline to properly quantify the uncertainty
-about the parametric information we can extract from high-throughput competitive
-fitness assays. In these assays, the fitness of an ensemble of genotypes is
-determined relative to a reference genotype [@kinsler2020; @ascensao2023].
-@fig-01(A) shows a schematic of the experimental procedure in which an initial
-pool of barcoded strains are mixed with a reference strain and inoculated into
-fresh media. After some time---usually, enough time for the culture to
-saturate---an aliquot is transferred to fresh media, while the remaining culture
-is used for DNA sequencing of the lineage barcodes. The time-series information
-of the relative abundance of each lineage, i.e., the barcode frequency depicted
-in @fig-01(B), is used to infer the relative fitness---the growth advantage on a
-per-cycle basis---for each lineage with respect to the reference strain. The
-proposed statistical model accounts for multiple sources of uncertainty when
-inferring the lineages' relative fitness values (see @sec-experiment for details
-on sources of uncertainty accounted for by the model). Furthermore, minor
-changes to the core statistical model allow us to account for relevant
-experimental variations of these competition assays. More specifically, in
-@sec-multienv, we present a variation of the statistical model to infer fitness
-on growth dilution cycles in multiple environments with proper error
-propagation. Furthermore, as described in @sec-replicates, our statistical model
-can account for batch-to-batch differences when jointly analyzing multiple
-experimental replicates using a Bayesian hierarchical model. Finally, a variant
-of these hierarchical models, presented in @sec-genotypes, can account for
-variability within multiple barcodes mapping to equivalent genotypes within the
-same experiment. 
+We present a Bayesian inference pipeline to quantify the uncertainty about the
+parametric information we can extract from high-throughput competitive fitness
+assays given a model of the data generation process and experimental data. In
+these assays, the fitness of an ensemble of genotypes is determined relative to
+a reference genotype [@kinsler2020; @ascensao2023]. @fig-01(A) shows a schematic
+of the experimental procedure in which an initial pool of barcoded strains are
+mixed with a reference strain and inoculated into fresh media. After some
+time---usually, enough time for the culture to saturate---an aliquot is
+transferred to fresh media, while the remaining culture is used for DNA
+sequencing of the lineage barcodes. The time-series information of the relative
+abundance of each lineage, i.e., the barcode frequency depicted in @fig-01(B),
+is used to infer the relative fitness---the growth advantage on a per-cycle
+basis---for each lineage with respect to the reference strain. The proposed
+statistical model accounts for multiple sources of uncertainty when inferring
+the lineages' relative fitness values (see @sec-experiment for details on
+sources of uncertainty accounted for by the model). Furthermore, minor changes
+to the core statistical model allow us to account for relevant experimental
+variations of these competition assays. More specifically, in @sec-multienv, we
+present a variation of the statistical model to infer fitness on growth dilution
+cycles in multiple environments with proper error propagation. Furthermore, as
+described in @sec-replicates, our statistical model can account for
+batch-to-batch differences when jointly analyzing multiple experimental
+replicates using a Bayesian hierarchical model. Finally, a variant of these
+hierarchical models, presented in @sec-genotypes, can account for variability
+within multiple barcodes mapping to equivalent genotypes within the same
+experiment. 
 
 For all the model variations presented in this paper, we benchmark the ability
-of our pipeline to infer relative fitness parameters against synthetic data with
-known ground truth. A `Julia` package accompanies the present method to readily
-implement the inference pipeline with state-of-the-art scientific computing
-software.
+of our pipeline to infer relative fitness parameters against synthetic data
+generated from logistic growth simulations with added random noise. A `Julia`
+package accompanies the present method to readily implement the inference
+pipeline with state-of-the-art scientific computing software.
