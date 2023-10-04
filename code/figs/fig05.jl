@@ -1,4 +1,4 @@
-##
+#
 println("Loading packages...")
 
 # Load project package
@@ -7,22 +7,18 @@ println("Loading packages...")
 import Revise
 # Import project package
 import BayesFitUtils
-
-# Import library to perform Bayesian inference
+# Import package for Bayesian inference
 import BayesFitness
-
-# Import basic math
-import Random
-import Distributions
-import LinearAlgebra
-import StatsBase
 
 # Import libraries to manipulate data
 import DataFrames as DF
 import CSV
-
-# Import library to list files
 import Glob
+
+# Import basic math
+import StatsBase
+import Distributions
+import LinearAlgebra
 
 # Import plotting libraries
 using CairoMakie
@@ -35,21 +31,19 @@ CairoMakie.activate!()
 # Set PBoC Plotting style
 BayesFitUtils.viz.theme_makie!()
 
-Random.seed!(18)
+# Import library to set random seed
+import Random
+
+Random.seed!(42)
+
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Loading data
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
-println("Loading data...")
-
+println("Loading simulated dataset...")
 # Import data
 df_counts = CSV.read(
-    "$(git_root())/data/logistic_growth/data_007/tidy_data.csv", DF.DataFrame
-)
-
-# Generate a barcode to genotype dictionary
-bc_to_geno = Dict(
-    zip(collect(eachcol(unique(df_counts[:, [:barcode, :genotype]])))...)
+    "$(git_root())/data/logistic_growth/data_002/tidy_data.csv", DF.DataFrame
 )
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -59,18 +53,22 @@ bc_to_geno = Dict(
 println("Loading ADVI results...")
 
 # Define file
-file = "$(git_root())/code/processing/" *
-       "data007_logistic_hierarchicalgenotype_1000bc_01env_01rep/" *
-       "output/advi_meanfield_hierarchicalgenotypes_01samples_10000steps.csv"
+file = "$(git_root())/code/processing/data002_logistic_1000bc_01env_02rep/" *
+       "output/advi_meanfield_01samples_5000steps.csv"
 
 # Convert results to tidy dataframe
 df_advi = CSV.read(file, DF.DataFrame)
 
+# Split variables by replicate
+rep_vars = Dict(
+    Symbol(rep) => df_advi[df_advi.rep.==rep, :varname]
+    for rep in unique(df_advi.rep)
+)
+# Remove "N/A" from dictionary
+delete!(rep_vars, Symbol("N/A"))
+
 # Extract bc fitness values
 df_fitness = df_advi[(df_advi.vartype.=="bc_fitness"), :]
-
-# Add genotype information
-df_fitness[!, :genotype] = [bc_to_geno[x] for x in df_fitness.id]
 
 # Extract and append hyperfitness values for each fitness value
 DF.leftjoin!(
@@ -80,496 +78,292 @@ DF.leftjoin!(
             [:mean, :std, :varname, :id]],
         :mean => :mean_h,
         :std => :std_h,
-        :varname => :varname_h,
-        :id => :genotype,
+        :varname => :varname_h
     );
-    on=:genotype
+    on=:id
 )
 
-# Extract and append ground truth fitness values
+# Extract and append ground truth fitness and hyperfitness values
 DF.leftjoin!(
     df_fitness,
     DF.rename(
-        unique(df_counts[.!(df_counts.neutral), [:barcode, :fitness]]),
+        unique(
+            df_counts[.!(df_counts.neutral),
+                [:barcode, :fitness, :hyperfitness, :rep]]
+        ),
         :barcode => :id
+    );
+    on=[:id, :rep]
+)
+
+# Load single-experiment replicates
+# -----------------------------------------------------------------------------
+
+println("Loading ADVI results for individual replicates...")
+
+# Define file
+files = sort(
+    Glob.glob(
+        "$(git_root())/code/processing/"[2:end] *
+        "data002_logistic_1000bc_01env_02rep/output/advi_meanfield*rep*5000*",
+        "/"
+    )
+)
+
+# Initialize empty dataframe
+df_advi_single = DF.DataFrame()
+
+# Loop through files
+for file in files
+    # Extract replicate information
+    rep = replace(split(split(file, "/")[end], "_")[3], "rep" => "")
+
+    # read dataframe
+    df_tmp = CSV.read(file, DF.DataFrame)
+    # Replace replicate column
+    df_tmp[:, :rep] .= rep
+
+    # Append to DataFrame
+    DF.append!(df_advi_single, df_tmp)
+end # for
+
+# Extract and append hyperfitness values for each fitness value
+DF.leftjoin!(
+    df_fitness,
+    DF.rename(
+        df_advi_single[(df_advi_single.vartype.=="bc_fitness"),
+            [:mean, :std, :varname, :id, :rep]],
+        :mean => :mean_single,
+        :std => :std_single,
+        :varname => :varname_single
+    );
+    on=[:id, :rep]
+)
+
+# Add column with mean between replicates for singled dataset model
+DF.leftjoin!(
+    df_fitness,
+    DF.combine(
+        DF.groupby(df_fitness, :id), :mean_single => StatsBase.mean
     );
     on=:id
 )
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Generate samples from distribution and format into dataframe
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-
-# Define number of samples
-n_samples = 10_000
-
-# Sample from posterior MvNormal
-df_samples = DF.DataFrame(
-    Random.rand(
-        Distributions.MvNormal(
-            df_advi.mean, LinearAlgebra.Diagonal(df_advi.std .^ 2)
-        ),
-        n_samples
-    )',
-    df_advi.varname
-)
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Load ADVI results for other two cases
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-
-# Define file
-file = "$(git_root())/code/processing/" *
-       "data007_logistic_hierarchicalgenotype_1000bc_01env_01rep/" *
-       "output/advi_meanfield_01samples_10000steps.csv"
-
-# Convert results to tidy dataframe
-df_advi_single = CSV.read(file, DF.DataFrame)
-
-# Define file
-file = "$(git_root())/code/processing/" *
-       "data007_logistic_hierarchicalgenotype_1000bc_01env_01rep/" *
-       "output/advi_meanfield_genotype-group_01samples_10000steps.csv"
-
-# Convert results to tidy dataframe
-df_advi_group = CSV.read(file, DF.DataFrame)
-
-# Extract bc fitness values
-df_fitness_single = df_advi_single[(df_advi_single.vartype.=="bc_fitness"), :]
-df_fitness_group = df_advi_group[(df_advi_group.vartype.=="bc_fitness"), :]
-
-# Add genotype information
-df_fitness_single[!, :genotype] = [bc_to_geno[x] for x in df_fitness_single.id]
-# Rename column to genotype
-DF.rename!(df_fitness_group, :id => :genotype)
-
-# Extract and append ground truth fitness values
-DF.leftjoin!(
-    df_fitness_single,
-    DF.rename(
-        unique(df_counts[.!(df_counts.neutral), [:barcode, :fitness]]),
-        :barcode => :id
-    );
-    on=:id
-)
-
-DF.leftjoin!(
-    df_fitness_group,
-    DF.rename(
-        DF.combine(
-            DF.groupby(df_fitness, :genotype), :fitness => StatsBase.mean
-        ),
-        :fitness_mean => :fitness
-    );
-    on=:genotype
-)
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
-# Set figure layout
+# Generate figure
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Initialize figure
-fig = Figure(resolution=(1200, 700))
+fig = Figure(resolution=(350 * 2, 350 * 2))
 
-# Add grid layout for illustrator diagram
-gl_illustrator = fig[1, 1] = GridLayout()
-
-# Add grid lauout for datasets
-gl_data = fig[2, 1] = GridLayout()
-
-# Add grid layout for true hyperfitness vs true fitness
-gl_hyper_vs_fit_true = fig[1, 2:4] = GridLayout()
-
-# Add grid layout for ECDF plots
-gl_ecdf = fig[2, 2] = GridLayout()
-
-# Add grid layout for posterior predictive checks
-gl_ppc = fig[2, 3:4] = GridLayout()
-
-# ---------------------------------------------------------------------------- #
+# Add grid layout for datasets
+gl = fig[1, 1] = GridLayout()
 
 # Add axis
-ax = Axis(
-    gl_data[1, 1],
-    xlabel="time [dilution cycles]",
-    yscale=log10,
-    aspect=AxisAspect(1)
-)
+ax = [
+    Axis(
+        gl[i, j],
+        aspect=AxisAspect(1)
+    ) for i = 1:2 for j = 1:2
+]
 
-# Group mutant barcodes by genotype
-df_group = DF.groupby(df_counts[.!df_counts.neutral, :], :genotype)
-
-# Define colors for genotypes
-colors = ColorSchemes.glasbey_hv_n256
-
-# Loop through genotypes
-for (i, data) in enumerate(df_group)
-    # Plot mutant barcode trajectories
-    BayesFitUtils.viz.bc_time_series!(
-        ax,
-        data,
-        quant_col=:freq,
-        zero_lim=1E-10,
-        alpha=0.3,
-        zero_label="extinct",
-        color=colors[i]
-    )
-end # for
-
-# Plot neutral barcode trajectories
-BayesFitUtils.viz.bc_time_series!(
-    ax,
-    df_counts[df_counts.neutral, :],
-    quant_col=:freq,
-    zero_lim=1E-10,
-    color=ColorSchemes.Blues_9[end],
-)
-
-# ----------------------------------------------------------------------------
-
-# Add axis for true vs inferred hyperfitness 
-ax = Axis(
-    gl_hyper_vs_fit_true[1, 1],
-    xlabel="ground truth genotype fitness",
-    ylabel="inferred hyper-fitness",
-    aspect=AxisAspect(1),
-    title="hierarchical model",
-)
+# -----------------------------------------------------------------------------
 
 # Add identity line
 lines!(
-    ax,
-    repeat(
-        [[minimum(df_fitness.mean_h), maximum(df_fitness.mean_h)] .* 1.05], 2
-    )...,
+    ax[1],
+    repeat([[1.75, -0.5,]], 2)...,
     linestyle=:dash,
-    color=:black
+    color="black"
 )
 
-# Plot errorbars
+# Plot erorr bars for fitness comparison between replicates in hierarchical
+# model
 errorbars!(
-    ax,
-    df_fitness.fitness,
-    df_fitness.mean_h,
-    df_fitness.std_h,
+    ax[1],
+    df_fitness[(df_fitness.rep.=="R1"), :mean],
+    df_fitness[(df_fitness.rep.=="R2"), :mean],
+    df_fitness[(df_fitness.rep.=="R1"), :std],
+    direction=:x,
     color=(:gray, 0.5)
 )
+errorbars!(
+    ax[1],
+    df_fitness[(df_fitness.rep.=="R1"), :mean],
+    df_fitness[(df_fitness.rep.=="R2"), :mean],
+    df_fitness[(df_fitness.rep.=="R2"), :std],
+    direction=:y,
+    color=(:gray, 0.25)
+)
 
-# Plot mean point
+# Plot mean for fitness comparison between replicates in hierarchical model
 scatter!(
-    ax,
-    df_fitness.fitness,
-    df_fitness.mean_h,
-    markersize=5,
-    color=(ColorSchemes.seaborn_colorblind[1], 0.75)
+    ax[1],
+    df_fitness[(df_fitness.rep.=="R1"), :mean],
+    df_fitness[(df_fitness.rep.=="R2"), :mean],
+    markersize=5
 )
 
-# ----------------------
+ax[1].title = "hierarchical model"
+ax[1].xlabel = "replicate R1 fitness"
+ax[1].ylabel = "replicate R2 fitness"
 
-# Add axis for true vs inferred hyperfitness 
-ax = Axis(
-    gl_hyper_vs_fit_true[1, 2],
-    xlabel="ground truth barcode fitness",
-    ylabel="inferred barcode fitness",
-    aspect=AxisAspect(1),
-    title="single-barcode inference"
-)
+# -----------------------------------------------------------------------------
 
 # Add identity line
 lines!(
-    ax,
-    repeat(
-        [[minimum(df_fitness.mean_h), maximum(df_fitness.mean_h)] .* 1.05], 2
-    )...,
+    ax[2],
+    repeat([[1.75, -0.5,]], 2)...,
     linestyle=:dash,
-    color=:black
+    color="black"
 )
 
-# Plot errorbars
+# Plot erorr bars for fitness comparison between replicates in hierarchical
+# model
 errorbars!(
-    ax,
-    df_fitness_single.fitness,
-    df_fitness_single.mean,
-    df_fitness_single.std,
+    ax[2],
+    df_fitness[(df_fitness.rep.=="R1"), :mean_single],
+    df_fitness[(df_fitness.rep.=="R2"), :mean_single],
+    df_fitness[(df_fitness.rep.=="R1"), :std_single],
+    direction=:x,
     color=(:gray, 0.5)
 )
+errorbars!(
+    ax[2],
+    df_fitness[(df_fitness.rep.=="R1"), :mean_single],
+    df_fitness[(df_fitness.rep.=="R2"), :mean_single],
+    df_fitness[(df_fitness.rep.=="R2"), :std_single],
+    direction=:y,
+    color=(:gray, 0.25)
+)
 
-# Plot mean point
+# Plot mean for fitness comparison between replicates in hierarchical model
 scatter!(
-    ax,
-    df_fitness_single.fitness,
-    df_fitness_single.mean,
+    ax[2],
+    df_fitness[(df_fitness.rep.=="R1"), :mean_single],
+    df_fitness[(df_fitness.rep.=="R2"), :mean_single],
     markersize=5,
-    color=(ColorSchemes.seaborn_colorblind[2], 0.75)
+    color=ColorSchemes.seaborn_colorblind[2]
 )
 
-# ----------------------
+ax[2].title = "single dataset model"
+ax[2].xlabel = "replicate R1 fitness"
+ax[2].ylabel = "replicate R2 fitness"
 
-# Add axis for true vs inferred hyperfitness 
-ax = Axis(
-    gl_hyper_vs_fit_true[1, 3],
-    xlabel="ground truth genotype fitness",
-    ylabel="inferred genotype fitness",
-    aspect=AxisAspect(1),
-    title="pooled-barcodes inference"
-)
+# -----------------------------------------------------------------------------
 
 # Add identity line
 lines!(
-    ax,
+    ax[3],
     repeat(
-        [[minimum(df_fitness.mean_h), maximum(df_fitness.mean_h)] .* 1.05], 2
+        [[
+            minimum(df_fitness.mean) * 1.1,
+            maximum(df_fitness.mean) * 1.1,
+        ]],
+        2
     )...,
     linestyle=:dash,
-    color=:black
+    color="black"
 )
 
-# Plot errorbars
+# Extract data
+data = df_fitness[df_fitness.rep.=="R1", :]
+
+# Plot hierarchical hyperfitness vs ground truth
 errorbars!(
-    ax,
-    df_fitness_group.fitness,
-    df_fitness_group.mean,
-    df_fitness_group.std,
-    color=(:gray, 0.5)
+    ax[3],
+    data.hyperfitness,
+    data.mean_h,
+    data.std_h,
+    color=(:gray, 0.25)
 )
-
-# Plot mean point
 scatter!(
-    ax,
-    df_fitness_group.fitness,
-    df_fitness_group.mean,
+    ax[3],
+    data.hyperfitness,
+    data.mean_h,
+    label="hierarchical\nhyper-fitness",
     markersize=5,
-    color=(ColorSchemes.seaborn_colorblind[3], 0.75)
 )
 
-# ----------------------------------------------------------------------------
-
-# Add axis for ECDF
-ax = Axis(
-    gl_ecdf[1, 1],
-    xlabel="|mean - ground truth fitness|",
-    ylabel="ECDF",
-    aspect=AxisAspect(1)
+# Plot single-dataset model vs ground turth
+scatter!(
+    ax[3],
+    data.hyperfitness,
+    data.mean_single_mean,
+    label="⟨single fitness⟩",
+    markersize=5
 )
 
-# Plot hierarchical model ECDF
+# Add legend
+axislegend(ax[3], position=:rb, labelsize=13, framevisible=false)
+
+# Label axis
+ax[3].xlabel = "ground truth hyper-fitness"
+ax[3].ylabel = "inferred parameter"
+
+# -----------------------------------------------------------------------------
+
+# Extract data
+data = df_fitness[df_fitness.rep.=="R1", :]
+
+# Plot ECDF for hierarchical model
 ecdfplot!(
-    ax,
-    abs.(df_fitness.mean_h .- df_fitness.fitness),
-    color=ColorSchemes.seaborn_colorblind[1],
-    label="hierarchical model",
-    linewidth=2.5,
+    ax[4],
+    abs.(data.mean_h .- data.hyperfitness),
+    label="hierarchical model"
 )
 
-# Plot single-barcode inference ECDF
+# Plot ECDF for single-dataset model
 ecdfplot!(
-    ax,
-    abs.(df_fitness_single.mean .- df_fitness_single.fitness),
-    color=ColorSchemes.seaborn_colorblind[2],
-    label="single-barcode",
-    linewidth=2.5,
+    ax[4],
+    abs.(data.mean_single_mean .- data.hyperfitness),
+    label="single dataset model"
 )
 
-# Plot grouped-barcode inference ECDF
-ecdfplot!(
-    ax,
-    abs.(df_fitness_group.mean .- df_fitness_group.fitness),
-    color=ColorSchemes.seaborn_colorblind[3],
-    label="pooled-barcodes",
-    linewidth=2.5,
-)
+# Add legend
+axislegend(ax[4], position=:rb, labelsize=13, framevisible=false)
 
-axislegend(ax, position=:rb, framevisible=false)
+# Label axis
+ax[4].xlabel = "|mean - ground truth hyper-fitness|"
+ax[4].ylabel = "ECDF"
 
-# ---------------------------------------------------------------------------- #
-
-# Define number of posterior predictive check samples
-n_ppc = 500
-# Define quantiles to compute
-qs = [0.95, 0.675, 0.05]
-
-# Define number of rows and columns
-n_row, n_col = [2, 3]
-
-# List example barcodes to plot
-bc_plot = StatsBase.sample(
-    eachrow(DF.sort(df_fitness, :mean)),
-    n_row * n_col,
-    replace=false,
-    ordered=true
-)
-
-# Initialize plot counter
-counter = 1
-# Loop through rows
-for row in 1:n_row
-    # Loop through columns
-    for col in 1:n_col
-        # Add axis
-        local ax = Axis(gl_ppc[row, col], aspect=AxisAspect(1.25))
-
-        # Check if first first entry
-        if (row == 1) & (col == 1)
-            # Define dictionary with corresponding parameters for variables
-            # needed for the posterior predictive checks
-            param = Dict(
-                :population_mean_fitness => :s̲ₜ,
-                :population_std_fitness => :σ̲ₜ,
-            )
-
-            # Define colors
-            local colors = get(
-                ColorSchemes.Purples_9, LinRange(0.5, 1.0, length(qs))
-            )
-
-            # Compute posterior predictive checks
-            local ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
-                df_samples, n_ppc; model=:normal, param=param
-            )
-
-            # Define time
-            t = vec(collect(axes(ppc_mat, 2)) .+ 1)
-
-            # Plot posterior predictive checks
-            BayesFitUtils.viz.ppc_time_series!(
-                ax, qs, ppc_mat; colors=colors, time=t
-            )
-
-            # Plot log-frequency ratio of neutrals
-            BayesFitUtils.viz.logfreq_ratio_time_series!(
-                ax,
-                df_counts[df_counts.neutral, :];
-                freq_col=:freq,
-                color=:black,
-                alpha=1.0,
-                linewidth=1.5
-            )
-
-            # Hide axis decorations
-            hidedecorations!.(ax, grid=false)
-
-            ax.title = "neutral lineages"
-            # ax.titlesize = 18
-
-            counter += 1
-
-            continue
-        end # if
-
-        # Extract data
-        data_bc = DF.sort(
-            df_counts[df_counts.barcode.==bc_plot[counter].id, :], :time
-        )
-
-        # Define colors
-        local colors = get(ColorSchemes.Blues_9, LinRange(0.5, 1.0, length(qs)))
-
-        # Define dictionary with corresponding parameters for variables needed
-        # for the posterior predictive checks
-        local param = Dict(
-            :bc_mean_fitness => Symbol(bc_plot[counter].varname),
-            :bc_std_fitness => Symbol(
-                replace(bc_plot[counter].varname, "s" => "logσ")
-            ),
-            :population_mean_fitness => :s̲ₜ,
-        )
-        # Compute posterior predictive checks
-        local ppc_mat = BayesFitness.stats.logfreq_ratio_bc_ppc(
-            df_samples, n_ppc; model=:normal, param=param
-        )
-        # Plot posterior predictive checks
-        BayesFitUtils.viz.ppc_time_series!(
-            ax, qs, ppc_mat; colors=colors
-        )
-
-        # Add scatter of data
-        scatterlines!(ax, diff(log.(data_bc.freq)), color=:black, linewidth=2.0)
-
-        # Define fitness ranges to display in title
-        vals = [
-            round(bc_plot[counter].mean; sigdigits=2),
-            round(bc_plot[counter].std; sigdigits=2),
-        ]
-
-        # Add title
-        ax.title = "s⁽ᵐ⁾= $(vals[1])±$(vals[2])"
-
-        ## == Plot format == ##
-
-        # Hide axis decorations
-        hidedecorations!.(ax, grid=false)
-
-        # Update counter
-        global counter += 1
-    end  # for
-end # for
-
-# Add x-axis label
-Label(gl_ppc[end, :, Bottom()], "time [dilution cycles]", fontsize=18)
-# Add y-axis label
-Label(gl_ppc[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=18)
-# # Set spacing
-rowgap!(gl_ppc, 0)
-colgap!(gl_ppc, 4)
-
-# ---------------------------------------------------------------------------- #
-
-# Add subplot labels
+# Add label
 Label(
-    gl_illustrator[1, 1, TopLeft()], "(A)",
-    fontsize=24,
+    gl[1, 1, TopLeft()], "(A)",
+    fontsize=26,
     padding=(0, 5, 5, 0),
     halign=:right
 )
 
-# Add subplot labels
+# Add label
 Label(
-    gl_data[1, 1, TopLeft()], "(B)",
-    fontsize=24,
+    gl[1, 2, TopLeft()], "(B)",
+    fontsize=26,
     padding=(0, 5, 5, 0),
     halign=:right
 )
 
-# Add subplot labels
+# Add label
 Label(
-    gl_hyper_vs_fit_true[1, 1, TopLeft()], "(C)",
-    fontsize=24,
+    gl[2, 1, TopLeft()], "(C)",
+    fontsize=26,
     padding=(0, 5, 5, 0),
     halign=:right
 )
 
-# Add subplot labels
+# Add label
 Label(
-    gl_hyper_vs_fit_true[1, 2, TopLeft()], "(D)",
-    fontsize=24,
+    gl[2, 2, TopLeft()], "(D)",
+    fontsize=26,
     padding=(0, 5, 5, 0),
     halign=:right
 )
 
-# Add subplot labels
-Label(
-    gl_hyper_vs_fit_true[1, 3, TopLeft()], "(E)",
-    fontsize=24,
-    padding=(0, 5, 5, 0),
-    halign=:right
-)
+# Set spacing
+rowgap!(gl, -10)
+colgap!(gl, -20)
 
-# Add subplot labels
-Label(
-    gl_ecdf[1, 1, TopLeft()], "(F)",
-    fontsize=24,
-    padding=(0, 5, 5, 0),
-    halign=:right
-)
-
-# Add subplot labels
-Label(
-    gl_ppc[1, 1, TopLeft()], "(G)",
-    fontsize=24,
-    padding=(0, 5, 5, 0),
-    halign=:right
-)
-
-save("$(git_root())/doc/figs/fig05B-G.pdf", fig)
+save("$(git_root())/doc/figs/fig05.pdf", fig)
+save("$(git_root())/doc/figs/fig05.png", fig)
 
 fig
