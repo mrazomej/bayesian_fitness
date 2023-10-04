@@ -187,7 +187,7 @@ time. Although to compute @eq-vi_objective, we require the posterior
 distribution we are trying to approximate $\pi(\theta \mid
 \underline{\underline{R}})$, it can be shown that maximizing the so-called
 evidence lower bound (ELBO) [@kingma2014]---equivalent to minimizing the
-variational free energy [@buckley2017]---is mathematically equivalent to
+variational free energy [@gottwald2020]---is mathematically equivalent to
 performing the optimization prescribed by @eq-vi_objective. We direct the reader
 to @sec-vi_primer for a short primer on variational inference.
 

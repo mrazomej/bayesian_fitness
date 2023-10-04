@@ -32,25 +32,25 @@ accounted for---in the present inference pipeline, each experimental replicate
 gets assigned a *local* fitness value $s^{(m)}_i$, where the extra sub-index
 indicates the $i$-th experimental replicate. For our hierarchical model, these
 local fitness values interact via the common dependency on the global
-hyper-fitness value. As schematized in @fig-03(A), this interaction runs both
+hyper-fitness value. As schematized in @fig-04(A), this interaction runs both
 ways. First, the data from one experimental replicate
 ($\underline{\underline{R}}^M_k$ in the diagram) informs all local fitness
-values via the global hyper-fitness (upper panel in @fig-03(A)). Second, the
+values via the global hyper-fitness (upper panel in @fig-04(A)). Second, the
 local fitness value is informed by the data from all experimental replicates via
-the same global hyper-fitness parameter (lower panel in @fig-03(A)).
+the same global hyper-fitness parameter (lower panel in @fig-04(A)).
 
 To test the performance of this model, we simulated two experimental replicates
-with 1000 unique barcodes (see @fig-03(B-C)) where we randomly sampled a ground
+with 1000 unique barcodes (see @fig-04(B-C)) where we randomly sampled a ground
 truth hyper-fitness value $\theta^{(m)}$ for each barcode. We sampled a
 variation from this hyper-fitness value for each experimental replicate
-$s^{(m)}_i$ to capture experimental batch effects. @fig-03(D) shows the
+$s^{(m)}_i$ to capture experimental batch effects. @fig-04(D) shows the
 relationship between hyper-fitness and replicate fitness values for this
 simulation. The spread around the identity line represents the expected
-batch-to-batch variation. The posterior predictive checks examples in @fig-03(E)
+batch-to-batch variation. The posterior predictive checks examples in @fig-04(E)
 show that the hierarchical model can correctly fit the data for each
-experimental replicate. Furthermore, @fig-03(F-G) show a high correlation
+experimental replicate. Furthermore, @fig-04(F-G) show a high correlation
 between the ground truth and the inferred fitness values. The empirical
-cumulative distribution functions shown in @fig-03(H-I) reveal that for $\approx
+cumulative distribution functions shown in @fig-04(H-I) reveal that for $\approx
 75\%$ of the non-neutral barcodes, the ground truth hyper-fitness values fall
 within one standard deviation from the mean value in the posterior
 distributions.
@@ -72,17 +72,17 @@ ground truth hyper-fitness (F) and replicate fitness (G) values and the inferred
 parameters. Gray error bars represent the 68\% posterior credible region. (H-I)
 The empirical cumulative distribution function (ECDF) for the absolute z-score
 value of the ground truth parameter value within the inferred hyper-fitness
-posterior distribution (H) and replicate fitness (I).](./figs/fig03){#fig-03}
+posterior distribution (H) and replicate fitness (I).](./figs/fig04){#fig-04}
 
-As shown in @fig-04, the structure imposed by the hierarchical model schematized
-in @fig-03(A), where we explicitly account for the connection between
+As shown in @fig-05, the structure imposed by the hierarchical model schematized
+in @fig-04(A), where we explicitly account for the connection between
 experimental replicates can improve the quality of the inference. Inferred
 fitness values between experimental replicates exhibit a stronger degree of
-correlation in the hierarchical model (@fig-04(A)) compared to conducting
-inference on each replicate independently (@fig-04(B)). Moreover, when comparing
+correlation in the hierarchical model (@fig-05(A)) compared to conducting
+inference on each replicate independently (@fig-05(B)). Moreover, when comparing
 the inferred hyper-fitness values---the objective parameter when performing
 multiple experimental measurements---the hierarchical model outperforms
-averaging the independent experimental replicates as shown in @fig-04(C) and
+averaging the independent experimental replicates as shown in @fig-05(C) and
 (D).
 
 ![**Comparison between hierarchical model and single dataset model**. (A-B)
@@ -96,4 +96,4 @@ average of the mean inferred fitness values for the two experimental replicates.
 No error bars are shown for these, as it is inappropriate to compute one with
 two data points per non-neutral barcode. (D) Empirical cumulative distribution
 function (ECDF) of the absolute difference between the inferred mean and the
-ground truth hyper-fitness.](./figs/fig04){#fig-04}
+ground truth hyper-fitness.](./figs/fig05){#fig-05}
