@@ -46,7 +46,7 @@ fig = Figure(resolution=(350, 300))
 
 # Add axis
 ax = Axis(
-    fig[1, 1], xlabel="time", ylabel="barcode frequency", yscale=log10
+    fig[1, 1], xlabel="time [dilution cycles]", ylabel="barcode frequency", yscale=log10
 )
 
 # Plot mutant barcode trajectories

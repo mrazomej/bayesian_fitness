@@ -45,7 +45,7 @@ data = CSV.read(
 fig = Figure(resolution=(350, 300))
 
 # Add axis
-ax = Axis(fig[1, 1], xlabel="time", ylabel="ln(fₜ₊₁/fₜ)")
+ax = Axis(fig[1, 1], xlabel="time [dilution cycles]", ylabel="ln(fₜ₊₁/fₜ)")
 
 # Plot mutant barcode trajectories
 BayesFitUtils.viz.logfreq_ratio_time_series!(
