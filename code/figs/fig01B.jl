@@ -53,7 +53,7 @@ color = [x for x in color_grad]
 fig = Figure(resolution=(400, 250))
 
 # Add axis
-ax = Axis(fig[1, 1], xlabel="time", ylabel="barcode frequency", yscale=log10)
+ax = Axis(fig[1, 1], xlabel="time [dilution cycles]", ylabel="barcode frequency", yscale=log10)
 
 # %%% Barcode trajectories %%% #
 

@@ -110,7 +110,7 @@ color_palette = BayesFitUtils.viz.colors()
 ax = [
     Axis(
         gl_data[i, 1],
-        xlabel="time",
+        xlabel="time [dilution cycles]",
         aspect=AxisAspect(1)
     ) for i = 1:2
 ]
@@ -282,7 +282,7 @@ for row in 1:n_row
 end # for
 
 # Add x-axis label
-Label(gl_ppc[end, :, Bottom()], "time points", fontsize=22)
+Label(gl_ppc[end, :, Bottom()], "time [dilution cycles]", fontsize=22)
 # Add y-axis label
 Label(gl_ppc[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=22)
 # Set spacing

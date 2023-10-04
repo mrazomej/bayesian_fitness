@@ -125,7 +125,7 @@ env_colors = Dict(env_unique .=> ColorSchemes.tableau_10[5:7])
 # Add axis
 ax = Axis(
     gl_data[1, 1],
-    xlabel="time",
+    xlabel="time [dilution cycles]",
     ylabel="ln(fₜ₊₁/fₜ)",
     aspect=AxisAspect(1),
     backgroundcolor=:white
@@ -430,7 +430,7 @@ for row in 1:n_row
 end # for
 
 # Add x-axis label
-Label(gl_ppc[end, :, Bottom()], "time points", fontsize=18)
+Label(gl_ppc[end, :, Bottom()], "time [dilution cycles]", fontsize=18)
 # Add y-axis label
 Label(gl_ppc[:, 1, Left()], "ln(fₜ₊₁/fₜ)", rotation=π / 2, fontsize=18)
 # # Set spacing
