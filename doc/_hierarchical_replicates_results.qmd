@@ -12,14 +12,15 @@ replicates via Bayesian hierarchical models [@betancourt2013]. Briefly, when
 accounting for multiple repeated measurements of the same phenomena, there are
 two extreme cases one can use to perform the data analysis: On the one hand, we
 can treat each measurement as entirely independent, losing the power to utilize
-multiple measurements when trying to learn a single parameter. This can hurt the
-inference since, in principle, the value of our parameter of interest should not
-depend on the particular experimental replicate in question. However, this
-approach does not allow us to properly "combine" the uncertainties in both
-experiments when performing the inference. On the other hand, we can pool all
-data together and treat our different experiments as a single measurement with
-higher coverage. This loses the subtle differences from biotic and abiotic batch
-effects, effectively halving the data that goes into our inference problem.
+multiple measurements when trying to learn a single parameter. This can
+negatively impact the inference since, in principle, the value of our parameter
+of interest should not depend on the particular experimental replicate in
+question. However, this approach does not allow us to properly "combine" the
+uncertainties in both experiments when performing the inference. On the other
+hand, we can pool all data together and treat our different experiments as a
+single measurement with higher coverage. This loses the subtle differences due
+to biotic and abiotic batch effects, effectively halving the data that goes into
+our inference problem.
 
 Hierarchical models present a middle ground between these extremes. First,
 hierarchical models rely on the definition of so-called *hyper-parameters*, that

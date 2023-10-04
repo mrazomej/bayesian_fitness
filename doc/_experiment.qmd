@@ -26,7 +26,7 @@ mutants and their relative growth rates. The DNA barcodes are sequenced at the
 end of each growth cycle to quantify the relative abundance of each of the
 barcodes. We point the reader to @kinsler2020 for specific details on these
 assays for *S. cerevisiae* and to @ascensao2023 for equivalent assays for *E.
-coli*. @fig-01(B) presents a typical barcode trajectory where the darker barcode
+coli*. @fig-01(B) presents a typical barcode trajectory where the black
 trajectories represent the so-called *neutral lineages*, genetically equivalent
 to the untagged ancestor strain that initially dominates the culture. These
 spiked-in neutral lineages simplify the inference problem since the fitness

@@ -30,7 +30,7 @@ on these computations). @fig-02(C) shows these results for all neutral lineages
 different color shades represent the 95\%, 68\%, and 5\% credible regions, i.e.,
 the regions where we expect to find the data with the corresponding
 probability---or in terms of our parameter, the $X\%$ credible region is the
-interval where we expect the true parameter to lie with $X\%$ probability. 
+interval where we expect the true parameter value to lie with $X\%$ probability. 
 
 The main advantage of our method is this natural interpretability of these
 credible regions where an $X\%$ credible region indeed captures the region of
@@ -42,15 +42,15 @@ equivalent [@morey2016]. Frequentist confidence intervals and Bayesian credible
 regions are based on fundamentally different philosophical approaches to
 statistics. Frequentist confidence intervals represent the range of values that
 would contain the true population parameter with a certain probability if the
-experiment was repeated many times. The confidence level does not represent the
-probability that the interval contains the true value. According to a specific
-model and prior information, Bayesian credible regions represent the range of
-values that contain the parameter with a certain posterior probability. The
-credible region directly represents the probability that the region contains the
-true value. So, frequentist confidence intervals cannot be interpreted as
+experiment was repeated many times. The confidence interval does not represent
+the probability that the interval contains the true value. According to a
+specific model and prior information, Bayesian credible regions represent the
+range of values that contain the parameter with a certain posterior probability.
+The credible region directly represents the probability that the region contains
+the true value. So, frequentist confidence intervals cannot be interpreted as
 Bayesian credible regions because they have fundamentally different meanings.
 Treating an $X\%$ confidence interval like an $X\%$  credible region is
-fallacious since confidence levels do not represent probabilistic coverage of
+fallacious since confidence intervals do not represent probabilistic coverage of
 the true value like credible regions. The intervals are generated through
 entirely different procedures.
 

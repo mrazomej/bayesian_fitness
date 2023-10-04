@@ -56,9 +56,9 @@ $$
 \pi(\underline{s}^M)}
 {\pi(\underline{\underline{R}})},
 $${#eq-bayes_obj}
-where hereafter $\pi(\cdot)$ defines a probability density function, unless
-otherwise stated. When defining our statistical model, we need not to focus on
-the denominator on the right-hand side of @eq-bayes_obj. Thus, we can write
+where hereafter $\pi(\cdot)$ defines a probability density function. When
+defining our statistical model, we need not to focus on the denominator on the
+right-hand side of @eq-bayes_obj. Thus, we can write
 $$
 \pi(\underline{s}^M \mid \underline{\underline{R}}) \propto
 \pi(\underline{\underline{R}} \mid \underline{s}^M) 
@@ -78,25 +78,13 @@ $d^n$ imply a $n$-dimensional integral.
 Although @eq-bayes_obj and @eq-bayes_obj_propto seem simple enough, recall that
 @eq-fitness relates barcode frequency values and the population mean fitness to
 the mutant relative fitness. Therefore, we must include these nuisance
-parameters as part of our inference problem. To include these nuisance
-parameters, let 
-$$
-\underline{\bar{s}}_T = (\bar{s}_1, \bar{s}_2, \ldots, \bar{s}_{T-1})^\dagger,
-$${#eq-pop_fitness_vec}
-be the vector containing the $T-1$ population mean fitness we compute from the
-$T$ time points where measurements were taken. We have $T-1$ since the value
-of any $\bar{s}_t$ requires cycle numbers $t$ and $t+1$. Furthermore, let the
-matrix $\underline{\underline{F}}$ be a $T \times B$ matrix containing all
-frequency values. As with @eq-R-mat_split, we can split
-$\underline{\underline{F}}$ into two matrices of the form
-$$
-\underline{\underline{F}} = \left[ 
-\underline{\underline{F}}^N \; \underline{\underline{F}}^M
-\right],
-$${#eq-F-mat_split}
-to separate the corresponding neutral and non-neutral barcode frequencies. With
-these nuisance variables in hand, the full inference problem we must solve takes
-the form
+parameters as part of our inference problem. We direct the reader to the
+supplementary materials for the exact definitions of these parameters. Here, it
+suffices to say that the inference problem must include the vector
+$\underline{\bar{s}}_T$ of all population mean fitness values and the matrix
+$\underline{\underline{F}}$ of all barcode frequencies within the sequencing
+data. With these nuisance variables in hand, the full inference problem we must
+solve takes the form
 $$
 \pi(
     \underline{s}^M, \underline{\bar{s}}_T, \underline{\underline{F}} \mid
@@ -175,9 +163,9 @@ such as Hamiltonian Montecarlo can numerically perform this integration
 [@betancourt2017], the dimensionality of the problem in @eq-split_posterior
 makes an MCMC-based approach prohibitively slow.
 
-To overcome this computational limitation, in this work, we rely on the recent
-development of the automatic differentiation variational inference algorithm
-(ADVI) [@kucukelbir2016]. Briefly, when performing ADVI, our target posterior
+To overcome this computational limitation, we rely on the recent development of
+the automatic differentiation variational inference algorithm (ADVI)
+[@kucukelbir2016]. Briefly, when performing ADVI, our target posterior
 distribution $\pi(\theta \mid \underline{\underline{R}})$, where $\theta =
 (\underline{s}^M, \underline{\bar{s}}_T, \underline{\underline{F}})$, is
 replaced by an approximate posterior distribution $q_\phi(\theta)$, where $\phi$

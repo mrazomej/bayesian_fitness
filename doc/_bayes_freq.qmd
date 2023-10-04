@@ -5,6 +5,38 @@ editor:
 
 ## Defining the Bayesian model {#sec-bayes_def}
 
+In the main text, we specify the inference problem we must solve as being of the
+form
+$$
+\pi(
+    \underline{s}^M, \underline{\bar{s}}_T, \underline{\underline{F}} \mid
+    \underline{\underline{R}}
+) \propto
+\pi(
+    \underline{\underline{R}} \mid
+    \underline{s}^M, \underline{\bar{s}}_T, \underline{\underline{F}}
+)
+\pi(
+    \underline{s}^M, \underline{\bar{s}}_T, \underline{\underline{F}}
+).
+$${#eq-full_inference_SI}
+Here, we briefly define the missing nuisance parameters. Let 
+$$
+\underline{\bar{s}}_T = (\bar{s}_1, \bar{s}_2, \ldots, \bar{s}_{T-1})^\dagger,
+$${#eq-pop_fitness_vec}
+be the vector containing the $T-1$ population mean fitness we compute from the
+$T$ time points where measurements were taken. We have $T-1$ since the value
+of any $\bar{s}_t$ requires cycle numbers $t$ and $t+1$. Furthermore, let the
+matrix $\underline{\underline{F}}$ be a $T \times B$ matrix containing all
+frequency values. As with @eq-R-mat_split in the main text, we can split
+$\underline{\underline{F}}$ into two matrices of the form
+$$
+\underline{\underline{F}} = \left[ 
+\underline{\underline{F}}^N \; \underline{\underline{F}}^M
+\right],
+$${#eq-F-mat_split}
+to separate the corresponding neutral and non-neutral barcode frequencies.
+
 Let us now define each of the terms in @eq-split_posterior described in
 @sec-bayesian_inference of the main text. The following sections will specify 
 the functional form each of these terms takes.
