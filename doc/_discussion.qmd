@@ -18,7 +18,7 @@ research area promises to improve as new culturing technologies [@jagdish2022]
 as well as more complex lineage barcoding schemes [@nguyenba2019a;@yang2022],
 are adopted.
 
-For this data-heavy field, properly accounting for the uncertainty in quantities
+For this data-heavy field, properly accounting for the uncertainty in parameters
 inferred from experiments is vital to ensure the conclusions drawn are reliable.
 Bayesian statistics presents a principled way to quantify this uncertainty
 systematically [@gelman2010]. Moreover, Bayesian analysis offers a more
@@ -75,5 +75,14 @@ with respect to this reference genotype. This experimental design constraint
 facilitates the inference of the population mean fitness since most of the
 culture---the unlabeled reference genotype---is not tracked. Finally, the
 presented statistical model assumes that relative fitness is solely a constant
-of the environment and the genotype. Therefore, the model is not designed to
-analyze data with time-varying or frequency-dependent fitness values.
+of the environment and the genotype. Future directions of this work could extend
+the fitness model to properly analyze data with time-varying or
+frequency-dependent fitness values.
+
+In total, the statistical model presented in this work and the software package
+accompanying the paper allow for a principled way of quantifying the accuracy
+with which we can extract relevant parametric information from large-scale
+multiplexed fitness competition assays. Furthermore, the implementation of
+Bayesian models and their fitting via automatic differentiation approaches opens
+the gate to extend this type of formal analysis to the data-rich literature in
+experimental evolution and other high-throughput technologies applications.
