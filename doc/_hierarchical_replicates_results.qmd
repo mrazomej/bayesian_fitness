@@ -30,9 +30,18 @@ barcode. Second, each experiment draws randomly from the distribution of this
 hyper-parameter, allowing for subtle variability between experiments to be
 accounted for---in the present inference pipeline, each experimental replicate
 gets assigned a *local* fitness value $s^{(m)}_i$, where the extra sub-index
-indicates the $i$-th experimental replicate. For our hierarchical model, these
-local fitness values interact via the common dependency on the global
-hyper-fitness value. As schematized in @fig-04(A), this interaction runs both
+indicates the $i$-th experimental replicate. Conceptually, we can think of the
+local fitness for replicate $i$ as being sampled from a distribution that
+depends on the value of the global hyper-fitness value, i.e., $s^{(m)}_i \sim
+\pi_{\theta^{(m)}}$, where the subindex $\theta^{(m)}$ indicates the
+distribution's parametric dependence on the hyper-fitness value. This way of
+interpreting the connection between the distribution $\pi_{\theta^{(m)}}$ and
+the local fitness implies that a large replicate-to-replicate variability would
+lead to a broad hyper-fitness distribution---implying a large uncertainty when
+determining the parameter that characterizes the overall relative fitness. We
+point the reader to @sec-hierarchical_model for the full definition of the
+hierarchical model used in this section. Importantly, as schematized in
+@fig-04(A), the influence between different experimental replicates runs both
 ways. First, the data from one experimental replicate
 ($\underline{\underline{R}}^M_k$ in the diagram) informs all local fitness
 values via the global hyper-fitness (upper panel in @fig-04(A)). Second, the
