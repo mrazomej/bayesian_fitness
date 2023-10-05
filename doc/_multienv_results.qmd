@@ -7,31 +7,44 @@ csl: ieee.csl
 
 ## Fitness inference on multiple environments{#sec-multienv}
 
-One of the benefits of Bayesian methods is the intrinsic error propagation
-embedded in the mathematical framework. For example, the uncertainty on the
-value of the population mean fitness values $\underline{\bar{s}}_T$ is
-propagated to the relative fitness of a particular strain $s^{(b)}$ since we
-defined a joint posterior distribution over all parameters as fully expressed in
-@eq-bayes_full. This natural error propagation can help us with the experimental
-design schematized in @fig-03(A). Here, rather than performing growth-dilution
-cycles in the same environment, the cells are diluted into a different 
-environment. Thus, the uncertainty on the fitness estimate for the previous
-environment must be propagated to that of the next one.
+The fitness model in @eq-fitness relates nuisance parameters such as the
+population mean fitness and the barcode frequencies to the relative fitness
+parameter we want to infer from the data. These dependencies imply that
+uncertainty on the estimates of these nuisance parameters influences the
+inference of the relevant parameters. For example, imagine a scenario where the
+neutral lineages data were incredibly noisy, leading to poor estimates of the
+population mean fitness values $\underline{\bar{s}}_T$. Since the relative
+fitness of any non-neutral barcode $s^{(m)}$ is determined with respect to these
+neutral barcodes, not accounting for the lack of precision in the value of the
+population mean fitness would result in misleading estimates of the accuracy
+with which we determine the value of the parameter we care about. Thus,
+propagating these sources of uncertainty in nuisance parameters is vital to
+generate an unbiased estimate of the relevant information we want to extract
+from the data. One of the benefits of Bayesian methods is the intrinsic error
+propagation embedded in the mathematical framework. For our previous example,
+the uncertainty on the value of the population mean fitness values is propagated
+to the relative fitness of a non-neutral barcode since we defined a joint
+posterior distribution over all parameters as fully expressed in @eq-bayes_full.
 
-To validate the extension of our statistical model to this scenario, @fig-03(B)
-shows the trajectory of the log frequency ratios between adjacent time points.
-The different colored regions correspond to the different environments. For this
-simulation, the growth rate of Environment 2 was set to be, on average, half of
-the average growth rate in Environment 1. Equivalently, the growth rate in
-Environment 3 was set to be, on average, twice the average growth rate in
-Environment 1. @fig-03(C-E) show the correspondence between the simulation
-ground truth and the inferred fitness values, where the error bars represent the
-68\% credible region. @fig-03(F) summarizes the performance of our inference
-pipeline by showing the empirical cumulative distribution functions for the
-absolute value of the ground truth fitness value z-score within the posterior
-distribution. This plot shows that, overall, $\approx 75\%$ of inferred mean
-values fall within one standard deviation of the ground truth. For completeness,
-@fig-03(G) shows the posterior predictive checks for a few example barcodes.
+This natural error propagation can help us with the experimental design
+schematized in @fig-03(A). Here, rather than performing growth-dilution cycles
+in the same environment, the cells are diluted into a different environment.
+Thus, the uncertainty on the fitness estimate for the previous environment must
+be propagated to that of the next one. To validate the extension of our
+statistical model to this scenario, @fig-03(B) shows the trajectory of the log
+frequency ratios between adjacent time points. The different colored regions
+correspond to the different environments. For this simulation, the growth rate
+of Environment 2 was set to be, on average, half of the average growth rate in
+Environment 1. Equivalently, the growth rate in Environment 3 was set to be, on
+average, twice the average growth rate in Environment 1. @fig-03(C-E) show the
+correspondence between the simulation ground truth and the inferred fitness
+values, where the error bars represent the 68\% credible region. @fig-03(F)
+summarizes the performance of our inference pipeline by showing the empirical
+cumulative distribution functions for the absolute value of the ground truth
+fitness value z-score within the posterior distribution. This plot shows that,
+overall, $\approx 75\%$ of inferred mean values fall within one standard
+deviation of the ground truth. For completeness, @fig-03(G) shows the posterior
+predictive checks for a few example barcodes.
 
 ![**Multi-environment fitness inference.** (A) Schematic of the simulated
 experimental design where growth-dilution cycles are performed into different
