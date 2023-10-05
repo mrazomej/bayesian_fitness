@@ -1,2 +1,4 @@
 /.quarto/
 _*/**
+
+/.luarc.json
