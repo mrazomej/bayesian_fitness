@@ -5,7 +5,7 @@ bibliography: references.bib
 csl: ieee.csl
 ---
 
-### Hierarchical models for multiple experimental replicates
+### Hierarchical models for multiple experimental replicates {#sec-hierarchical_model}
 
 As detailed in @sec-replicates of the main text, we define a Bayesian
 hierarchical model to analyze data from multiple experimental replicates. The
