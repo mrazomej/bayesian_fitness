@@ -10,3 +10,5 @@
   the mean fitness for each time point using the neutral strains.
 - `bayesian_mutant_fitness.ipynb`: Notebook used to develop the model that
   infers the fitness for all adaptive mutants.
+- `kinsler_fitness_eda.ipynb`: Exploratory data analysis for the inferences done
+  on the manually-curated Kinsler et al., 2020 datasets.

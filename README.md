@@ -9,11 +9,11 @@ described in the publication "[`TBD`]"
 
 ## Installation
 The installation of the `BayesFitUtils.jl` package requires `Julia` version `>
-1.8.0`. We direct the user to the [Julia language
+1.9.0`. We direct the user to the [Julia language
 homepage](https://julialang.org) for instructions on how to install the latest
 version of Julia.
 
-**Note:** This package was developed using `Julia v1.8.5`.
+**Note:** This package was originally developed using `Julia v1.9.3`.
 
 ### Installing the `BayesFitUtils` package
 To maintain a clean separate environment for this project, we created a package
