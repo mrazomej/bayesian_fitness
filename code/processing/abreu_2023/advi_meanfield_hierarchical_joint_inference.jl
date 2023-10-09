@@ -8,7 +8,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -85,7 +85,7 @@ n_env = length(unique(data.environment))
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Compute naive priors from neutral strains
-naive_priors = BayesFitness.stats.naive_prior(
+naive_priors = BarBay.stats.naive_prior(
     data; rep_col=:replicate, pseudocount=1
 )
 
@@ -121,7 +121,7 @@ envs = collect(unique(data[:, [:time, :environment]])[:, :environment])
 param = Dict(
     :data => data,
     :outputname => "./output/advi_meanfield_hierarchical_$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
-    :model => BayesFitness.model.multienv_replicate_fitness_normal,
+    :model => BarBay.model.multienv_replicate_fitness_normal,
     :model_kwargs => Dict(
         :envs => envs,
         :s_pop_prior => s_pop_prior,
@@ -147,7 +147,7 @@ end # if
 
 # Run inference
 println("Running Variational Inference...")
-@time dist = BayesFitness.vi.advi(; param...)
+@time dist = BarBay.vi.advi(; param...)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Convert output to tidy dataframe
@@ -170,7 +170,7 @@ dist = advi_results["dist"]
 vars = advi_results["var"]
 
 # Generate tidy dataframe with distribution information
-df_advi = BayesFitness.utils.advi_to_df(
+df_advi = BarBay.utils.advi_to_df(
     dist, vars, bc_ids; envs=envs
 )
 

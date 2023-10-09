@@ -10,7 +10,7 @@ import Revise
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -105,7 +105,7 @@ param = Dict(
     :n_walkers => n_walkers,
     :n_steps => n_steps,
     :outputname => "./output/chain_popmean_fitness_$(n_steps)steps_$(lpad(n_walkers, 2, "0"))walkers",
-    :model => BayesFitness.model.neutrals_lognormal,
+    :model => BarBay.model.neutrals_lognormal,
     :sampler => Turing.DynamicNUTS(),
     :ensemble => Turing.MCMCThreads(),
     :rm_T0 => false,
@@ -113,4 +113,4 @@ param = Dict(
 
 # Run inference
 println("Running Inference...")
-@time BayesFitness.mcmc.mcmc_popmean_fitness(; param...)
+@time BarBay.mcmc.mcmc_popmean_fitness(; param...)

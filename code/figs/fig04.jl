@@ -8,7 +8,7 @@ import Revise
 # Import project package
 import BayesFitUtils
 # Import package for Bayesian inference
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -396,7 +396,7 @@ for row in 1:n_row
                     :population_std_fitness => :logσ̲ₜ,
                 )
                 # Compute posterior predictive checks
-                ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
+                ppc_mat = BarBay.stats.logfreq_ratio_popmean_ppc(
                     df_samples[:, value], n_ppc; model=:normal, param=param
                 )
 
@@ -455,7 +455,7 @@ for row in 1:n_row
                     :population_mean_fitness => Symbol("s̲ₜ"),
                 )
                 # Compute posterior predictive checks
-                local ppc_mat = BayesFitness.stats.logfreq_ratio_bc_ppc(
+                local ppc_mat = BarBay.stats.logfreq_ratio_bc_ppc(
                     df_samples[:, Symbol.(vars_bc)],
                     n_ppc;
                     model=:normal,

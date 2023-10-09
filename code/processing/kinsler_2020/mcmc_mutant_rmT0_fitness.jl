@@ -10,7 +10,7 @@ import Revise
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -88,8 +88,8 @@ for i = 1:length(df_group)
     end # if
 
     # Infer mean fitness distributions
-    mean_fitness_dist = BayesFitness.stats.gaussian_prior_mean_fitness(
-        BayesFitness.utils.var_jld2_to_df(sort!(mean_files), :sₜ)
+    mean_fitness_dist = BarBay.stats.gaussian_prior_mean_fitness(
+        BarBay.utils.var_jld2_to_df(sort!(mean_files), :sₜ)
     )
 
     println("Processing $(env)-$(rep) mutant fitness ($i / $(length(df_group))) \n")
@@ -101,9 +101,9 @@ for i = 1:length(df_group)
         :n_steps => 4_000,
         :outputdir => outdir,
         :outputname => "$(env)_$(rep)_mutantfitness_rmT0",
-        :model => BayesFitness.model.mutant_fitness_lognormal,
+        :model => BarBay.model.mutant_fitness_lognormal,
         :model_kwargs => Dict(
-            :α => BayesFitness.stats.beta_prior_mutant(
+            :α => BarBay.stats.beta_prior_mutant(
                 data[data.time.==minimum(data.time), :barcode],
             ),
             :μ_s̄ => mean_fitness_dist[1],
@@ -113,6 +113,6 @@ for i = 1:length(df_group)
     )
 
     # Run inference in a multithread fasshion
-    BayesFitness.mcmc.mcmc_mutant_fitness(; param...)
+    BarBay.mcmc.mcmc_mutant_fitness(; param...)
 
 end # for

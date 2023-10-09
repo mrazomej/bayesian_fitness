@@ -8,7 +8,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -113,7 +113,7 @@ Threads.@threads for i = 1:length(rep_envs)
     end # for
 
     # Compute naive priors from neutral strains
-    naive_priors = BayesFitness.stats.naive_prior(
+    naive_priors = BarBay.stats.naive_prior(
         data; rep_col=:rep, pseudocount=1
     )
 
@@ -140,7 +140,7 @@ Threads.@threads for i = 1:length(rep_envs)
         :data => data,
         :outputname => "$(outdir)/advi_meanfield_hierarchical_$(env)" *
                        "$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
-        :model => BayesFitness.model.replicate_fitness_normal,
+        :model => BarBay.model.replicate_fitness_normal,
         :model_kwargs => Dict(
             :s_pop_prior => s_pop_prior,
             :logσ_pop_prior => logσ_pop_prior,
@@ -157,5 +157,5 @@ Threads.@threads for i = 1:length(rep_envs)
 
     # Run inference
     println("Running Variational Inference...")
-    @time BayesFitness.vi.advi(; param...)
+    @time BarBay.vi.advi(; param...)
 end # for

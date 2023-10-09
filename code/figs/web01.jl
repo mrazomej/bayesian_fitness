@@ -5,7 +5,7 @@
 import BayesFitUtils
 
 # Import Bayesian inference package
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -67,6 +67,6 @@ BayesFitUtils.viz.bc_time_series!(
     color=ColorSchemes.Blues_9[end],
 )
 
-save("/Users/mrazo/git/BayesFitness/docs/src/figs/fig01.svg", fig)
+save("/Users/mrazo/git/BarBay/docs/src/figs/fig01.svg", fig)
 
 fig

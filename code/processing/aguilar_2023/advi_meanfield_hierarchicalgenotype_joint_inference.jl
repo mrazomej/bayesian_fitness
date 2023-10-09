@@ -8,7 +8,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -94,7 +94,7 @@ Threads.@threads for i in eachindex(df_group)
     data = df_group[i]
 
     # Compute naive priors from neutral strains
-    naive_priors = BayesFitness.stats.naive_prior(
+    naive_priors = BarBay.stats.naive_prior(
         data; pseudocount=1, id_col=:oligo
     )
 
@@ -125,7 +125,7 @@ Threads.@threads for i in eachindex(df_group)
     oligo_edit_dict = Dict(oligo_edit[:, :oligo] .=> oligo_edit[:, :edit])
 
     # Extract list of oligos as they will be used in the inference
-    oligo_ids = BayesFitness.utils.data_to_arrays(data; id_col=:oligo)[:bc_ids]
+    oligo_ids = BarBay.utils.data_to_arrays(data; id_col=:oligo)[:bc_ids]
 
     # Extract edits in the order they will be used in the inference
     edit_list = [oligo_edit_dict[m] for m in oligo_ids]
@@ -136,7 +136,7 @@ Threads.@threads for i in eachindex(df_group)
         :data => data,
         :outputname => "./output/advi_meanfield_hierarchicalgenotypes_R$(i)rep_" *
                        "$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
-        :model => BayesFitness.model.genotype_fitness_normal,
+        :model => BarBay.model.genotype_fitness_normal,
         :model_kwargs => Dict(
             :s_pop_prior => s_pop_prior,
             :logσ_pop_prior => logσ_pop_prior,
@@ -152,6 +152,6 @@ Threads.@threads for i in eachindex(df_group)
 
     # Run inference
     println("Running Variational Inference...")
-    @time dist = BayesFitness.vi.advi(; param...)
+    @time dist = BarBay.vi.advi(; param...)
 
 end # for

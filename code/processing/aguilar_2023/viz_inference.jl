@@ -8,7 +8,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import basic math
 import StatsBase
@@ -67,7 +67,7 @@ df_counts = df_counts[df_counts.rep.!="N/A", :]
 oligo_edit_dict = Dict(values.(keys(DF.groupby(df_counts, [:oligo, :edit]))))
 
 # Extract list of mutants as they were used in the inference
-oligo_ids = BayesFitness.utils.data_to_arrays(
+oligo_ids = BarBay.utils.data_to_arrays(
     df_counts[df_counts.rep.=="R1", :]; id_col=:oligo
 )[:bc_ids]
 
@@ -96,7 +96,7 @@ for (i, file) in enumerate(files)
     # Load distribution
     setindex!(advi_output, JLD2.load(file), "R$(i)")
     # Convert distribution to tidy dataframe
-    df_advi = BayesFitness.utils.advi_to_df(
+    df_advi = BarBay.utils.advi_to_df(
         advi_output["R$(i)"]["dist"],
         advi_output["R$(i)"]["var"],
         advi_output["R$(i)"]["ids"];
@@ -164,7 +164,7 @@ rm("./output/figs/advi_logfreqratio_ppc_neutral.pdf"; force=true)
 for rep in sort(collect(eachindex(advi_output)))
     println("Generating plot for $(rep)")
     # Compute posterior predictive checks
-    ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
+    ppc_mat = BarBay.stats.logfreq_ratio_popmean_ppc(
         advi_output[rep]["df_samples"], n_ppc; model=:normal, param=param
     )
 
@@ -282,7 +282,7 @@ for rep in sort(collect(eachindex(advi_output)))
                 :population_mean_fitness => Symbol("s̲ₜ"),
             )
             # Compute posterior predictive checks
-            local ppc_mat = BayesFitness.stats.logfreq_ratio_mutant_ppc(
+            local ppc_mat = BarBay.stats.logfreq_ratio_mutant_ppc(
                 df_samples[:, Symbol.(vars_bc)],
                 n_ppc;
                 model=:normal,

@@ -8,7 +8,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -88,7 +88,7 @@ df_edit[!, :freq] = df_edit.count ./ df_edit.count_sum
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Compute naive priors from neutral strains
-naive_priors = BayesFitness.stats.naive_prior(
+naive_priors = BarBay.stats.naive_prior(
     df_edit; rep_col=:rep, pseudocount=1, id_col=:edit
 )
 
@@ -118,7 +118,7 @@ param = Dict(
     :data => df_edit,
     :outputname => "./output/advi_meanfield_hierarchicalreplicate" *
                    "$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
-    :model => BayesFitness.model.replicate_fitness_normal,
+    :model => BarBay.model.replicate_fitness_normal,
     :model_kwargs => Dict(
         :s_pop_prior => s_pop_prior,
         :logσ_pop_prior => logσ_pop_prior,
@@ -144,4 +144,4 @@ end # if
 
 # Run inference
 println("Running Variational Inference...")
-@time BayesFitness.vi.advi(; param...)
+@time BarBay.vi.advi(; param...)

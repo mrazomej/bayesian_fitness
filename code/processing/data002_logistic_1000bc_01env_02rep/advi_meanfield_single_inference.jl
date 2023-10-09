@@ -7,7 +7,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -76,7 +76,7 @@ Threads.@threads for data in df_group
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
     # Compute naive priors from neutral strains
-    naive_priors = BayesFitness.stats.naive_prior(data)
+    naive_priors = BarBay.stats.naive_prior(data)
 
     # Select standard deviation parameters
     s_pop_prior = hcat(
@@ -104,7 +104,7 @@ Threads.@threads for data in df_group
         :data => data,
         :outputname => "./output/advi_meanfield_$(first(data.rep))rep_" *
                        "$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
-        :model => BayesFitness.model.fitness_normal,
+        :model => BarBay.model.fitness_normal,
         :model_kwargs => Dict(
             :s_pop_prior => s_pop_prior,
             :logσ_pop_prior => logσ_pop_prior,
@@ -128,5 +128,5 @@ Threads.@threads for data in df_group
 
     # Run inference
     println("Running Variational Inference...")
-    @time BayesFitness.vi.advi(; param...)
+    @time BarBay.vi.advi(; param...)
 end # for

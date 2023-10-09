@@ -10,7 +10,7 @@ import Revise
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -106,7 +106,7 @@ param = Dict(
     :n_walkers => n_walkers,
     :n_steps => n_steps,
     :outputname => "./output/chain_freq_$(n_steps)steps_$(lpad(n_walkers, 2, "0"))walkers",
-    :model => BayesFitness.model.freq_lognormal,
+    :model => BarBay.model.freq_lognormal,
     :sampler => Turing.DynamicNUTS(),
     :ensemble => Turing.MCMCThreads(),
     :rm_T0 => false,
@@ -115,4 +115,4 @@ param = Dict(
 # Run inference
 println("Running Inference...")
 
-@time BayesFitness.mcmc.mcmc_joint_fitness(; param...)
+@time BarBay.mcmc.mcmc_joint_fitness(; param...)

@@ -10,7 +10,7 @@ import Revise
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -157,7 +157,7 @@ for i in axes(df_include, 1)
         :n_walkers => n_walkers,
         :n_steps => n_steps,
         :outputname => "$(outdir)/kinsler_$(env)env_$(rep)rep_$(rm_T0)rmT0_$(n_steps)steps_$(lpad(2, n_walkers, "0")walkers)",
-        :model => BayesFitness.model.neutrals_lognormal,
+        :model => BarBay.model.neutrals_lognormal,
         :sampler => Turing.DynamicNUTS(),
         :ensemble => Turing.MCMCThreads(),
         :rm_T0 => rm_T0,
@@ -167,7 +167,7 @@ for i in axes(df_include, 1)
     println("Running Inference for group $(i)...")
 
     try
-        @time BayesFitness.mcmc.mcmc_popmean_fitness(; param...)
+        @time BarBay.mcmc.mcmc_popmean_fitness(; param...)
     catch
         @warn "Group $(i) was already processed"
     end
@@ -190,7 +190,7 @@ if gen_plots
         end # if
 
         # Concatenate population mean fitness chains into single chain
-        chains = BayesFitness.utils.var_jld2_concat(od, "meanfitness", :sₜ)
+        chains = BarBay.utils.var_jld2_concat(od, "meanfitness", :sₜ)
 
         # Initialize figure
         fig = Figure(resolution=(800, 800))

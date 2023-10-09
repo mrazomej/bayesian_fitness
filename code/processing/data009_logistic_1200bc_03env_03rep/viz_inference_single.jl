@@ -8,7 +8,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import basic math
 import StatsBase
@@ -128,7 +128,7 @@ for file in files
     ppc_color = get(ColorSchemes.Purples_9, LinRange(0.25, 1.0, length(qs)))
 
     # Compute posterior predictive checks
-    ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
+    ppc_mat = BarBay.stats.logfreq_ratio_popmean_ppc(
         df_samples, n_ppc; model=:normal, param=param
     )
 
@@ -398,7 +398,7 @@ for file in files
                 :population_mean_fitness => :s̲ₜ,
             )
             # Compute posterior predictive checks
-            local ppc_mat = BayesFitness.stats.logfreq_ratio_multienv_ppc(
+            local ppc_mat = BarBay.stats.logfreq_ratio_multienv_ppc(
                 df_bc, n_ppc, data_bc.env; model=:normal, param=param
             )
 

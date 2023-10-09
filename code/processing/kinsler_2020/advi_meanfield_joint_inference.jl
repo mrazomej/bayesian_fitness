@@ -8,7 +8,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -124,7 +124,7 @@ Threads.@threads for i in axes(df_include, 1)
     data = df[(df.env.==env).&(df.rep.==rep), :]
 
     # Compute naive priors from neutral strains
-    naive_priors = BayesFitness.stats.naive_prior(data; rm_T0=rm_T0)
+    naive_priors = BarBay.stats.naive_prior(data; rm_T0=rm_T0)
 
     # Select standard deviation parameters
     s_pop_prior = hcat(
@@ -149,7 +149,7 @@ Threads.@threads for i in axes(df_include, 1)
         :data => data,
         :outputname => "$(outdir)/kinsler_$(env)env_$(rep)rep_$(rm_T0)rmT0_" *
                        "$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
-        :model => BayesFitness.model.fitness_normal,
+        :model => BarBay.model.fitness_normal,
         :model_kwargs => Dict(
             :s_pop_prior => s_pop_prior,
             :logσ_pop_prior => logσ_pop_prior,
@@ -166,5 +166,5 @@ Threads.@threads for i in axes(df_include, 1)
     # Run inference
     println("Running Inference for group $(i)...")
 
-    @time BayesFitness.vi.advi(; param...)
+    @time BarBay.vi.advi(; param...)
 end # for

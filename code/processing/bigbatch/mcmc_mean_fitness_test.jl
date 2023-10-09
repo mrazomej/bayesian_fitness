@@ -8,8 +8,8 @@ import Revise
 import Suppressor
 # Import project package
 import BayesFitUtils
-# Import BayesFitness package
-import BayesFitness
+# Import BarBay package
+import BarBay
 # Import library to list files
 import Glob
 # Import library to save output

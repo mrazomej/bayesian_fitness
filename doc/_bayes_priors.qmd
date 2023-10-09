@@ -34,7 +34,7 @@ indeed, one might argue that as scientists we learn the most from the anomalies
 and reassessments associated with episodes of incoherence.
 
 With this in mind, we leave it to the reader to judge the selection of priors.
-Furthermore, the software package associated with this work, `BayesFitness.jl`,
+Furthermore, the software package associated with this work, `BarBay.jl`,
 is written so that users can experiment with different prior selection criteria
 that fit their needs. We strongly advocate that statistics should not be done in
 a black-box fit-all tool mindset but rather as a formal way to encode the
@@ -69,7 +69,7 @@ $$
 \sigma^{(m)} \sim \log\mathcal{N}(\mu_{\sigma^{(m)}}, \sigma_{\sigma^{(m)}})
 $${#eq-prior_fit_var}
 
-The `BayesFitness.jl` package includes a function `naive_prior` within the
+The `BarBay.jl` package includes a function `naive_prior` within the
 `stats` module. This function utilizes the data from the neutral lineages to
 determine some of the prior parameters to facilitate the inference algorithm's
 numerical convergence. In particular, it defines the population mean fitness

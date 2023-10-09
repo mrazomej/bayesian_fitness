@@ -8,7 +8,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import basic math
 import StatsBase
@@ -109,7 +109,7 @@ for (i, file) in enumerate(files)
     chn = JLD2.load(file)["chain"]
 
     # Compute posterior predictive checks
-    ppc_mat = BayesFitness.stats.logfreq_ratio_mean_ppc(
+    ppc_mat = BarBay.stats.logfreq_ratio_mean_ppc(
         chn, n_ppc; param=param
     )
 
@@ -246,7 +246,7 @@ for rep = 1:n_rep
     )
 
     # Compute posterior predictive checks
-    ppc_mat = BayesFitness.stats.logfreq_ratio_mean_ppc(
+    ppc_mat = BarBay.stats.logfreq_ratio_mean_ppc(
         df_chn, n_ppc; param=param
     )
 
@@ -635,7 +635,7 @@ for row in 1:n_row
                 :population_mean_fitness => Symbol("s̲ₜ_R$rep"),
             )
             # Compute posterior predictive checks
-            local ppc_mat = BayesFitness.stats.logfreq_ratio_mutant_ppc(
+            local ppc_mat = BarBay.stats.logfreq_ratio_mutant_ppc(
                 df_chn, n_ppc; param=param
             )
             # Plot posterior predictive checks

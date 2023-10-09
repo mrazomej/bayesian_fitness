@@ -8,7 +8,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import basic math
 import LinearAlgebra
@@ -127,7 +127,7 @@ qs = [0.05, 0.68, 0.95]
 colors = get(ColorSchemes.Blues_9, LinRange(0.25, 1.0, length(qs)))
 
 # Compute posterior predictive checks
-ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
+ppc_mat = BarBay.stats.logfreq_ratio_popmean_ppc(
     chn, n_ppc; param=param, model=:normal
 )
 
@@ -398,7 +398,7 @@ for row in 1:n_row
             :population_mean_fitness => :s̲ₜ,
         )
         # Compute posterior predictive checks
-        local ppc_mat = BayesFitness.stats.logfreq_ratio_mutant_ppc(
+        local ppc_mat = BarBay.stats.logfreq_ratio_mutant_ppc(
             chn, n_ppc; param=param
         )
         # Plot posterior predictive checks
@@ -666,7 +666,7 @@ ppc_color = get(ColorSchemes.Blues_9, LinRange(0.25, 1.0, length(qs)))
 fig = Figure(resolution=(400, 350))
 
 # Compute posterior predictive checks
-ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
+ppc_mat = BarBay.stats.logfreq_ratio_popmean_ppc(
     df_samples, n_ppc; model=:normal, param=param
 )
 
@@ -761,7 +761,7 @@ for row in 1:n_row
             :population_mean_fitness => Symbol("s̲ₜ"),
         )
         # Compute posterior predictive checks
-        local ppc_mat = BayesFitness.stats.logfreq_ratio_mutant_ppc(
+        local ppc_mat = BarBay.stats.logfreq_ratio_mutant_ppc(
             df_samples[:, Symbol.(vars_bc)],
             n_ppc;
             model=:normal,

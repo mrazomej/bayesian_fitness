@@ -8,7 +8,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -164,7 +164,7 @@ for (i, data) in enumerate(df_group)
         :n_walkers => n_walkers,
         :n_steps => n_steps,
         :outputname => "./output/chain_joint_fitness_R$(i)rep_$(n_steps)steps_$(lpad(n_walkers, 2, "0"))walkers",
-        :model => BayesFitness.model.fitness_lognormal,
+        :model => BarBay.model.fitness_lognormal,
         :model_kwargs => Dict(
             :s_pop_prior => s_pop_prior,
             :σ_pop_prior => σ_pop_prior,
@@ -179,5 +179,5 @@ for (i, data) in enumerate(df_group)
     # Run inference
     println("Running Inference...")
 
-    @time BayesFitness.mcmc.mcmc_joint_fitness(; param...)
+    @time BarBay.mcmc.mcmc_joint_fitness(; param...)
 end # for

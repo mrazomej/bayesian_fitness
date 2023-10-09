@@ -7,7 +7,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -94,7 +94,7 @@ data[!, :freq] = data.count ./ data.count_sum
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Compute naive priors from neutral strains
-naive_priors = BayesFitness.stats.naive_prior(data; id_col=:genotype)
+naive_priors = BarBay.stats.naive_prior(data; id_col=:genotype)
 
 # Select standard deviation parameters
 s_pop_prior = hcat(
@@ -122,7 +122,7 @@ param = Dict(
     :data => data,
     :outputname => "./output/advi_meanfield_genotype-group_" *
                    "$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
-    :model => BayesFitness.model.fitness_normal,
+    :model => BarBay.model.fitness_normal,
     :model_kwargs => Dict(
         :s_pop_prior => s_pop_prior,
         :logσ_pop_prior => logσ_pop_prior,
@@ -147,4 +147,4 @@ end # if
 
 # Run inference
 println("Running Variational Inference...")
-@time BayesFitness.vi.advi(; param...)
+@time BarBay.vi.advi(; param...)

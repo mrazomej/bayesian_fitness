@@ -8,7 +8,7 @@ import Revise
 # Import project package
 import BayesFitUtils
 # Import package for Bayesian inference
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF

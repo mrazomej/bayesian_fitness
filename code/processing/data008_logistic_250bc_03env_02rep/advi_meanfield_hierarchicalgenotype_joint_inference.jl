@@ -8,7 +8,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -153,7 +153,7 @@ env_idx = [1, 1, 2, 3, 1, 2, 3]
 param = Dict(
     :data => data,
     :outputname => "./output/advi_meanfield_$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
-    :model => BayesFitness.model.multienv_replicate_fitness_normal,
+    :model => BarBay.model.multienv_replicate_fitness_normal,
     :model_kwargs => Dict(
         :envs => env_idx,
         :s_pop_prior => s_pop_prior,
@@ -178,4 +178,4 @@ end # if
 
 # Run inference
 println("Running Variational Inference...")
-@time dist = BayesFitness.vi.advi(; param...)
+@time dist = BarBay.vi.advi(; param...)

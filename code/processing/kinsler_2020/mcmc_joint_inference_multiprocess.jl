@@ -20,7 +20,7 @@ println("Importing packages on all processess...\n")
 # Import packages everywhere
 Distributed.@everywhere begin
     # Import library package
-    import BayesFitness
+    import BarBay
 
     # Import MCMC-related packages
     import Turing
@@ -83,7 +83,7 @@ for i = 1:size(df_include, 1)
         :n_walkers => n_walkers,
         :n_steps => n_steps,
         :outputname => "./output/kinsler_$(env)env_$(rep)rep_$(rm_T0)rmT0",
-        :model => BayesFitness.model.fitness_lognormal,
+        :model => BarBay.model.fitness_lognormal,
         :sampler => Turing.NUTS(0.65),
         :ensemble => Turing.MCMCDistributed(),
         :rm_T0 => rm_T0,
@@ -94,7 +94,7 @@ for i = 1:size(df_include, 1)
     println("Running Inference for group $(i)...")
 
     try
-        @time BayesFitness.mcmc.mcmc_joint_fitness(; param...)
+        @time BarBay.mcmc.mcmc_joint_fitness(; param...)
     catch
         @warn "Group $(i) was already processed"
     end

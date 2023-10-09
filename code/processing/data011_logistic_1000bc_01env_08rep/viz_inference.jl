@@ -8,7 +8,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import basic math
 import StatsBase
@@ -366,7 +366,7 @@ fig = Figure(resolution=(400 * n_rep, 350))
 for (i, (key, value)) in enumerate(rep_vars)
 
     # Compute posterior predictive checks
-    ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
+    ppc_mat = BarBay.stats.logfreq_ratio_popmean_ppc(
         df_samples[:, value], n_ppc; model=:normal, param=param
     )
 
@@ -473,7 +473,7 @@ for row in 1:n_row
                 :population_mean_fitness => Symbol("s̲ₜ"),
             )
             # Compute posterior predictive checks
-            local ppc_mat = BayesFitness.stats.logfreq_ratio_bc_ppc(
+            local ppc_mat = BarBay.stats.logfreq_ratio_bc_ppc(
                 df_samples[:, Symbol.(vars_bc)],
                 n_ppc;
                 model=:normal,

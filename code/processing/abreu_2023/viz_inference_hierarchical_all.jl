@@ -8,7 +8,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import basic math
 import LinearAlgebra
@@ -67,7 +67,7 @@ for col = 1:n_col
     data = df_counts[df_idx[:, col], 1:12]
 
     # Process data to arrays
-    data_dict = BayesFitness.utils.data_to_arrays(
+    data_dict = BarBay.utils.data_to_arrays(
         data; rep_col=:rep, env_col=:env
     )
 
@@ -351,7 +351,7 @@ for col = 1:n_col
     for (i, (key, value)) in enumerate(rep_vars)
 
         # Compute posterior predictive checks
-        ppc_mat = BayesFitness.stats.logfreq_ratio_popmean_ppc(
+        ppc_mat = BarBay.stats.logfreq_ratio_popmean_ppc(
             df_samples[:, value], n_ppc; model=:normal, param=param
         )
 
@@ -503,7 +503,7 @@ for col = 1:n_col
                         :population_mean_fitness => Symbol("s̲ₜ"),
                     )
                     # Compute posterior predictive checks
-                    local ppc_mat = BayesFitness.stats.logfreq_ratio_bc_ppc(
+                    local ppc_mat = BarBay.stats.logfreq_ratio_bc_ppc(
                         df_samples[:, Symbol.(vars_bc)],
                         n_ppc;
                         model=:normal,
@@ -518,7 +518,7 @@ for col = 1:n_col
                         :population_mean_fitness => Symbol("s̲ₜ"),
                     )
                     # Compute posterior predictive checks
-                    local ppc_mat = BayesFitness.stats.logfreq_ratio_multienv_ppc(
+                    local ppc_mat = BarBay.stats.logfreq_ratio_multienv_ppc(
                         df_samples[:, Symbol.(vars_bc)],
                         n_ppc,
                         envs[rep];

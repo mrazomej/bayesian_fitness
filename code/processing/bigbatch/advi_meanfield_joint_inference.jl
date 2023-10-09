@@ -8,7 +8,7 @@ println("Loading packages...")
 import BayesFitUtils
 
 # Import library package
-import BayesFitness
+import BarBay
 
 # Import libraries to manipulate data
 import DataFrames as DF
@@ -94,7 +94,7 @@ Threads.@threads for i in 1:length(df_keys)
     data = df_group[i]
 
     # Compute naive parameters
-    prior_param = BayesFitness.stats.naive_prior_neutral(data)
+    prior_param = BarBay.stats.naive_prior_neutral(data)
 
     # Define parameter for population mean fitness adding a standard deviation
     s_pop_prior = hcat(
@@ -108,7 +108,7 @@ Threads.@threads for i in 1:length(df_keys)
         :outputname => "$(outdir)/bigbatch_$(batch)batch_$(hub)hub_" *
                        "$(pert)perturbation_$(rep)rep_" *
                        "$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
-        :model => BayesFitness.model.fitness_normal,
+        :model => BarBay.model.fitness_normal,
         :model_kwargs => Dict(
             :s_pop_prior => s_pop_prior,
             :logσ_pop_prior => prior_param[:logσ_pop_prior],
@@ -124,5 +124,5 @@ Threads.@threads for i in 1:length(df_keys)
     # Run inference
     println("Running Inference for group $(i) / $(length(df_group))...")
 
-    @time BayesFitness.vi.advi(; param...)
+    @time BarBay.vi.advi(; param...)
 end # for

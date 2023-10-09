@@ -16,7 +16,7 @@ import Distributions
 import MCMCChains
 
 # Import function from stats module
-import BayesFitness.stats: matrix_quantile_range
+import BarBay.stats: matrix_quantile_range
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Color Style
