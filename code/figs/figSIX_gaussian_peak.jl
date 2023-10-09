@@ -68,9 +68,9 @@ fig = Figure(resolution=(400, 300))
 # Add axis for latent space
 ax = Axis3(
     fig[1, 1],
-    xlabel="x₁",
-    ylabel="x₂",
-    zlabel="π(x₁,x₂)",
+    xlabel="θ₁",
+    ylabel="θ₂",
+    zlabel="π(x̲,θ₁,θ₂)",
     xypanelcolor="#E6E6EF",
     xzpanelcolor="#E6E6EF",
     yzpanelcolor="#E6E6EF",
@@ -83,6 +83,9 @@ ax = Axis3(
     yticklabelsvisible=false,
     zticksvisible=false,
     zticklabelsvisible=false,
+    xlabeloffset=10,
+    ylabeloffset=10,
+    zlabeloffset=10,
 )
 
 # Plot surface
@@ -103,6 +106,7 @@ wireframe!(
 )
 
 save("$(git_root())/doc/figs/figSIX_gaussian_peak.pdf", fig)
+save("$(git_root())/doc/figs/figSIX_gaussian_peak.svg", fig)
 save("$(git_root())/doc/figs/figSIX_gaussian_peak.png", fig)
 
 fig

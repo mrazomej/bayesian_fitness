@@ -201,7 +201,7 @@ n_ppc = 500
 qs = [0.95, 0.675, 0.05]
 
 # Define number of rows and columns
-n_row, n_col = [2, 2]
+n_row, n_col = [4, 4]
 
 # List example barcodes to plot
 bc_plot = StatsBase.sample(
@@ -360,7 +360,8 @@ save("$(fig_dir)/ppc_$(env)env.pdf", fig)
 
 println("Plot the remainder in parallel")
 
-Threads.@threads for d = 2:length(df_group)
+# Threads.@threads 
+for d = 2:length(df_group)
     # Define quantiles to compute
     qs = [0.95, 0.675, 0.05]
 
@@ -434,7 +435,7 @@ Threads.@threads for d = 2:length(df_group)
     qs = [0.95, 0.675, 0.05]
 
     # Define number of rows and columns
-    n_row, n_col = [2, 2]
+    n_row, n_col = [4, 4]
 
     # List example barcodes to plot
     bc_plot = StatsBase.sample(

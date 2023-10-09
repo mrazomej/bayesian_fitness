@@ -14,9 +14,6 @@ import BayesFitness
 import DataFrames as DF
 import CSV
 
-# Import library to save and load native julia objects
-import JLD2
-
 # Import library to list files
 import Glob
 
@@ -38,6 +35,8 @@ import Distributions
 Turing.setadbackend(:reversediff)
 # Allow system to generate cache to speed up computation
 Turing.setrdcache(true)
+
+Random.seed!(42)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Define ADVI hyerparameters
@@ -64,7 +63,7 @@ println("Loading data...")
 
 # Import data
 data = CSV.read(
-    "$(git_root())/data/logistic_growth/data_003/tidy_data.csv", DF.DataFrame
+    "$(git_root())/data/logistic_growth/data_010/tidy_data.csv", DF.DataFrame
 )
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -72,7 +71,7 @@ data = CSV.read(
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Compute naive priors from neutral strains
-naive_priors = BayesFitness.stats.naive_prior(data; pseudocount=1)
+naive_priors = BayesFitness.stats.naive_prior(data; rep_col=:rep, pseudocount=1)
 
 # Select standard deviation parameters
 s_pop_prior = hcat(
@@ -98,18 +97,20 @@ logλ_prior = hcat(
 
 param = Dict(
     :data => data,
-    :outputname => "./output/advi_meanfield_$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
-    :model => BayesFitness.model.multienv_fitness_normal,
+    :outputname => "./output/advi_meanfield_" *
+                   "$(lpad(n_samples, 2, "0"))samples_$(n_steps)steps",
+    :model => BayesFitness.model.replicate_fitness_normal,
     :model_kwargs => Dict(
         :s_pop_prior => s_pop_prior,
         :logσ_pop_prior => logσ_pop_prior,
         :logσ_bc_prior => logσ_bc_prior,
         :s_bc_prior => [0.0, 1.0],
         :logλ_prior => logλ_prior,
+        :logτ_prior => [-2.0, 0.5],
     ),
-    :env_col => :env,
     :advi => Turing.ADVI(n_samples, n_steps),
     :opt => Turing.TruncatedADAGrad(),
+    :rep_col => :rep,
     :fullrank => false
 )
 
