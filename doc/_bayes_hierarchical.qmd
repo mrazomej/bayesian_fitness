@@ -148,7 +148,7 @@ $$
 ),
 $${#eq-hier_bayes}
 where we leave the conditioning on the population mean fitness as we did in
-@seq-bayes_mutfit. This expression can be simplified in two ways. First, the
+@sec-bayes_mutfit. This expression can be simplified in two ways. First, the
 frequency values for each experimental replicate depend directly on the local
 fitness values and the corresponding population mean fitness, as the
 relationship between experimental replicates only occurs through the relative
@@ -203,11 +203,11 @@ expectations of what the global hyper-fitness or local fitness value might be do
 not depend on these nuisance parameters. 
 
 The first term on the right-hand side of @eq-hier_bayes_exp_indep takes the same
-functional form as the one derived in @seq-bayes_mutfit. Therefore, all we are
+functional form as the one derived in @sec-bayes_mutfit. Therefore, all we are
 left with is to determine the functional forms for the hyper–prior
 $\pi(\underline{\theta}^M)$, and the conditional probability
 $\pi(\underline{s}^M_{[j]} \mid \underline{\theta}^M)$. In analogy to the 
-assumptions used for the fitness values in @seq-bayes_mutfit, we define the 
+assumptions used for the fitness values in @sec-bayes_mutfit, we define the 
 value of each hyper-fitness as independent. This means that we have
 $$
 \pi(\underline{\theta}^M) = \prod_{m=1}^M \pi(\theta^{(m)}).

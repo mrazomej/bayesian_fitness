@@ -3,7 +3,7 @@ editor:
     render-on-save: true
 ---
 
-### Mutant relative fitness uncertainty $\pi(\underline{s}^M \mid \underline{\bar{s}}_T, \underline{\underline{F}}, \underline{\underline{R}})$ {#seq-bayes_mutfit}
+### Mutant relative fitness uncertainty $\pi(\underline{s}^M \mid \underline{\bar{s}}_T, \underline{\underline{F}}, \underline{\underline{R}})$ {#sec-bayes_mutfit}
 
 The last piece of our inference is the piece that we care about the most: the
 probability distribution of all the mutants' relative fitness, given the
