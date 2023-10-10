@@ -1,23 +1,78 @@
 project:
-  type: book
-
-book:
+  type: website
+  output-dir: _output
   title: "Bayesian inference of relative fitness on high-throughput pooled competition assays"
-  author: "Manuel Razo-Mejia, Madhav Mani, Dmitri Petrov"
-  page-navigation: true
-  chapters:
-    - index.qmd
-    - intro.qmd
-    - results.qmd
-    - discussion.qmd
-    - SI.qmd
+  render:
+    - paper.qmd
+
+number-sections: false
+bibliography: references.bib
+author:
+  - name: Manuel Razo-Mejia
+    orcid: 0000-0002-9510-0527
+    email: mrazo@stanford.edu
+    affiliation: 
+      - id: stanfordbio
+        name: Department of Biology, Stanford University, Stanford, CA, USA
+  - name: Madhav Mani
+    orcid: 0000-0002-5812-4167
+    email: 
+    affiliation: 
+      - name: Department of Engineering Sciences and Applied Mathematics, Northwestern University, Chicago, IL, USA
+      - name: NSF-Simons Center for Quantitative Biology, Northwestern University, Chicago, IL, USA
+      - name: Department of Molecular Biosciences, Northwestern University, Chicago, IL, USA
+  - name: Dmitri Petrov
+    orcid: 0000-0002-3664-9130
+    email: dpetrov@stanford.edu
+    affiliation:
+      - ref: stanfordbio
+      - name: Stanford Cancer Institute, Stanford University School of Medicine, Stanford, CA, USA
+keywords:
+  - bayesian inference
+  - variational inference
+  - relative fitness
+  - open-source
+abstract: |
+  The tracking of lineage frequencies via DNA barcode sequencing enables the
+  quantification of microbial fitness. However, experimental noise coming from
+  biotic and abiotic sources complicates the computation of a reliable
+  inference. We present a Bayesian pipeline to infer relative microbial fitness
+  from high-throughput lineage tracking assays. Our model accounts for multiple
+  sources of noise and propagates uncertainties throughout all parameters in a
+  systematic way. Furthermore, using modern variational inference methods based
+  on automatic differentiation, we are able to scale the inference to a large
+  number of unique barcodes. We extend this core model to analyze
+  multi-environment assays, replicate experiments, and barcodes linked to
+  genotypes. On simulations, our method recovers known parameters within
+  posterior credible intervals. This work provides a generalizable Bayesian
+  framework to analyze lineage tracking experiments. The accompanying
+  open-source software library enables the adoption of principled statistical
+  methods in experimental evolution.
+
+website:
+  navbar:
+    left:
+      - text: BarBay.jl
+        href: https://mrazomej.github.io/BarBay.jl
+    logo: logo.png
+    right:
+      - icon: github
+        href: https://github.com/mrazomej/bayesian_fitness
+      - icon: twitter-x
+        href: https://twitter.com/mrazomej
 
 format:
   html:
     theme: cosmo
     default-image-extension: png
+    toc: true
   pdf:
-    documentclass: scrreprt
+    toc: false
+    include-in-header:
+        - text: |
+            \usepackage{lineno}
+            \linenumbers
+    documentclass: scrartcl
     default-image-extension: pdf
     pdf-engine: pdflatex
     cite-method: biblatex
