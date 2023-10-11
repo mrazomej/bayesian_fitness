@@ -25,6 +25,7 @@ author:
     affiliation:
       - ref: stanfordbio
       - name: Stanford Cancer Institute, Stanford University School of Medicine, Stanford, CA, USA
+      - name: Chan Zuckerberg Biohub 
 keywords:
   - bayesian inference
   - variational inference
@@ -67,12 +68,12 @@ format:
     theme: cosmo
     default-image-extension: png
     toc: true
-  # pdf: 
-  #   toc: false
-  #   include-in-header:
-  #       - file: _preamble.tex
-  #   documentclass: scrartcl
-  #   default-image-extension: pdf
-  #   pdf-engine: pdflatex
-  #   cite-method: biblatex
-  #   keep-tex: true
+  pdf: 
+    toc: false
+    include-in-header:
+        - file: _preamble.tex
+    documentclass: scrartcl
+    default-image-extension: pdf
+    pdf-engine: pdflatex
+    cite-method: biblatex
+    keep-tex: false
