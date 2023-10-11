@@ -5,8 +5,6 @@ project:
   render:
     - paper.qmd
 
-number-sections: false
-bibliography: references.bib
 author:
   - name: Manuel Razo-Mejia
     orcid: 0000-0002-9510-0527
@@ -32,6 +30,7 @@ keywords:
   - variational inference
   - relative fitness
   - open-source
+  - reproducible research
 abstract: |
   The tracking of lineage frequencies via DNA barcode sequencing enables the
   quantification of microbial fitness. However, experimental noise coming from
@@ -48,6 +47,8 @@ abstract: |
   framework to analyze lineage tracking experiments. The accompanying
   open-source software library enables the adoption of principled statistical
   methods in experimental evolution.
+number-sections: false
+bibliography: references.bib
 
 website:
   navbar:
@@ -66,13 +67,12 @@ format:
     theme: cosmo
     default-image-extension: png
     toc: true
-  pdf:
-    toc: false
-    include-in-header:
-        - text: |
-            \usepackage{lineno}
-            \linenumbers
-    documentclass: scrartcl
-    default-image-extension: pdf
-    pdf-engine: pdflatex
-    cite-method: biblatex
+  # pdf: 
+  #   toc: false
+  #   include-in-header:
+  #       - file: _preamble.tex
+  #   documentclass: scrartcl
+  #   default-image-extension: pdf
+  #   pdf-engine: pdflatex
+  #   cite-method: biblatex
+  #   keep-tex: true

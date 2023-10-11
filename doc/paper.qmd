@@ -1,0 +1,62 @@
+# Abstract
+
+{{< include _abstract.qmd >}}
+
+# Introduction
+
+{{< include _intro.qmd >}}
+
+# Results
+
+<!-- Experimental results -->
+{{< include _experiment.qmd >}}
+
+<!-- Fitness model -->
+{{< include _fitness_model.qmd >}}
+
+<!-- Bayesian inference -->
+{{< include _bayesian_inference.qmd >}}
+
+<!-- Single dataset -->
+{{< include _single_results.qmd >}}
+
+<!-- Multi-environment results -->
+{{< include _multienv_results.qmd >}}
+
+<!-- Hierarchical model for experimental replicates -->
+{{< include _hierarchical_replicates_results.qmd >}}
+
+<!-- Hierarchical model for genotypes-->
+{{< include _hierarchical_genotypes_results.qmd >}}
+
+# Discussion
+
+{{< include _discussion.qmd >}}
+
+# Acknowledgements
+
+{{< include _acknowledgements.qmd >}}
+
+# Supplementary Materials
+
+<!-- Primer on Variational Bayes -->
+{{< include _variational_inference_primer.qmd >}}
+
+<!-- Bayesian inference pipeline -->
+{{< include _bayes_freq.qmd >}}
+
+{{< include _bayes_meanfit.qmd >}}
+
+{{< include _bayes_mutfit.qmd >}}
+
+<!-- Hierarchical models -->
+{{< include _bayes_hierarchical.qmd >}}
+
+<!-- Prior selection -->
+{{< include _bayes_priors.qmd >}}
+
+<!-- Posterior predictive checks -->
+{{< include _ppc.qmd >}}
+
+<!-- Logistic growth simulations -->
+{{< include _logistic_sim.qmd >}}
