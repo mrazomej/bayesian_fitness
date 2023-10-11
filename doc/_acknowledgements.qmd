@@ -2,8 +2,14 @@ We would like to thank Griffin Chure and Michael Betancourt for their helpful
 advice and discussion. We would like to thank Karna Gowda, Spencer Farrell, and
 Shaili Mathur for critical observations on the manuscript. This work was
 supported by the NIH/NIGMS, Genomics of rapid adaptation in the lab and in the
-wild R35GM11816506 (MIRA grant), and the CZ Biohub investigator program. MRM was
-supported by the Schmidt Science Fellowship. MM was supported by The National
-Science Foundation-Simons Center for Quantitative Biology at Northwestern
-University and the Simons Foundation grant 597491. MM is a Simons Investigator. 
-DP is a CZ Biohub investigator.
+wild R35GM11816506 (MIRA grant), the NIH, Unravelling mechanisms of tumor
+suppression in lung cancer R01CA23434903, the NIH (PQ4), Quantitative and
+multiplexed analysis of gene function in cancer in vivo R01CA23125303, the NIH,
+Genetic Determinants of Tumor Growth and Drug Sensitivity in EGFR Mutant Lung
+Cancer R01CA263715, the NIH, Dissecting the interplay between aging, genotype,
+and the microenvironment in lung cancer U01AG077922, the NIH, Genetic dissection
+of oncogenic Kras signaling R01CA230025, and the CZ Biohub investigator program.
+MRM was supported by the Schmidt Science Fellowship. MM was supported by The
+National Science Foundation-Simons Center for Quantitative Biology at
+Northwestern University and the Simons Foundation grant 597491. MM is a Simons
+Investigator. DP is a CZ Biohub investigator.
