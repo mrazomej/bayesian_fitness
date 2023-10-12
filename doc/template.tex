@@ -316,7 +316,6 @@ $if(natbib)$
 $endif$
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Add biblatex bibliography
 $if(biblatex)$
 \usepackage[
     $if(biblio-style)$style=$biblio-style$,$endif$
@@ -328,9 +327,7 @@ $if(biblatex)$
 	maxbibnames=9, 			    % Include up to 9 names in citation
 	firstinits=true,
 ]{biblatex}
-$endif$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 $for(bibliography)$
 \addbibresource{$bibliography$}
 $endfor$
@@ -382,8 +379,6 @@ $endif$
 $endif$
   pdfcreator={LaTeX via pandoc}}
 
-$title.tex()$
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Add title
 $if(title)$
@@ -412,13 +407,14 @@ $endif$
 $endfor$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{document}
+\date{}
 
+\begin{document}
 $before-body.tex()$
 $for(include-before)$
 $include-before$
-$endfor$
 
+$endfor$
 $toc.tex()$
 $if(linestretch)$
 \setstretch{$linestretch$}
