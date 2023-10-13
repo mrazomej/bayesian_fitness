@@ -20,5 +20,17 @@
 % This will allow me to add a tile to the main text and to the SI
 \usepackage{titling}
 
+% Define command to begin the supplementary section
+\newcommand{\beginsupplement}{
+\setcounter{section}{0} % Restart section counter
+\renewcommand{\thesection}{S\arabic{section}}%
+\setcounter{table}{0} % Restart table counter
+\renewcommand{\thetable}{S\arabic{table}}%
+\setcounter{figure}{0} % Restart figure counter
+\renewcommand{\thefigure}{S\arabic{figure}}%
+\setcounter{equation}{0} % Restart equation counter
+\renewcommand{\theequation}{S\arabic{equation}}%
+}
+
 % Add author affiliations
 \usepackage{authblk}

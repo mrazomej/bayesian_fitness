@@ -4,9 +4,7 @@
 \PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
 %
 \documentclass[
-  letterpaper,
-  DIV=11,
-  numbers=noendperiod]{scrartcl}
+]{scrartcl}
 
 \usepackage{amsmath,amssymb}
 \usepackage{iftex}
@@ -78,8 +76,7 @@
 \def\fps@figure{htbp}
 \makeatother
 
-\usepackage{lineno}
-\linenumbers
+% Change font size
 \usepackage[font={footnotesize, sf}, labelfont=bf, margin=0.05\linewidth]{caption}
 \renewcommand{\familydefault}{\sfdefault}
 % Bold the 'Figure #' in the caption and separate it from the title/caption
@@ -115,8 +112,6 @@
 
 % Add author affiliations
 \usepackage{authblk}
-
-\KOMAoption{captions}{tableheading}
 \makeatletter
 \makeatother
 \makeatletter
@@ -174,26 +169,24 @@
   \usepackage{selnolig}  % disable illegal ligatures
 \fi
 
-% References
-% \usepackage[]{biblatex}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage[
-	backend=bibtex,
-	style=phys, 
-	sorting=none,				% Do not sort bibliography
+    style=phys,
+    sorting=none,				% Do not sort bibliography
 	url=false, 					% Do not show url in reference
 	doi=false, 					% Do not show doi in reference
 	isbn=false, 				% Do not show isbn link in reference
-	eprint=false, 			% Do not show eprint link in reference
-	maxbibnames=9, 			% Include up to 9 names in citation
+	eprint=false, 			    % Do not show eprint link in reference
+	maxbibnames=9, 			    % Include up to 9 names in citation
 	firstinits=true,
 ]{biblatex}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \addbibresource{references.bib}
-
-
 \IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same} % disable monospaced font for URLs
 \hypersetup{
+  pdftitle={Bayesian inference of relative fitness on high-throughput pooled competition assays},
   pdfauthor={Manuel Razo-Mejia; Madhav Mani; Dmitri Petrov},
   pdfkeywords={bayesian inference, variational inference, relative
 fitness, open-source, reproducible research},
@@ -204,31 +197,65 @@ fitness, open-source, reproducible research},
   urlcolor={Blue},
   pdfcreator={LaTeX via pandoc}}
 
-% Title
-\title{Bayesian inference of relative fitness on high-throughput pooled competition assays}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Add title
+\title{Bayesian inference of relative fitness on high-throughput pooled
+competition assays}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Authors
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Add list of authors
+
+% Loop through authors
 \author[1,*]{Manuel Razo-Mejia}
-\author[2,3]{Madhav Mani}
-\author[1,4,5]{Dmitri Petrov}
+\author[3,4]{Madhav Mani}
+\author[1,2,5]{Dmitri Petrov}
 
-% Affiliations
-\affil[1]{Department of Biology, Stanford University, Stanford, CA, USA}
-\affil[2]{Department of Engineering Sciences and Applied Mathematics, Northwestern University, Chicago, IL, USA}
-\affil[3]{NSF-Simons Center for Quantitative Biology, Northwestern University, Chicago, IL, USA}
-\affil[4]{Stanford Cancer Institute, Stanford University School of Medicine, Stanford, CA, USA}
+% Loop through affiliations
+\affil[1]{Department of Biology, Stanford University}
+\affil[2]{Stanford Cancer Institute, Stanford University School of
+Medicine}
+\affil[3]{NSF-Simons Center for Quantitative Biology, Northwestern
+University}
+\affil[4]{Department of Molecular Biosciences, Northwestern University}
 \affil[5]{Chan Zuckerberg Biohub}
-\affil[*]{Correspondence: mrazo@stanford.edu}
 
-\setcounter{Maxaffil}{0}
+% Add corresponding author
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Set affiliations in small font
 \renewcommand\Affilfont{\itshape\small}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Remove date
 \date{}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[borderline west={3pt}{0pt}{shadecolor}, sharp corners, frame hidden, interior hidden, enhanced, breakable, boxrule=0pt]}{\end{tcolorbox}}\fi
+\maketitle
+\begin{abstract}
+The tracking of lineage frequencies via DNA barcode sequencing enables
+the quantification of microbial fitness. However, experimental noise
+coming from biotic and abiotic sources complicates the computation of a
+reliable inference. We present a Bayesian pipeline to infer relative
+microbial fitness from high-throughput lineage tracking assays. Our
+model accounts for multiple sources of noise and propagates
+uncertainties throughout all parameters in a systematic way.
+Furthermore, using modern variational inference methods based on
+automatic differentiation, we are able to scale the inference to a large
+number of unique barcodes. We extend this core model to analyze
+multi-environment assays, replicate experiments, and barcodes linked to
+genotypes. On simulations, our method recovers known parameters within
+posterior credible intervals. This work provides a generalizable
+Bayesian framework to analyze lineage tracking experiments. The
+accompanying open-source software library enables the adoption of
+principled statistical methods in experimental evolution.
+\end{abstract}
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, enhanced, breakable, sharp corners, borderline west={3pt}{0pt}{shadecolor}, frame hidden, interior hidden]}{\end{tcolorbox}}\fi
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Remove main text from the table of contents by specifying not to include
 % any section or subsection
 \addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
@@ -239,26 +266,7 @@ fitness, open-source, reproducible research},
 % Generate filter to not include references from main text in the
 % supplemental references
 \defbibfilter{notother}{not segment=\therefsegment}
-
-\maketitle
-
-\begin{abstract}
-    The tracking of lineage frequencies via DNA barcode sequencing enables the
-  quantification of microbial fitness. However, experimental noise coming from
-  biotic and abiotic sources complicates the computation of a reliable
-  inference. We present a Bayesian pipeline to infer relative microbial fitness
-  from high-throughput lineage tracking assays. Our model accounts for multiple
-  sources of noise and propagates uncertainties throughout all parameters in a
-  systematic way. Furthermore, using modern variational inference methods based
-  on automatic differentiation, we are able to scale the inference to a large
-  number of unique barcodes. We extend this core model to analyze
-  multi-environment assays, replicate experiments, and barcodes linked to
-  genotypes. On simulations, our method recovers known parameters within
-  posterior credible intervals. This work provides a generalizable Bayesian
-  framework to analyze lineage tracking experiments. The accompanying
-  open-source software library enables the adoption of principled statistical
-  methods in experimental evolution.
-\end{abstract}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
@@ -1187,44 +1195,54 @@ high-throughput technologies applications.
 \hypertarget{acknowledgements}{%
 \section{Acknowledgements}\label{acknowledgements}}
 
-We would like to thank Griffin Chure and Michael Betancourt for their helpful
-advice and discussion. We would like to thank Karna Gowda, Spencer Farrell, and
-Shaili Mathur for critical observations on the manuscript. This work was
-supported by the NIH/NIGMS, Genomics of rapid adaptation in the lab and in the
-wild R35GM11816506 (MIRA grant), the NIH, Unravelling mechanisms of tumor
-suppression in lung cancer R01CA23434903, the NIH (PQ4), Quantitative and
-multiplexed analysis of gene function in cancer in vivo R01CA23125303, the NIH,
-Genetic Determinants of Tumor Growth and Drug Sensitivity in EGFR Mutant Lung
-Cancer R01CA263715, the NIH, Dissecting the interplay between aging, genotype,
-and the microenvironment in lung cancer U01AG077922, the NIH, Genetic dissection
-of oncogenic Kras signaling R01CA230025, and the CZ Biohub investigator program.
-MRM was supported by the Schmidt Science Fellowship. MM was supported by The
-National Science Foundation-Simons Center for Quantitative Biology at
-Northwestern University and the Simons Foundation grant 597491. MM is a Simons
-Investigator. DP is a CZ Biohub investigator.
+We would like to thank Griffin Chure and Michael Betancourt for their
+helpful advice and discussion. We would like to thank Karna Gowda,
+Spencer Farrell, and Shaili Mathur for critical observations on the
+manuscript. This work was supported by the NIH/NIGMS, Genomics of rapid
+adaptation in the lab and in the wild R35GM11816506 (MIRA grant), the
+NIH, Unravelling mechanisms of tumor suppression in lung cancer
+R01CA23434903, the NIH (PQ4), Quantitative and multiplexed analysis of
+gene function in cancer in vivo R01CA23125303, the NIH, Genetic
+Determinants of Tumor Growth and Drug Sensitivity in EGFR Mutant Lung
+Cancer R01CA263715, the NIH, Dissecting the interplay between aging,
+genotype, and the microenvironment in lung cancer U01AG077922, the NIH,
+Genetic dissection of oncogenic Kras signaling R01CA230025, and the CZ
+Biohub investigator program. MRM was supported by the Schmidt Science
+Fellowship. MM was supported by The National Science Foundation-Simons
+Center for Quantitative Biology at Northwestern University and the
+Simons Foundation grant 597491. MM is a Simons Investigator. DP is a CZ
+Biohub investigator.
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Print main text references
 \printbibliography[segment=\therefsegment]
 % Close reference segment
 \end{refsegment}
 
 \clearpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SUPPLEMENTAL MATERIAL
 
-% Indicate that now all sections and subsections should be included in the
+% Indicate that all sections and subsections should be included in the
 % table of contents so that only the SI is included.
 \addtocontents{toc}{\protect\setcounter{tocdepth}{3}}
 
-% Define reference section for the supplemental material
+% Define the reference section for the supplemental material
 \begin{refsegment}
-% Set equation, table and figure counters to begin with "S"
+% Set equation, table, and figure counters to begin with "S"
 \beginsupplement
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \hypertarget{supplementary-materials}{%
 \section{Supplementary Materials}\label{supplementary-materials}}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Add table of contents
 \tableofcontents
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \hypertarget{sec-vi_primer}{%
 \subsection{Primer on Variational Inference}\label{sec-vi_primer}}
@@ -2754,13 +2772,12 @@ growth-dilution simulations with and without noise}}
 
 \end{figure}
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% HERE IS WHERE THE SI TEXT GOES
 % Print supplemental references changing the title
 \printbibliography[title={Supplemental References},
 segment=\therefsegment, filter=notother]
 \end{refsegment}
-
-% \printbibliography
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \end{document}

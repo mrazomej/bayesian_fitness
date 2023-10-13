@@ -116,14 +116,4 @@ format:
       - file: _preamble.tex
     cite-method: biblatex
     biblio-style: phys
-    
-    # pdf-engine: pdflatex
-
-    # toc: false
-    # include-in-header:
-    #     - file: _preamble.tex
-    # documentclass: scrartcl
-    # default-image-extension: pdf
-    # pdf-engine: pdflatex
-    # cite-method: biblatex
-    # keep-tex: false
+    keep-tex: true
