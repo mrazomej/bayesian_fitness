@@ -1,3 +1,4 @@
+::: {.maintext}
 # Introduction
 
 {{< include _intro.qmd >}}
@@ -32,7 +33,9 @@
 # Acknowledgements
 
 {{< include _acknowledgements.qmd >}}
+:::
 
+::: {.sitext}
 # Supplementary Materials
 
 <!-- Primer on Variational Bayes -->
@@ -56,3 +59,4 @@
 
 <!-- Logistic growth simulations -->
 {{< include _logistic_sim.qmd >}}
+:::

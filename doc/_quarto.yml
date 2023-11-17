@@ -119,3 +119,5 @@ format:
     keep-tex: true
     filters:
       - color-text-span.lua
+      - maintext-filter.lua
+      - sitext-filter.lua
