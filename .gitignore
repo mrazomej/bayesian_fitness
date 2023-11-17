@@ -94,6 +94,7 @@ doc/*_files/*
 doc/_*.html
 doc/_*.pdf
 doc/figs/
+doc/ploscompbio_reviews/
 code/analysis/*/output/
 data/*/*
 *.jld2
