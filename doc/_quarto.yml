@@ -117,3 +117,5 @@ format:
     cite-method: biblatex
     biblio-style: phys
     keep-tex: true
+    filters:
+      - color-text-span.lua
