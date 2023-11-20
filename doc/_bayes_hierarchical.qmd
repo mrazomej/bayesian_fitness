@@ -197,14 +197,14 @@ $$
 \pi(
     \underline{\theta}^M
 ).
-$${#eq-hier_bayes_exp_indep}
+$${#eq-hier_bayes_exp_indep_02}
 Notice we removed the conditioning on the population mean fitness as our prior
 expectations of what the global hyper-fitness or local fitness value might be do
 not depend on these nuisance parameters. 
 
-The first term on the right-hand side of @eq-hier_bayes_exp_indep takes the same
-functional form as the one derived in @sec-bayes_mutfit. Therefore, all we are
-left with is to determine the functional forms for the hyper–prior
+The first term on the right-hand side of @eq-hier_bayes_exp_indep_02 takes the
+same functional form as the one derived in @sec-bayes_mutfit. Therefore, all we
+are left with is to determine the functional forms for the hyper–prior
 $\pi(\underline{\theta}^M)$, and the conditional probability
 $\pi(\underline{s}^M_{[j]} \mid \underline{\theta}^M)$. In analogy to the 
 assumptions used for the fitness values in @sec-bayes_mutfit, we define the 
