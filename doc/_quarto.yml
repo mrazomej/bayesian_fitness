@@ -111,10 +111,11 @@ format:
     toc: true
   pdf: 
     documentclass: scrartcl
+    numbersections: true
     template: template.tex
+    cite-method: biblatex
     include-in-header:
       - file: _preamble.tex
-    cite-method: biblatex
     biblio-style: phys
     keep-tex: true
     filters:
