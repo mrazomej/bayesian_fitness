@@ -14,10 +14,6 @@ function Div(el)
 % Set equation, table, and figure counters to begin with "S"
 \beginsupplement
 
-%% OPTIONAL: Add title for section if it doesn't exist
-\hypertarget{supplementary-materials}{%
-\section{Supplementary Materials}\label{supplementary-materials}}
-
 % Add table of contents
 \tableofcontents
 ]]
