@@ -94,7 +94,7 @@ q_\phi^*(\underline{\theta}) =
     q_\phi(\underline{\theta}) \vert\vert 
     \pi(\underline{\theta} \mid \underline{x})
 \right),
-$${#eq-vi_objective}
+$${#eq-vi_objective_si}
 where $D_{KL}$ is the KL divergence. Furthermore, we highlight that the KL
 divergence is a strictly positive number, i.e.,
 $$
@@ -105,7 +105,7 @@ D_{KL}\left(
 $${#eq-vi_kl_pos}
 as this property will become important later on.
 
-At first sight, @eq-vi_objective does not improve the situation but only
+At first sight, @eq-vi_objective_si does not improve the situation but only
 introduces further technical complications. After all, the definition of the KL
 divergence
 $$
