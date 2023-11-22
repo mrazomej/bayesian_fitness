@@ -373,8 +373,8 @@ function growth_lineages(
     # t
     n_cells_new = [lineage_growth(n, f) for (n, f) in zip(n_cells, fitness)]
 
-    # Set all negative numbers to zero
-    n_cells_new[n_cells_new.≤0] .= 0.0
+    # Set all numbers less than one to zero
+    n_cells_new[n_cells_new.<1.0] .= 0.0
 
     # Sample number of cells according to Poisson distribution
     return Random.rand.(Distributions.Poisson.(n_cells_new))
@@ -691,47 +691,47 @@ function fitseq2_fitness_measurement(
     end # if
 
     # Initialize matrix to save number of cells through growth cycles
-    n_cells_culture = Matrix{Float64}(undef, n_lineage, n_growth_cycles + 1)
+    n_cells_culture = Matrix{Float64}(undef, n_growth_cycles + 1, n_lineage)
     # Set initial condition
-    n_cells_culture[:, 1] = n̲₀
+    n_cells_culture[1, :] = n̲₀
 
     # Initialize matrix to save number of sampled cells for PCR
     n_cells_sample = similar(n_cells_culture)
     # Set initial condition
-    n_cells_sample[:, 1] = sample_lineages(n_cells_culture[:, 1], L)
+    n_cells_sample[1, :] = sample_lineages(n_cells_culture[1, :], L)
 
     # Initialize matrix to save number of reads after PCR
     n_pcr = similar(n_cells_culture)
     # Set initial condition
-    n_pcr[:, 1] = amplify_lineages(n_cells_sample[:, 1], n_pcr_cycles)[:, end]
+    n_pcr[1, :] = amplify_lineages(n_cells_sample[1, :], n_pcr_cycles)[:, end]
 
     # Initialize matrix to save number of sequenced reads
     n_reads = similar(n_cells_culture)
     # Set initial condition
-    n_reads[:, 1] = sequence_lineages(n_pcr[:, 1], reads)
+    n_reads[1, :] = sequence_lineages(n_pcr[1, :], reads)
 
 
     # Loop through growth-dilution cycles
     for cyc = 2:(n_growth_cycles+1)
         # 1. Simulate noisy growth for n_gen
-        n_cells_culture[:, cyc] = growth_lineages(
-            n_cells_culture[:, cyc-1], λ̲, n_gen
+        n_cells_culture[cyc, :] = growth_lineages(
+            n_cells_culture[cyc-1, :], λ̲, n_gen
         )
 
         # 2. Simulate noisy cell sampling
-        n_cells_sample[:, cyc] = sample_lineages(n_cells_culture[:, cyc], L)
+        n_cells_sample[cyc, :] = sample_lineages(n_cells_culture[cyc, :], L)
 
         # 3. Simulate noisy PCR amplification
-        n_pcr[:, cyc] = amplify_lineages(
-            n_cells_sample[:, cyc], n_pcr_cycles
+        n_pcr[cyc, :] = amplify_lineages(
+            n_cells_sample[cyc, :], n_pcr_cycles
         )[:, end]
 
         # 4. Simulate noisy sequencing
-        n_reads[:, cyc] = sequence_lineages(n_pcr[:, cyc], reads)
+        n_reads[cyc, :] = sequence_lineages(n_pcr[cyc, :], reads)
 
         # 5. Dilute back again the cultures for next generation
-        n_cells_culture[:, cyc] = transfer_lineages(
-            n_cells_culture[:, cyc], n_gen
+        n_cells_culture[cyc, :] = transfer_lineages(
+            n_cells_culture[cyc, :], n_gen
         )
     end # for
 
