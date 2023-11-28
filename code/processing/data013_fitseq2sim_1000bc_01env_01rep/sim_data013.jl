@@ -135,6 +135,21 @@ data = DF.stack(data, bc_names)
 # Rename columns
 DF.rename!(data, :variable => :barcode, :value => :count)
 
+# Convert noiseless matrix to dataframe
+data_noiseless = DF.DataFrame(n_mat, bc_names)
+
+# Add time column
+data_noiseless[!, :time] = 1:size(n_mat, 1)
+
+# Convert to tidy dataframe
+data_noiseless = DF.stack(data_noiseless, bc_names)
+
+# Rename columns
+DF.rename!(data_noiseless, :variable => :barcode, :value => :count_noiseless)
+
+# Join noiseless data and noise on barcode and time
+DF.leftjoin!(data, data_noiseless; on=[:barcode, :time])
+
 # Add neutral index column
 data[!, :neutral] = occursin.("neutral", data.barcode)
 
