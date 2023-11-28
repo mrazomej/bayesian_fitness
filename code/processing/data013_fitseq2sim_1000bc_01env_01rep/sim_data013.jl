@@ -46,7 +46,7 @@ n_gen = 4
 n_growth_cycle = 4
 
 # Define average number of reads per barcode
-reads = 100
+reads = 1_000
 
 # Define parameters for initial number of cells according to
 # n₀ ~ Gamma(α, β)
@@ -62,20 +62,39 @@ skew = 3
 ## ----------------------------------------------------------------------------- 
 
 # Sample initial number of cells
-n̲₀ = Random.rand(Distributions.Gamma(α, 1 / β), n_lin)
+n̲₀ = Random.rand(Distributions.Gamma(α, 1 / β), n_lin)# .* 100
 
 # Sample fitness values
 λ̲ = [
     repeat([0], n_neutral);
-    Random.rand(Distributions.SkewNormal(µ, σ, skew), n_mut)
-]
+    sort(Random.rand(Distributions.SkewNormal(µ, σ, skew), n_mut))
+] .+ log(2)
 
 ## ----------------------------------------------------------------------------- 
 
 # Simulate experiment
-n_mat = BayesFitUtils.sim.fitseq2_fitness_measurement(
+n_mat_noise = BayesFitUtils.sim.fitseq2_simulation_noise(
     λ̲, n̲₀; n_growth_cycles=n_growth_cycle, n_gen=n_gen, reads=reads
 )
+
+# Compute true fitness
+n_mat = BayesFitUtils.sim.fitseq2_simulation_noiseless(
+    λ̲, n̲₀; n_growth_cycles=n_growth_cycle, n_gen=n_gen
+)
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+# Compute frequencies and log-frequency ratios
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
+
+# Compute the frequencies for all non-ancestral strains
+f_mat = n_mat ./ sum(n_mat, dims=2) #.+ 1E-10
+
+f_mat_noise = n_mat_noise ./ sum(n_mat_noise, dims=2) #.+ 1E-10
+
+# Compute the frequency ratios
+γ_mat = f_mat[2:end, :] ./ f_mat[1:end-1, :]
+γ_mat_noise = f_mat_noise[2:end, :] ./ f_mat_noise[1:end-1, :]
+
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Convert data to tidy dataframe
@@ -87,17 +106,28 @@ bc_names = [
     ["mut$(lpad(i, 3,  "0"))" for i = 1:n_mut]
 ]
 
+# Take the log of the frequency ratios
+logγ_mat = log.(γ_mat)
+
+# Obtain population mean fitness given the neutrals
+pop_mean_fitness = StatsBase.mean(-logγ_mat[:, 1:n_neutral], dims=2)
+
+# Compute fitness by extracting the population mean fitness from the log
+# frequency ratios and computing the mean of this quantity over time.
+fitness = vec(StatsBase.mean(logγ_mat .- pop_mean_fitness, dims=1))
+
 # Create dataframe with relative fitness and growth rate
 df_fit = DF.DataFrame(
     :barcode => bc_names,
-    :fitness => λ̲
+    :fitness => fitness .- StatsBase.mean(fitness[1:n_neutral]),
+    :growth_rate => λ̲
 )
 
 # Convert matrix to dataframe
-data = DF.DataFrame(n_mat, bc_names)
+data = DF.DataFrame(n_mat_noise, bc_names)
 
 # Add time column
-data[!, :time] = 1:size(n_mat, 1)
+data[!, :time] = 1:size(n_mat_noise, 1)
 
 # Convert to tidy dataframe
 data = DF.stack(data, bc_names)
@@ -184,7 +214,6 @@ BayesFitUtils.viz.logfreq_ratio_time_series!(
 ax[2].ylabel = "ln(fₜ₊₁/fₜ)"
 
 save("./output/figs/trajectories.pdf", fig)
-save("./output/figs/trajectories.svg", fig)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% # 
 # Save data to memory
