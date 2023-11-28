@@ -339,7 +339,7 @@ function lineage_growth(
     fitness::Real
 )
     # Compute lineage growth according to Malthusian fitness model
-    return 2 * cell_num * exp(fitness)
+    return cell_num * exp(fitness)
 end # function
 
 ## ----------------------------------------------------------------------------- 
@@ -371,7 +371,7 @@ function growth_lineages(
 )
     # Compute the number of cells at time t+1 given the number of cells at time
     # t
-    n_cells_new = [lineage_growth(n, f) for (n, f) in zip(n_cells, fitness)]
+    n_cells_new = lineage_growth.(n_cells, fitness)
 
     # Set all numbers less than one to zero
     n_cells_new[n_cells_new.<1.0] .= 0.0
@@ -613,7 +613,7 @@ end # function
 ## ----------------------------------------------------------------------------- 
 
 """
-    fitseq2_fitness_measurement(
+    fitseq2_simulation_noise(
         λ̲::AbstractVector{Float64},
         n̲₀::AbstractVector{Int64};
         n_growth_cycles::Int64=4,
@@ -665,10 +665,10 @@ cycle.
 
 # Example
 ```julia
-read_counts = fitseq2_fitness_measurement([0.05, 0.02], [500, 300])
+read_counts = fitseq2_simulation_noise([0.05, 0.02], [500, 300])
 ```
 """
-function fitseq2_fitness_measurement(
+function fitseq2_simulation_noise(
     λ̲::AbstractVector{<:Real},
     n̲₀::AbstractVector{<:Real};
     n_growth_cycles::Int64=4,
@@ -736,4 +736,94 @@ function fitseq2_fitness_measurement(
     end # for
 
     return n_reads
+end # function
+
+## ----------------------------------------------------------------------------- 
+
+"""
+    fitseq2_simulation_noiseless(
+        λ̲::AbstractVector{<:Real},
+        n̲₀::AbstractVector{<:Real};
+        n_growth_cycles::Int64=4,
+        n_gen::Int64=8
+    ) -> Matrix{Float64}
+
+Simulate deterministic growth of lineages over multiple growth-dilution cycles
+without stochastic noise.
+
+# Arguments
+- `λ̲::AbstractVector{<:Real}`: Vector of growth rate values for each lineage.
+- `n̲₀::AbstractVector{<:Real}`: Vector with the initial population sizes for
+  each lineage.
+
+# Optional Keyword Arguments
+- `n_growth_cycles::Int64=4`: Number of growth-dilution cycles to simulate.
+- `n_gen::Int64=8`: Number of generations each lineage goes through for every
+  growth cycle.
+
+# Returns
+- `Matrix{Float64}`: Matrix with the cell counts for each lineage across all
+  growth-dilution cycles.
+
+# Description
+This function simulates the exponential growth of each lineage according to its
+Malthusian parameter λ over a number of growth-dilution cycles. It assumes a
+deterministic model where the populations grow exponentially during the growth
+phase and are then diluted by a factor of 2^n_gen for each subsequent cycle. The
+function provides a noiseless simulation, where the expected growth is
+calculated without random variation, to serve as a baseline for comparison
+against noisy experimental data.
+
+The first growth cycle assumes no dilution (i.e., the initial populations grow
+exponentially). For subsequent cycles, a dilution factor is applied before
+exponential growth to simulate the bottleneck effect of transferring cultures.
+
+# Example
+```julia
+cell_counts = fitseq2_simulation_noiseless([0.05, 0.02], [500, 300])
+```
+"""
+function fitseq2_simulation_noiseless(
+    λ̲::AbstractVector{<:Real},
+    n̲₀::AbstractVector{<:Real};
+    n_growth_cycles::Int64=4,
+    n_gen::Int64=8,
+)
+    # Check the positivity of initial populations
+    if any(n̲₀ .< 0)
+        error("Initial populations cannot be negative")
+    end # if
+
+    # Define number of lineages
+    n_lineage = length(n̲₀)
+
+    # Check that every lineage has a fitness value assigned
+    if length(λ̲) ≠ n_lineage
+        error("Each lineage must have a corresponding fitness value")
+    end # if
+
+    # Initialize matrix to save number of cells through growth cycles
+    n_cells_culture = Matrix{Float64}(undef, n_growth_cycles + 1, n_lineage)
+    # Set initial condition
+    n_cells_culture[1, :] = n̲₀
+
+    # Loop through growth-dilution cycles
+    for cyc = 2:(n_growth_cycles+1)
+        # Check if it is the first growth cycle
+        if cyc == 2
+            # Simulate deterministic growth for n_gen
+            n_cells_culture[cyc, :] = lineage_growth.(
+                n_cells_culture[cyc-1, :],
+                λ̲ .* n_gen
+            )
+        else
+            # Simulate deterministic growth for n_gen
+            n_cells_culture[cyc, :] = lineage_growth.(
+                n_cells_culture[cyc-1, :] ./ 2^n_gen,
+                λ̲ .* n_gen
+            )
+        end # if
+    end # for
+
+    return n_cells_culture
 end # function
