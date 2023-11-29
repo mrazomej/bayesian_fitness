@@ -99,7 +99,7 @@ df_fitseq = CSV.read("$(output_prefix)_FitSeq_Result.csv", DF.DataFrame)
 DF.rename!(df_fitseq, lowercase.(names(df_fitseq)))
 
 # Append barcode name
-df_fitseq[!, :barcode] = bc_names
+df_fitseq[!, :id] = bc_names
 
 # Remove unnecessary files
 files = vcat(
