@@ -1,0 +1,124 @@
+---
+editor:
+    render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
+---
+
+## Comparison with `FitSeq2.0` {#sec-fitseq2}
+
+For a complete comparison, we apply our inference pipeline to a simulated
+dataset closely following the simulation pipeline from @li2023. This simulation
+explicitly accounts for multiple noise sources captured in the added Gaussian
+noise in @sec-logistic. Here, we list all the steps involved in this explicit
+simulation, highlighting that the overall results are qualitatively very similar
+to that of our simple logistic growth plus added Gaussian noise when computing
+the relevant quantity of the log frequency ratio.
+
+1. We initialized a population consisting of 1000 unique barcodes---50 neutral
+barcodes and 950 mutant barcodes---where the initial number of cells with
+barcode $i$ in the culture was sampled from a Gamma distribution as
+$$
+n_o^{(i)} \sim \text{Gamma}(20, 0.2)
+$${#eq-fitseq_gamma_pop}
+
+2. The Malthusian fitness (related but not exactly the relative fitness to be
+inferred from the data) for non-neutral barcodes was then sampled from a skewed
+normal distribution of the form
+$$
+\lambda^{(j)} \sim \text{Skew}\mathcal{N}(0, 0.225, 3)
+$${#eq-fitseq_skewnormal}
+
+3. To simulate the noisy growth, the number of cells underwent the following
+steps:
+
+**for** $t=2:T$ **do**
+
+&nbsp;&nbsp;&nbsp;&nbsp; 
+$n_{t,c}^{(i)} = \text{Poisson}(n_{t-1,c}^{(i)} e^{\lambda^{(i)}})$
+
+**end for**,
+
+where $T$ is the number of generations, and $c$ indexes the growth-dilution
+cycle. We use $T=4$ for our simulation.
+
+4. After the $T$ generations, cells were stochastically diluted back for the
+next growth-dilution cycle as
+$$
+n_{0,c+1}^{(i)} \sim \text{Poisson}
+\left(\frac{n_{T,c}^{(i)}}{2^{T}}\right).
+$${#eq-fitseq_dilution}
+This process was repeated $C=4$ times for a total of four growth-dilution
+cycles.
+
+5. To simulate the sampling noise when taking cells that will then be
+subsequently processed to obtain barcode reads, we sampled
+$n_{\text{sample},c}^{(i)}$ cells with barcode $i$ as
+$$
+n_{\text{sample},c}^{(i)} \sim 
+\text{Poisson}(L \times N \times f_{c}^{(i)}),
+$${#eq-fitseq_sample}
+where $c$ indexes the growth cycle, $N$ is the total number of unique barcodes,
+$f_{j}^{(i)}$ is the fraction of cells in the culture with barcode $i$ at the
+end of cycle $j$, i.e.,
+$$
+f_{c}^{(i)} = \frac{n_{c}^{(i)}}
+{\sum_{j=1}^N n_{c}^{(j)}},
+$${#eq-fitseq_frac_cell}
+and $L$ is the expected average number of cells per lineage. We used $L = 500$.
+
+6. To simulate the noise due to PCR amplification, we iterate $c_{\text{PCR}} =
+25$ times, stochastically doubling the number of barcodes with a Poisson sample
+of the form
+
+**for** $a=1:A$ **do**
+
+&nbsp;&nbsp;&nbsp;&nbsp; 
+$n_{\text{PCR},(a+1),c}^{(i)} \sim \text{Poisson}(2 n_{\text{PCR},(a),c}^{(i)})$
+
+**end for**,
+
+where $(a)$ indexes the amplification cycle, $A$ is the total number of cycles,
+and $c$ indexes the growth-dilution cycle. We use $A=25$ for our simulation.For
+$a = 1$, we use the number of cells sampled in @eq-fitseq_sample.
+
+7. To simulate the noise due to the sampling step involved during the sequencing
+of the amplicon library, the number of reads mapping to barcode $i$ at the end
+of cycle $c$ used in the inference was sampled as 
+$$
+n_{\text{seq},c}^{(i)} \sim 
+\text{Poisson}(R \times N \times f_{\text{PCR},c}^{(i)}),
+$${#eq-fitseq_seq}
+where $R$ is the expected number of reads per barcode (R=100 for our
+simulation), $N$ is the number of total barcodes, and $f_{\text{PCR},c}^{(i)}$
+is the fraction of barcodes of type $i$ in the final amplification cycle from
+step 4.
+
+@fig-SIX_fitseq2(A) and (B) show the simulation's frequency and log frequency
+ratio trajectories, respectively. Qualitatively, these results are very similar
+to those shown in Fig. 1 of @li2023. As done throughout the main text,
+@fig-SIX_fitseq2(C) shows examples of the posterior predictive checks for the
+neutral lineages and a few of the mutant lineages. We can see that our inference
+pipeline can fit this simulated data for the examples shown. Furthermore,
+@fig-SIX_fitseq2(D) compares the ground truth fitness values and the inferred
+parameters for all mutant lineages. @fig-SIX_fitseq2 shows the comparison
+between the inference with the software provided in @li2023 and our inference
+pipeline. We note that although the values are highly correlated, the scale of
+the axis is very different.
+
+![**FitSeq2.0 simulation comparison**.(A) Frequency trajectories that represent
+the raw data going into the inference. (B) Log frequency ratio between two
+adjacent time points used by the inference pipeline. Darker lines represent the
+neutral barcodes. These transformed data are much more noisy than the seemingly
+smooth frequency trajectories. (C) Examples of the posterior predictive checks
+for all neutral lineages (upper left panel) and a subset of representative
+mutant lineages. Shaded regions represent the 95\%, 68\%, and 5\% credible
+regions for the data. The reported errors above the plot represent the 68\%
+credible region on the mutant relative fitness marginal distribution. (D)
+Comparison between the ground truth fitness value from the logistic-growth
+simulation and the inferred fitness value. Gray error bars represent the 68\%
+posterior credible region for the relative fitness values. (E) Comparison
+between fitness inferences as obtained using `FitSeq2.0` from @li2023 and our
+Bayesian method. Vertical gray error bars represent the 68\% posterior credible
+region for the relative fitness
+values.](./figs/figSIX_fitseq2){#fig-SIX_fitseq2}
