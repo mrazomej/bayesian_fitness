@@ -361,12 +361,30 @@ ecdfplot!(
     linewidth=2.5,
 )
 
+# Add line to complete ECDF
+lines!(
+    ax,
+    [maximum(abs.(df_fitness.mean_h .- df_fitness.fitness)), 1.5],
+    [1, 1],
+    color=ColorSchemes.seaborn_colorblind[1],
+    linewidth=2.5,
+)
+
 # Plot single-barcode inference ECDF
 ecdfplot!(
     ax,
     abs.(df_fitness_single.mean .- df_fitness_single.fitness),
     color=ColorSchemes.seaborn_colorblind[2],
     label="single-barcode",
+    linewidth=2.5,
+)
+
+# Add line to complete ECDF
+lines!(
+    ax,
+    [maximum(abs.(df_fitness_single.mean .- df_fitness_single.fitness)), 1.5],
+    [1, 1],
+    color=ColorSchemes.seaborn_colorblind[2],
     linewidth=2.5,
 )
 
@@ -378,6 +396,9 @@ ecdfplot!(
     label="pooled-barcodes",
     linewidth=2.5,
 )
+
+# Defie ax limits
+xlims!(ax, [0, 1.1])
 
 axislegend(ax, position=:rb, framevisible=false)
 
@@ -424,7 +445,7 @@ for row in 1:n_row
 
             # Compute posterior predictive checks
             local ppc_mat = BarBay.stats.logfreq_ratio_popmean_ppc(
-                df_samples, n_ppc; model=:normal, param=param
+                df_samples, n_ppc; param=param
             )
 
             # Define time
@@ -475,7 +496,7 @@ for row in 1:n_row
         )
         # Compute posterior predictive checks
         local ppc_mat = BarBay.stats.logfreq_ratio_bc_ppc(
-            df_samples, n_ppc; model=:normal, param=param
+            df_samples, n_ppc; param=param
         )
         # Plot posterior predictive checks
         BayesFitUtils.viz.ppc_time_series!(
