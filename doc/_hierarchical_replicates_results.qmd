@@ -18,9 +18,15 @@ of interest should not depend on the particular experimental replicate in
 question. However, this approach does not allow us to properly "combine" the
 uncertainties in both experiments when performing the inference. On the other
 hand, we can pool all data together and treat our different experiments as a
-single measurement with higher coverage. This loses the subtle differences due
-to biotic and abiotic batch effects, effectively halving the data that goes into
-our inference problem.
+single measurement with higher coverage. 
+<span style="color: #912E27;">
+However, by doing so, we lose all information about experiment-to-experiment
+variability due to intrinsic biological variability and environmental
+fluctuations---such as small temperature fluctuations---that we cannot control.
+In this sense, combining the datasets defeats the purpose of performing multiple
+measurements to account for this variability when extracting the relevant
+information from the observations.
+</span>
 
 Hierarchical models present a middle ground between these extremes. First,
 hierarchical models rely on the definition of so-called *hyper-parameters*, that
