@@ -16,6 +16,18 @@ schematic in @fig-01(A)). Furthermore, a fraction of labeled genotypes
 equivalent to the unlabeled reference strain---hereafter defined as *neutral*
 lineages---are spiked in at a relatively high abundance ($\approx 3-5\%$). The
 rest of the culture is left for the ensemble of genotypes of interest.
+<span style="color: #912E27;">
+This experimental design in which the barcodes of interest represent a small
+fraction of the culture serves three main purposes: First, the model used to
+infer the relative fitness differences between genotypes is valid in the regime
+where the genotype frequency is significantly smaller than one (see
+@sec-fitness_model). Second, potential problems with frequency-dependent
+selection are minimized as long as the frequency of each genotype remains small.
+Third, having a single genotype dominating the culture standardizes the
+environment experienced by all genotypes. This is because variations in the
+chemistry of the environment are effectively dictated by the dominating
+genotype, allowing for reproducible growth-dilution cycles.
+</span>
 
 To determine the relative fitness of the ensemble of genotypes, a series of
 growth-dilution cycles are performed on either a single or multiple
