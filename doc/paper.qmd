@@ -59,4 +59,7 @@
 
 <!-- Logistic growth simulations -->
 {{< include _logistic_sim.qmd >}}
+
+<!-- Stochastic growth simulations -->
+{{< include _fitseq2_sim.qmd >}}
 :::
