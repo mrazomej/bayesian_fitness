@@ -2,10 +2,14 @@
 
 Welcome to the GitHub repository for the bayesian fitness project! This
 repository serves as a record for the theoretical and computational work
-described in the publication "[`TBD`]" 
+described in the publication *Bayesian inference of relative fitness on
+high-throughput pooled competition assays* 
 
 ## Branches
-[`include information about GitHub repository branches`]
+
+The `master` branch in this repository contains all of the code needed to
+reproduce every simulation, inference analysis, and figure generation throughout
+this paper.
 
 ## Installation
 The installation of the `BayesFitUtils.jl` package requires `Julia` version `>
@@ -16,13 +20,14 @@ version of Julia.
 **Note:** This package was originally developed using `Julia v1.9.3`.
 
 ### Installing the `BayesFitUtils` package
+
 To maintain a clean separate environment for this project, we created a package
 named `BayesFitUtils` with the custom functions needed to reproduce our
-analysis. This package **does not contain** the functions needed to run the 
+analysis. This package **does not contain** the functions needed to run the
 Bayesian inference pipeline. Such functions are part of an independent package
-[BayesFitness.jl](https://github.com/mrazomej/BayesFitness.jl). However,
-`BayesFitUtils` has `BayesFitness.jl` as part of its dependencies. To install
-the `BayesFitUtils` package, follow the following steps:
+[BarBay.jl](https://github.com/mrazomej/BarBay.jl). However, `BayesFitUtils` has
+`BarBay.jl` as part of its dependencies. To install the `BayesFitUtils` package,
+follow the following steps:
 
 1. From the terminal, navigate to the `BayesFitUtils` folder.
 
@@ -38,14 +43,6 @@ julia
 ```
 where `x` is the version of `Julia`. Note: The `REPL` `Pkg` mode is the native
 package manager for the `Julia` language.
-
-0. **Extra steps**: Since the `BayesFitness.jl` package is not yet registered,
-   this might give an error when trying to install all dependencies for the
-   `BayesFitUtils` package. Therefore, add the package directly by typing
-```
-add https://github.com/mrazomej/BayesFitness.jl
-```
-This step will be deprecated once the package is registered.
 
 4. Run the command:
 ```
