@@ -74,6 +74,12 @@ These functions are part of the `~/.julia/config/startup.jl` file. To add these
 functions to your main Julia installation, follow the instructions in the
 `README.md` file in the `miscellaneous/` directory.
 
+Alternatively, you can manually activate the environment before running any
+script within this repository by following steps 3 and 4 from before and
+commenting the line `@load_pkg BayesFitUtils` within the script. This is
+obviously tedious and annoying, so we highly encourage you to use the
+`startup.jl` file provided to avoid these unnecessary steps.
+
 ## License
 ![](https://licensebuttons.net/l/by/3.0/88x31.png)
 
