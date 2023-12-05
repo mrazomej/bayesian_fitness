@@ -397,7 +397,7 @@ for row in 1:n_row
                 )
                 # Compute posterior predictive checks
                 ppc_mat = BarBay.stats.logfreq_ratio_popmean_ppc(
-                    df_samples[:, value], n_ppc; model=:normal, param=param
+                    df_samples[:, value], n_ppc; param=param
                 )
 
                 # Plot posterior predictive checks
@@ -457,9 +457,7 @@ for row in 1:n_row
                 # Compute posterior predictive checks
                 local ppc_mat = BarBay.stats.logfreq_ratio_bc_ppc(
                     df_samples[:, Symbol.(vars_bc)],
-                    n_ppc;
-                    model=:normal,
-                    param=param
+                    n_ppc; param=param
                 )
 
                 # Plot posterior predictive checks

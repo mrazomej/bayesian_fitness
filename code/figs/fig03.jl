@@ -292,7 +292,7 @@ for row in 1:n_row
 
             # Compute posterior predictive checks
             local ppc_mat = BarBay.stats.logfreq_ratio_popmean_ppc(
-                df_samples, n_ppc; model=:normal, param=param
+                df_samples, n_ppc; param=param
             )
 
             # Define time-environment relation
@@ -371,7 +371,7 @@ for row in 1:n_row
         )
         # Compute posterior predictive checks
         local ppc_mat = BarBay.stats.logfreq_ratio_multienv_ppc(
-            df_bc, n_ppc, data_bc.env; model=:normal, param=param
+            df_bc, n_ppc, data_bc.env; param=param
         )
 
         # Define time-environment relation

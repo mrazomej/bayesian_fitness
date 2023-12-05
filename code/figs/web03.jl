@@ -134,7 +134,7 @@ for row in 1:n_row
 
             # Compute posterior predictive checks
             local ppc_mat = BarBay.stats.logfreq_ratio_popmean_ppc(
-                df_samples, n_ppc; model=:normal, param=param
+                df_samples, n_ppc; param=param
             )
 
             # Define time
@@ -185,7 +185,7 @@ for row in 1:n_row
         )
         # Compute posterior predictive checks
         local ppc_mat = BarBay.stats.logfreq_ratio_bc_ppc(
-            df_samples, n_ppc; model=:normal, param=param
+            df_samples, n_ppc; param=param
         )
         # Plot posterior predictive checks
         BayesFitUtils.viz.ppc_time_series!(
