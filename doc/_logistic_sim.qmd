@@ -90,3 +90,206 @@ as the ground truth to be compared with the resulting inference.
 ![**Logistic growth-dilution simulations with and without
 noise**](./figs/figSIX_logistic_growth_04){#fig-SIX_logistic_growth_04}
   
+### Simulation details
+
+This section lists the parameters used to generate the synthetic data used
+throughout the main text. All the code to reproduce every simulation and figure
+in the paper can be found in [the GitHub
+repository](https://github.com/mrazomej/bayesian_fitness/tree/master). Unless
+stated otherwise, the simulations were initialized following these steps:
+
+1. The initial number of cells were defined as:
+- Ancestor lineage: `n_init` $\times$ `frac_anc`.
+- Neutral lineages: $n_0^{(n)} \sim \text{Poisson} 
+\left( 
+    \texttt{n\_init} \times \frac{\texttt{frac\_neutral}}{\texttt{n\_neutral}} 
+\right)$ 
+- Mutant lineages: $n_0^{(m)} \sim \text{LogNormal} 
+\left( 
+    \mu = \log(\texttt{n\_init} \times \frac{\texttt{frac\_mut}}{\texttt{n\_mut}}),
+    \sigma = 2 
+\right)$ 
+
+where
+
+- `n_init` is the initial number of cells.
+- `frac_anc` $\in [0, 1]$ is the initial fraction of the culture that is
+ancestor.
+- `frac_neutral` $\in [0, 1]$ is the initial fraction of the culture that is
+barcoded neutral lineages.
+- `frac_mut` $\in [0, 1]$ is the initial fraction of the culture that is
+barcoded lineages whose relative fitness we want to infer--hereafter "mutat"
+barcodes.
+- `frac_anc` + `frac_neutral` + `frac_mut` = 1
+- `n_neutral` is the number of unique neutral lineage barcodes.
+- `n_mut` is the number of unique mutant barcodes.
+
+2. The distribution of growth rates $\lambda$ were defined as
+- Ancestor lineage \& neutral lineages: $\lambda_a =$ `λ_a`. See details below
+for specific values for each simulation.
+- Mutant lineages: $\lambda_m \sim 
+\text{truncated}-\mathcal{N}(
+    \mu =$ `λ_mut_mean`,
+    $\sigma =$ `λ_bc_std`,
+    $\text{truncation limits} =$ `λ_trunc`
+$)$. See details below for specific values for each simulation.
+
+#### Fig 2.
+
+The following is a `README.md` file automatically generated when simulating the
+data for Fig. 2 in the main text:
+
+- File location
+`https://github.com/mrazomej/bayesian_fitness/code/processing/mcmc_logistic_data001/sim_data001.jl`
+- Number of mutant barcodes
+`n_mut = 225`
+- Number of neutral barcodes
+`n_neutral = 25`
+- Ancestral strain growth rate
+`λ_a = 1.0`
+- Carrying capacity
+`κ = 1.0e10`
+- Number of generations
+`n_gen = 8`
+- Initial number of cells
+`n_init = κ / (2^(n_gen)) = 3.90625e7`
+- Initial fraction of culture that is ancestor
+`frac_anc = 0.93`
+- Initial fraction of culture that is neutrals
+`frac_neutral = 0.02`
+- Initial fraction of culture that is mutants
+`frac_mut = 0.04999999999999995`
+- Mutant fitness distribution mean
+`λ_mut_mean = λ_a * 1.005 = 1.005`
+- Mutant fitness distribution standard deviation to sample growth rates
+`λ_mut_std = 0.1`
+- Mutant fitness distribution truncation ranges for growth rates
+`λ_trunc = [λ_a .* 0.9999, λ_a * 1.5] = [0.9999, 1.5]`
+- Gaussian noise distribution standard deviation
+`σ_lognormal = 0.3`
+
+#### Fig 3.
+
+The following is a `README.md` file automatically generated when simulating the
+data for Fig. 3 in the main text:
+
+- File location
+`https://github.com/mrazomej/bayesian_fitness/code/processing/data003_logistic_1000bc_03env_01rep/sim_multienv_data003.jl`
+- Number of environments
+`n_env = 3`
+- Environment transitions
+`env_idx = [1, 2, 3, 1, 2, 3]`
+- Number of mutant barcodes
+`n_mut = 900`
+- Number of neutral barcodes
+`n_neutral = 100`
+- Ancestral strain growth rate on each environment
+`λ_a = [1.0, 2.0, 0.5]`
+- Carrying capacity
+`κ = 1.0e10`
+- Number of generations
+`n_gen = 8`
+- Initial number of cells
+`n_init = κ / (2^(n_gen)) = 3.90625e7`
+- Initial fraction of culture that is ancestor
+`frac_anc = 0.93`
+- Initial fraction of culture that is neutrals
+`frac_neutral = 0.02`
+- Initial fraction of culture that is mutants
+`frac_mut = 0.04999999999999995`
+- Mutant fitness distribution mean
+`λ_mut_mean = λ_a * 1.005 = [1.005, 2.01, 0.5025]
+- Mutant fitness distribution standard deviation to sample growth rates
+`λ_mut_std = 0.1`
+- Mutant fitness distribution truncation ranges for growth rates
+`λ_trunc = [λ_a .* 0.9995, λ_a .* 1.5] = [[[0.995, 1.99, 0.4975]], [[1.5, 3.0, 0.75]]]`
+- Gaussian noise distribution standard deviation
+`σ_lognormal = 0.125`
+
+The variable `env_idx` lists the order of the environment cycles used in the
+simulation. In this case, transitions were of the form `1 -> 2`, `2 -> 3`, and
+`3 -> 1`.
+
+#### Fig 4.
+
+The following is a `README.md` file automatically generated when simulating the
+data for Fig. 4 in the main text:
+
+- File location
+`https://github.com/mrazomej/bayesian_fitness/code/processing/data002_logistic_1000bc_01env_02rep/sim_hierarchical_data002.jl`
+- Number of experimental replicates
+`n_data = 2`
+- Number of mutant barcodes
+`n_mut = 900`
+- Number of neutral barcodes
+`n_neutral = 100`
+- Ancestral strain growth rate
+`λ_a = 1.0`
+- Carrying capacity
+`κ = 1.0e10`
+- Number of generations
+`n_gen = 8`
+- Initial number of cells
+`n_init = κ / (2^(n_gen)) = 3.90625e7`
+- Initial fraction of culture that is ancestor
+`frac_anc = 0.93`
+- Initial fraction of culture that is neutrals
+`frac_neutral = 0.02`
+- Initial fraction of culture that is mutants
+`frac_mut = 0.04999999999999995`
+- Mutant fitness distribution mean
+`λ_bc_mean = λ_a * 1.005 = 1.005`
+- Mutant fitness distribution standard deviation to sample growth rates
+`λ_bc_std = 0.1`
+- Mutant fitness distribution truncation ranges for growth rates
+`λ_trunc = [λ_a .* 0.9999, λ_a * 1.5] = [0.9999, 1.5]`
+- Gaussian noise distribution standard deviation
+`σ_lognormal = 0.3`
+- Standard deviation for between-experiment fitness distribution variability
+`σ_exp = 0.015`
+
+The variable `σ_exp` defines the variance used to sample the variability between
+simulated experimental replicates. In other words, given a "hyper-fitness" value
+$\lambda$, for each experimental replicate, the growth rate was defined as
+$\lambda_j \sim \mathcal{N}(\lambda,$ `σ_exp` $)$.
+
+#### Fig 6.
+
+The following is a `README.md` file automatically generated when simulating the
+data for Fig. 6 in the main text:
+
+- File location
+`https://github.com/mrazomej/bayesian_fitness/code/processing/data007_logistic_hierarchicalgenotype_1200bc_01env_01rep/sim_data007.jl`
+- Number of mutant barcodes
+`n_mut = 900`
+- Number of neutral barcodes
+`n_neutral = 100`
+- Ancestral strain growth rate
+`λ_a = 1.0`
+- Carrying capacity
+`κ = 1.0e10`
+- Number of generations
+`n_gen = 8`
+- Initial number of cells
+`n_init = κ / (2^(n_gen)) = 3.90625e7`
+- Initial fraction of culture that is ancestor
+`frac_anc = 0.93`
+- Initial fraction of culture that is neutrals
+`frac_neutral = 0.02`
+- Initial fraction of culture that is mutants
+`frac_mut = 0.04999999999999995`
+- Mutant fitness distribution mean
+`λ_bc_mean = λ_a * 1.005 = 1.005`
+- Mutant fitness distribution standard deviation to sample growth rates
+`λ_bc_std = 0.1`
+- Mutant fitness distribution truncation ranges for growth rates
+`λ_trunc = [λ_a .* 0.9999, λ_a * 1.5] = [0.9999, 1.5]`
+- Gaussian noise distribution standard deviation
+`σ_lognormal = 0.3`
+- Number of unique genotypes
+`n_geno = Int64(n_mut / 10) = 90`
+
+The variable `n_geno` defines the number of unique genotypes in the simulation.
+In this simulation, we aimed to have ten unique barcodes on average for each
+genotype. The actual number of genotypes per barcode was sampled from a
+multinomial distribution with probability `1 / n_geno` for each genotype.
