@@ -139,8 +139,8 @@ $)$. See details below for specific values for each simulation.
 The following is a `README.md` file automatically generated when simulating the
 data for Fig. 2 in the main text:
 
-- File location
-`https://github.com/mrazomej/bayesian_fitness/code/processing/mcmc_logistic_data001/sim_data001.jl`
+- File location [link to
+file](`https://github.com/mrazomej/bayesian_fitness/code/processing/mcmc_logistic_data001/sim_data001.jl`)
 - Number of mutant barcodes
 `n_mut = 225`
 - Number of neutral barcodes
@@ -173,8 +173,8 @@ data for Fig. 2 in the main text:
 The following is a `README.md` file automatically generated when simulating the
 data for Fig. 3 in the main text:
 
-- File location
-`https://github.com/mrazomej/bayesian_fitness/code/processing/data003_logistic_1000bc_03env_01rep/sim_multienv_data003.jl`
+- File location [link to
+file](`https://github.com/mrazomej/bayesian_fitness/code/processing/data003_logistic_1000bc_03env_01rep/sim_multienv_data003.jl`)
 - Number of environments
 `n_env = 3`
 - Environment transitions
@@ -215,8 +215,8 @@ simulation. In this case, transitions were of the form `1 -> 2`, `2 -> 3`, and
 The following is a `README.md` file automatically generated when simulating the
 data for Fig. 4 in the main text:
 
-- File location
-`https://github.com/mrazomej/bayesian_fitness/code/processing/data002_logistic_1000bc_01env_02rep/sim_hierarchical_data002.jl`
+- File location [link to
+file](`https://github.com/mrazomej/bayesian_fitness/code/processing/data002_logistic_1000bc_01env_02rep/sim_hierarchical_data002.jl`)
 - Number of experimental replicates
 `n_data = 2`
 - Number of mutant barcodes
@@ -258,8 +258,8 @@ $\lambda_j \sim \mathcal{N}(\lambda,$ `σ_exp` $)$.
 The following is a `README.md` file automatically generated when simulating the
 data for Fig. 6 in the main text:
 
-- File location
-`https://github.com/mrazomej/bayesian_fitness/code/processing/data007_logistic_hierarchicalgenotype_1200bc_01env_01rep/sim_data007.jl`
+- File location [link to
+file](`https://github.com/mrazomej/bayesian_fitness/code/processing/data007_logistic_hierarchicalgenotype_1200bc_01env_01rep/sim_data007.jl`)
 - Number of mutant barcodes
 `n_mut = 900`
 - Number of neutral barcodes
