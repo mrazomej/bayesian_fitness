@@ -1,8 +1,7 @@
 ##
 println("Loading packages...")
 
-# Load project package
-@load_pkg BayesFitUtils
+
 
 import Revise
 import Suppressor

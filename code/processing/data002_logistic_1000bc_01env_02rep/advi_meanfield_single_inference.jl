@@ -1,7 +1,6 @@
 println("Loading packages...")
 
-# Load project package
-@load_pkg BayesFitUtils
+
 
 # Import project package
 import BayesFitUtils
