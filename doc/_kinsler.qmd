@@ -1,0 +1,83 @@
+---
+editor:
+    render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
+---
+
+## Reanalyzing Kinsler et al., 2020 {#sec-kinsler}
+
+The main text of this paper focuses only on simulation-based assessments of the
+performance of our inference algorithm. This supplementary section shows how the
+model performs on experimental data. In particular, we focus on a subset of the
+data generated for [@kinsler2020]. In this paper, the fitness of a set of
+mutants originally evolved in minimal glucose media was determined in multiple
+environments using an experimental design described here. @fig-SIX_kinsler_data
+shows the raw barcode frequency trajectories for four of such environments
+measured in two biological replicates.
+
+![**Kinsler et al., 2020 sample data**. Barcode frequency trajectories for
+minimal glucose evolved mutants in four different environments. Each environment
+was measured in two biological replicates (R1 and R2 on each panel). For
+experimental details, see
+[@kinsler2020].](./figs/figSIX_kinsler_data){#fig-SIX_kinsler_data}
+
+### Analysis of individual replicates
+
+As a first analysis, we perform inference assuming all replicates are
+independent. @fig-SIX_kinsler_ppc_single shows the posterior predictive checks
+for the neutral lineages (upper left plot on each panel) and some sample mutants
+for both replicates. We can see that the inference works exceptionally well with
+the data, capturing the variability. Although the main text inferences were made
+on logistic growth simulations, as described in @sec-logistic, the results
+in @sec-fitseq2 and this section show that our model does not depend on the
+assumptions underlying such simulations. The only assumption that must be valid
+is that the changes in the relative frequencies of each lineage follow an
+exponential function.
+
+![**Posterior predictive checks for Kinsler et al., 2020 independent
+replicates**. Examples of the posterior predictive checks for all neutral
+lineages (upper left panels) and a subset of representative mutant lineages for
+all four environments shown in @fig-SIX_kinsler_data. Shaded regions from light
+to dark represent the 95\%, 68\%, and 5\% credible regions. Listed fitness
+values for mutant lineages represent the 68\% credible
+region.](./figs/figSIX_kinsler_ppc_single){#fig-SIX_kinsler_ppc_single}
+
+Furthermore, we can compare the replicate-to-replicate correlation for these
+four environments with two biological replicates. The result of this comparison
+is shown in @fig-SIX_kinsler_rep_single.
+
+![**Replicate-to-replicate correlation**. Comparison of inferred fitness values
+between experimental replicates when fitting each replicate individually for all
+environments shown in @fig-SIX_kinsler_data. Gray error bars show the 68\%
+credible region for this
+inference.](./figs/figSIX_kinsler_rep_single){#fig-SIX_kinsler_rep_single}
+
+### Hierarchical analysis of multiple replicates
+
+As discussed in @sec-replicates, most experimental designs---including that of
+[@kinsler2020]---include two or more biological replicate measurements.
+Therefore, a natural way to analyze the data is by jointly inferring the fitness
+value using a hierarchical model. @fig-SIX_kinsler_ppc_hier shows the posterior
+predictive checks when fitting a hierarchical model to each of the four
+environments shown in @fig-SIX_kinsler_data. Comparing this figure with
+@fig-SIX_kinsler_ppc_single shows that the hierarchical model does not lose the
+ability to capture the variability in the data compared to fitting each
+replicate individually. However, as shown in @fig-SIX_kinsler_rep_hier, when
+comparing the replicate-to-replicate correlation, as expected, the hierarchical
+model does a better job.
+
+![**Posterior predictive checks for Kinsler et al., 2020 hierarchical model**.
+Examples of the posterior predictive checks for all neutral lineages (upper left
+panels) and a subset of representative mutant lineages for all four environments
+shown in @fig-SIX_kinsler_data. Shaded regions from light to dark represent the
+95\%, 68\%, and 5\% credible regions. Listed fitness values for mutant lineages
+represent the 68\% credible
+region.](./figs/figSIX_kinsler_ppc_hier){#fig-SIX_kinsler_ppc_hier}
+
+
+![**Replicate-to-replicate correlation**. Comparison of inferred fitness values
+between experimental replicates when fitting a hierarchical model on the
+biological replicates for all environments shown in @fig-SIX_kinsler_data. Gray
+error bars show the 68\% credible region for this
+inference.](./figs/figSIX_kinsler_rep_hier){#fig-SIX_kinsler_rep_hier}
