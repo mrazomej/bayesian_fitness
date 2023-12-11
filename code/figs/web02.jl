@@ -1,5 +1,4 @@
-# Load project package
-@load_pkg BayesFitUtils
+
 
 # Import package with useful plotting functions for our dataset
 import BayesFitUtils
