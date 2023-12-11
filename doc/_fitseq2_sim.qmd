@@ -102,9 +102,16 @@ neutral lineages and a few of the mutant lineages. We can see that our inference
 pipeline can fit this simulated data for the examples shown. Furthermore,
 @fig-SIX_fitseq2(D) compares the ground truth fitness values and the inferred
 parameters for all mutant lineages. @fig-SIX_fitseq2 shows the comparison
-between the inference with the software provided in @li2023 and our inference
+between the inference with the software provided in [@li2023] and our inference
 pipeline. We note that although the values are highly correlated, the scale of
-the axis is very different.
+the axis is very different. This scale difference comes from the differences in
+models used to infer the relative fitness value. While our model assumes an
+exponential change in the relative frequency of the barcode, @li2023 works
+directly with the number of cells rather than the relative frequency, assuming a
+Malthusian fitness form. In other words, while our model is agnostic to the
+underlying type of growth mechanism, as long as the condition of exponential
+change in relative frequency is satisfied, @li2023 assumes exponential growth of
+the number of cells, resulting in a discrepancy between the obtained numbers.
 
 ![**FitSeq2.0 simulation comparison**.(A) Frequency trajectories that represent
 the raw data going into the inference. (B) Log frequency ratio between two
