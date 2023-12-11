@@ -26,7 +26,7 @@ named `BayesFitUtils` with the custom functions needed to reproduce our
 analysis. This package **does not contain** the functions needed to run the
 Bayesian inference pipeline. Such functions are part of an independent package
 [BarBay.jl](https://github.com/mrazomej/BarBay.jl). However, `BayesFitUtils` has
-`BarBay.jl` as part of its dependencies. To install the `BayesFitUtils` package,
+`BarBay.jl` as one of its dependencies. To install the `BayesFitUtils` package,
 follow the following steps:
 
 1. From the terminal, navigate to the `BayesFitUtils` folder.
@@ -58,25 +58,21 @@ to activate the `BayesFitUtils` package. The `REPL` should now show
 instantiate
 ```
 This should install all the necessary packages and the dependencies listed in
-the `Project.toml` file.
+the `Project.toml` file, generating a `Manifest.toml` file that lists all
+sub-dependencies and their corresponding version.
 
 ## Optional setup to match package import
-Throughout this repository, there are two commands utilized when importing the
-packages for each script or `Jupyter` notebook:
 
-- `git_root()`: Function to find the root environment of a particular Git
-  repository.
-
-- `load_pkg(pkg)`: Function to find the home directory of a `GitHub` repository
-to load the package for that particular project.
-
-These functions are part of the `~/.julia/config/startup.jl` file. To add these
-functions to your main Julia installation, follow the instructions in the
-`README.md` file in the `miscellaneous/` directory.
+Throughout this repository, every script assumes that the working environment is
+defined by the provided `Project.toml` and the automatically generated
+`Manifest.toml` once `BayesFitUtils` has been installed. We use a set of custom
+functions to ensure this environment is automatically activated. These functions
+are part of the `~/.julia/config/startup.jl` file. To add these functions to
+your main Julia installation, follow the instructions in the `README.md` file in
+the `miscellaneous/` directory.
 
 Alternatively, you can manually activate the environment before running any
-script within this repository by following steps 3 and 4 from before and
-commenting the line `@load_pkg BayesFitUtils` within the script. This is
+script within this repository by following steps 3 and 4 from before. This is
 obviously tedious and annoying, so we highly encourage you to use the
 `startup.jl` file provided to avoid these unnecessary steps.
 
