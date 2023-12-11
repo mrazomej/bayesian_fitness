@@ -1,7 +1,9 @@
 We would like to thank Griffin Chure and Michael Betancourt for their helpful
 advice and discussion. We would like to thank Karna Gowda, Spencer Farrell, and
-Shaili Mathur for critical observations on the manuscript. This work was
-supported by the NIH/NIGMS, Genomics of rapid adaptation in the lab and in the
+Shaili Mathur for critical observations on the manuscript. We are especially
+thankful to Grant Kinsler for kindly providing raw experimental data as well as
+lengthy discussions about the state-of-the-art inference method. This work was
+ supported by the NIH/NIGMS, Genomics of rapid adaptation in the lab and in the
 wild R35GM11816506 (MIRA grant), the NIH, Unravelling mechanisms of tumor
 suppression in lung cancer R01CA23434903, the NIH (PQ4), Quantitative and
 multiplexed analysis of gene function in cancer in vivo R01CA23125303, the NIH,
