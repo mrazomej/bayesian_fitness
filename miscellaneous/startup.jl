@@ -49,3 +49,24 @@ macro load_pkg(pkg)
     load_pkg(pkg)
     return nothing
 end # macro
+
+# Try to load environment if available within git repo
+try
+    # Walk through git root directory iteratively
+    for (root, dirs, files) in walkdir(git_root())
+        # Loop through files. Note: This automatically updates the corresponding
+        # root for each file as well without having to explicitly loop through
+        # them.
+        for file in files
+            # Locate Manifest.toml file
+            if occursin("Manifest.toml", file)
+                # Activate package where Manifest.toml file is found
+                Pkg.activate(root)
+                # End for loop to make sure only one iteration happens.
+                break
+            end
+        end #for
+    end # for
+catch
+    # Do nothing
+end # try/catch
