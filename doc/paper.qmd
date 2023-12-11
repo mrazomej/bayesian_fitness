@@ -62,4 +62,7 @@
 
 <!-- Stochastic growth simulations -->
 {{< include _fitseq2_sim.qmd >}}
+
+<!-- Kinsler et al. 2020 -->
+{{< include _kinsler.qmd >}}
 :::
