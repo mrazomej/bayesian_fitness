@@ -147,7 +147,7 @@ advidir = "./output/advi_meanfield_joint_inference"
 files = Glob.glob("$(advidir)/*csv")
 
 # Initialize dataframe
-df_advi = DF.DataFrame()
+df_advi_single = DF.DataFrame()
 
 # Loop through files
 for f in files
@@ -165,11 +165,11 @@ for f in files
     df_tmp[!, :env] .= env
     df_tmp[!, :rep] .= rep
 
-    append!(df_advi, df_tmp)
+    append!(df_advi_single, df_tmp)
 end # for
 
 # Keep only fitness values
-df_fitness_single = df_advi[df_advi.vartype.=="bc_fitness", :]
+df_fitness_single = df_advi_single[df_advi_single.vartype.=="bc_fitness", :]
 
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Plot replicates comparisons
@@ -260,7 +260,7 @@ for (i, data) in enumerate(df_group)
 end # for
 
 save("$(git_root())/doc/figs/figSIX_kinsler_rep_single.pdf", fig)
-save("$(git_root())/doc/figs/figSIX_kinsler_rep_signle.png", fig)
+save("$(git_root())/doc/figs/figSIX_kinsler_rep_single.png", fig)
 
 fig
 
@@ -315,7 +315,7 @@ for (i, env) in enumerate(envs)
     df_counts = df[df.env.==env, :]
 
     # Extract ADVI inference
-    df_advi_env = df_advi[df_advi.env.==env, :]
+    df_advi_env = df_advi_single[df_advi_single.env.==env, :]
 
     # Sample from posterior MvNormal
     df_samples = DF.DataFrame(
@@ -514,7 +514,7 @@ advidir = "./output/advi_meanfield_hierarchicalreplicate_inference"
 files = Glob.glob("$(advidir)/*csv")
 
 # Initialize dataframe
-df_advi = DF.DataFrame()
+df_advi_hier = DF.DataFrame()
 
 # Loop through files
 for f in files
@@ -529,11 +529,11 @@ for f in files
     # Add env and rep column
     df_tmp[!, :env] .= env
 
-    append!(df_advi, df_tmp)
+    append!(df_advi_hier, df_tmp)
 end # for
 
 # Keep only fitness values
-df_fitness_hier = df_advi[df_advi.vartype.=="bc_fitness", :]
+df_fitness_hier = df_advi_hier[df_advi_hier.vartype.=="bc_fitness", :]
 
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Plot replicates comparisons
@@ -654,7 +654,7 @@ for (i, env) in enumerate(envs)
     df_counts = df[df.env.==env, :]
 
     # Extract ADVI inference
-    df_advi_env = df_advi[df_advi.env.==env, :]
+    df_advi_env = df_advi_hier[df_advi_hier.env.==env, :]
 
     # Sample from posterior MvNormal
     df_samples = DF.DataFrame(
@@ -834,5 +834,359 @@ Label(
 
 save("$(git_root())/doc/figs/figSIX_kinsler_ppc_hier.pdf", fig)
 save("$(git_root())/doc/figs/figSIX_kinsler_ppc_hier.png", fig)
+
+fig
+
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Plot replicate-to-replicate for both models in same plot
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# Group data by environment
+df_group = DF.groupby(df_fitness_single, :env)
+
+# Initialize figure
+fig = Figure(resolution=(300 * 2, 300 * 2))
+
+# An array to store the GridLayout objects
+gls = []
+# An array to store axis
+ax = []
+
+# Generating four GridLayout objects
+for i in 1:2, j in 1:2
+    # Initialize grid layout
+    gl = GridLayout()
+    # Storing each GridLayout in the array
+    push!(gls, gl)
+
+    # Set GridLayout position
+    fig.layout[i, j] = gl
+
+    # Add axis
+    axs = Axis(
+        gl[1, 1],
+        xlabel="fitness replicate R1",
+        ylabel="fitness replicate R2",
+        aspect=AxisAspect(1)
+    )
+    # Storing each Axis in the array
+    push!(ax, axs)
+end
+
+# Loop through groups
+for (i, data) in enumerate(df_group)
+    # Group data by replicate
+    data_group = DF.groupby(data, :rep)
+
+    # Plot identity line
+    lines!(
+        ax[i],
+        repeat([[minimum(data.mean), maximum(data.mean)]], 2)...;
+        color=:black,
+        linestyle=:dash
+    )
+
+    # Plot comparison
+    scatter!(
+        ax[i],
+        DF.sort!(data_group[1], :id).mean,
+        DF.sort!(data_group[2], :id).mean,
+        label="single"
+    )
+
+    # Add title
+    ax[i].title = env_titles[i]
+
+    # Add plot label
+    Label(
+        gls[i][1, 1, TopLeft()], "($(collect('A':'D')[i]))",
+        fontsize=22,
+        padding=(0, 5, 5, 0),
+        halign=:right
+    )
+end # for
+
+# ------------------------------------------------------------------------------ 
+
+# Group data by environment
+df_group = DF.groupby(df_fitness_hier, :env)
+
+# Loop through groups
+for (i, data) in enumerate(df_group)
+    # Group data by replicate
+    data_group = DF.groupby(data, :rep)
+
+    # Plot comparison
+    scatter!(
+        ax[i],
+        DF.sort!(data_group[1], :id).mean,
+        DF.sort!(data_group[2], :id).mean,
+        label="hierarchical"
+    )
+
+    # Add title
+    ax[i].title = env_titles[i]
+
+end # for
+
+# Add legend to plot
+axislegend(ax[1]; position=:lt, merge=true, unique=true, framevisible=false)
+
+save("$(git_root())/doc/figs/figSIX_kinsler_rep_comb.pdf", fig)
+save("$(git_root())/doc/figs/figSIX_kinsler_rep_comb.png", fig)
+
+fig
+
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Plot distribution of errors for single dataset analysis
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# Group data by environment
+df_group = DF.groupby(df_fitness_single, :env)
+
+# Initialize figure
+fig = Figure(resolution=(300 * 2, 300 * 2))
+
+# An array to store the GridLayout objects
+gls = []
+# An array to store axis
+ax = []
+
+# Generating four GridLayout objects
+for i in 1:2, j in 1:2
+    # Initialize grid layout
+    gl = GridLayout()
+    # Storing each GridLayout in the array
+    push!(gls, gl)
+
+    # Set GridLayout position
+    fig.layout[i, j] = gl
+
+    # Add axis
+    axs = Axis(
+        gl[1, 1],
+        xlabel="relative fitness",
+        ylabel="ECDF",
+        aspect=AxisAspect(1)
+    )
+    # Storing each Axis in the array
+    push!(ax, axs)
+end # for
+
+# Loop through groups
+for (i, data) in enumerate(df_group)
+    # Group data by replicate
+    data_group = DF.groupby(data, :rep)
+
+    # Plot ECDF for mean fitness differences
+    ecdfplot!(
+        ax[i],
+        sqrt.((data_group[1].mean .- data_group[2].mean) .^ 2),
+        linewidth=2,
+        # label="√(⟨R₁⟩ - ⟨R₂⟩)²",
+        label="√(⟨s₁⁽ᵐ⁾⟩ - ⟨s₂⁽ᵐ⁾⟩)²",
+    )
+
+    # Plot ECDF for standard deviation
+    ecdfplot!(ax[i], data_group[1].std, linewidth=2, label="σ(s₁⁽ᵐ⁾)")
+    ecdfplot!(ax[i], data_group[2].std, linewidth=2, label="σ(s₂⁽ᵐ⁾)")
+
+    # Add title
+    ax[i].title = env_titles[i]
+
+    # Add plot label
+    Label(
+        gls[i][1, 1, TopLeft()], "($(collect('A':'D')[i]))",
+        fontsize=22,
+        padding=(0, 5, 5, 0),
+        halign=:right
+    )
+end # for
+
+# Add legend to first plot
+axislegend(ax[1], merge=true, unique=true, position=:rb, framevisible=false)
+
+save("$(git_root())/doc/figs/figSIX_kinsler_meandiff_single.pdf", fig)
+save("$(git_root())/doc/figs/figSIX_kinsler_meandiff_single.png", fig)
+
+fig
+
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Plot distribution of errors for hierarchical model
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# Group data by environment
+df_group = DF.groupby(df_fitness_hier, :env)
+
+# Initialize figure
+fig = Figure(resolution=(300 * 2, 300 * 2))
+
+# An array to store the GridLayout objects
+gls = []
+# An array to store axis
+ax = []
+
+# Generating four GridLayout objects
+for i in 1:2, j in 1:2
+    # Initialize grid layout
+    gl = GridLayout()
+    # Storing each GridLayout in the array
+    push!(gls, gl)
+
+    # Set GridLayout position
+    fig.layout[i, j] = gl
+
+    # Add axis
+    axs = Axis(
+        gl[1, 1],
+        xlabel="relative fitness",
+        ylabel="ECDF",
+        aspect=AxisAspect(1)
+    )
+    # Storing each Axis in the array
+    push!(ax, axs)
+end # for
+
+# Loop through groups
+for (i, data) in enumerate(df_group)
+    # Group data by replicate
+    data_group = DF.groupby(data, :rep)
+
+    # Plot ECDF for mean fitness differences
+    ecdfplot!(
+        ax[i],
+        sqrt.((data_group[1].mean .- data_group[2].mean) .^ 2),
+        linewidth=2,
+        label="√(⟨s₁⁽ᵐ⁾⟩ - ⟨s₂⁽ᵐ⁾⟩)²",
+    )
+
+    # Extract hyperfitness std value
+    hyper_std = df_advi_hier[
+        (df_advi_hier.env.==first(data_group[1].env)).&(df_advi_hier.vartype.=="bc_hyperfitness"),
+        :std
+    ]
+
+    # Plot ECDF for hyperfitness std
+    ecdfplot!(ax[i], hyper_std, linewidth=2, label="σ")
+
+    # Add title
+    ax[i].title = env_titles[i]
+
+    # Add plot label
+    Label(
+        gls[i][1, 1, TopLeft()], "($(collect('A':'D')[i]))",
+        fontsize=22,
+        padding=(0, 5, 5, 0),
+        halign=:right
+    )
+end # for
+
+# Add legend to first plot
+axislegend(ax[1], merge=true, unique=true, position=:rb, framevisible=false)
+
+save("$(git_root())/doc/figs/figSIX_kinsler_meandiff_hier.pdf", fig)
+save("$(git_root())/doc/figs/figSIX_kinsler_meandiff_hier.png", fig)
+
+fig
+
+
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+# Extract single dataset standard deviations
+df_fitness_comp = DF.rename(
+    df_advi_single[
+        (df_advi_single.vartype.=="bc_fitness"), [:std, :rep, :env, :id]
+    ],
+    Dict(:std => :std_single)
+)
+
+# Add hierarchical model standard deviations
+DF.leftjoin!(
+    df_fitness_comp,
+    DF.rename(
+        df_advi_hier[
+            (df_advi_hier.vartype.=="bc_hyperfitness"), [:std, :env, :id]
+        ],
+        Dict(:std => :std_hier)
+    );
+    on=[:id, :env]
+)
+
+# Group data by environment
+df_group = DF.groupby(df_fitness_comp, :env)
+
+# Initialize figure
+fig = Figure(resolution=(300 * 2, 300 * 2))
+
+# An array to store the GridLayout objects
+gls = []
+# An array to store axis
+ax = []
+
+# Generating four GridLayout objects
+for i in 1:2, j in 1:2
+    # Initialize grid layout
+    gl = GridLayout()
+    # Storing each GridLayout in the array
+    push!(gls, gl)
+
+    # Set GridLayout position
+    fig.layout[i, j] = gl
+
+    # Add axis
+    axs = Axis(
+        gl[1, 1],
+        xlabel="σ(fitness) [single dataset]",
+        ylabel="σ(hyperfitness) [hierarchical]",
+        aspect=AxisAspect(1)
+    )
+    # Storing each Axis in the array
+    push!(ax, axs)
+end
+
+# Loop through groups
+for (i, data) in enumerate(df_group)
+    # Group data by replicate
+    data_group = DF.groupby(data, :rep)
+
+    # Plot identity line
+    lines!(
+        ax[i],
+        repeat([[minimum(data.std_single), maximum(data.std_single)]], 2)...;
+        color=:black,
+        linestyle=:dash
+    )
+
+    # Loop through groups
+    for d in data_group
+        # Plot comparison
+        scatter!(
+            ax[i],
+            DF.sort!(d, :id).std_single,
+            DF.sort!(d, :id).std_hier,
+            label=first(d.rep),
+            markersize=8
+        )
+    end # for
+
+    # Add title
+    ax[i].title = env_titles[i]
+
+    # Add plot label
+    Label(
+        gls[i][1, 1, TopLeft()], "($(collect('A':'D')[i]))",
+        fontsize=22,
+        padding=(0, 5, 5, 0),
+        halign=:right
+    )
+end # for
+
+axislegend(ax[1], merge=true, unique=true, framevisible=false, position=:lt)
+
+save("$(git_root())/doc/figs/figSIX_kinsler_std_comp.pdf", fig)
+save("$(git_root())/doc/figs/figSIX_kinsler_std_comp.png", fig)
 
 fig
