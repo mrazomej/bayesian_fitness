@@ -12,14 +12,14 @@ performance of our inference algorithm. This supplementary section shows how the
 model performs on experimental data. In particular, we focus on a subset of the
 data generated for [@kinsler2020]. In this paper, the fitness of a set of
 mutants originally evolved in minimal glucose media was determined in multiple
-environments using an experimental design described here. @fig-SIX_kinsler_data
-shows the raw barcode frequency trajectories for four of such environments
-measured in two biological replicates.
+environments using an experimental design described in @sec-experiment.
+@fig-SIX_kinsler_data shows the raw barcode frequency trajectories for four of
+such environments measured in two biological replicates.
 
-![**Kinsler et al., 2020 sample data**. Barcode frequency trajectories for
-minimal glucose evolved mutants in four different environments. Each environment
-was measured in two biological replicates (R1 and R2 on each panel). For
-experimental details, see
+![**Kinsler et al., 2020 sample data**. Barcode frequency trajectories in four
+different environments for mutants evolved in minimal glucose media. Each
+environment was measured in two biological replicates (R1 and R2 on each panel).
+For experimental details, see
 [@kinsler2020].](./figs/figSIX_kinsler_data){#fig-SIX_kinsler_data}
 
 ### Analysis of individual replicates
@@ -45,27 +45,58 @@ region.](./figs/figSIX_kinsler_ppc_single){#fig-SIX_kinsler_ppc_single}
 
 Furthermore, we can compare the replicate-to-replicate correlation for these
 four environments with two biological replicates. The result of this comparison
-is shown in @fig-SIX_kinsler_rep_single.
+is shown in @fig-SIX_kinsler_rep_single. We can see that there is a good degree
+of correlation between replicates.
 
-![**Replicate-to-replicate correlation**. Comparison of inferred fitness values
-between experimental replicates when fitting each replicate individually for all
-environments shown in @fig-SIX_kinsler_data. Gray error bars show the 68\%
-credible region for this
+![**Replicate-to-replicate correlation for single-dataset model**. Comparison of
+inferred relative fitness values for mutant strains between experimental
+replicates when fitting each replicate individually for all environments shown
+in @fig-SIX_kinsler_data. Gray error bars show the 68\% credible region for this
 inference.](./figs/figSIX_kinsler_rep_single){#fig-SIX_kinsler_rep_single}
+
+Given that we have two biological replicates of the same experiment, we can ask
+how the difference between each replicate's inferred fitness values compares
+with the individual estimates' uncertainty. In other words, we want to compare
+how different the $x$- and $y$-axis values in @fig-SIX_kinsler_rep_single are
+with the size of the shown error bars. @fig-SIX_kinsler_meandiff_single compares
+the distribution of these magnitudes for all four environments. In each plot,
+the blue line shows the empirical cumulative distribution function (ECDF) of the
+distance between the mean fitness estimate for each replicate---computed as
+$\sqrt{\left( \left\langle s_1^{(m)}\right\rangle - \left\langle
+s_2^{(m)}\right\rangle \right)^2}$, where $\langle s_i^{(m)}\rangle$ is the mean
+fitness estimate of mutant $m$ in replicate $i$---meaning the difference between
+$x$- and $y$-axis in @fig-SIX_kinsler_rep_single. The orange and green lines
+represent the ECDF for each replicate's posterior distribution standard
+deviation, i.e., the ECDF of the size of the error bars in
+@fig-SIX_kinsler_rep_single. From these plots, we can see that the distribution
+of standard deviations is shifted to the left compared to the difference between
+replicates. This implies that the uncertainty in the estimate is generally
+larger than the difference between replicates one would obtain with a naive
+point estimate.
+
+![**Comparing the replicate-to-replicate deviations with within-batch noise
+estimates for single dataset analysis**. Empirical cumulative distribution
+functions of the distance between the mean fitness estimate for each replicate
+(blue lines) and each replicate's posterior distribution standard deviation
+(orange and green
+line).](./figs/figSIX_kinsler_meandiff_single){#fig-SIX_kinsler_meandiff_single}
+
 
 ### Hierarchical analysis of multiple replicates
 
 As discussed in @sec-replicates, most experimental designs---including that of
-[@kinsler2020]---include two or more biological replicate measurements.
-Therefore, a natural way to analyze the data is by jointly inferring the fitness
-value using a hierarchical model. @fig-SIX_kinsler_ppc_hier shows the posterior
+@kinsler2020---include two or more biological replicate measurements. Therefore,
+a natural way to analyze the data is by jointly inferring the fitness value
+using a hierarchical model. @fig-SIX_kinsler_ppc_hier shows the posterior
 predictive checks when fitting a hierarchical model to each of the four
 environments shown in @fig-SIX_kinsler_data. Comparing this figure with
 @fig-SIX_kinsler_ppc_single shows that the hierarchical model does not lose the
 ability to capture the variability in the data compared to fitting each
-replicate individually. However, as shown in @fig-SIX_kinsler_rep_hier, when
-comparing the replicate-to-replicate correlation, as expected, the hierarchical
-model does a better job.
+replicate individually. However, as shown in @fig-SIX_kinsler_rep_hier, the
+hierarchical model does a better job when comparing the replicate-to-replicate
+correlation, as expected. To emphasize this last point,
+@fig-SIX_kinsler_rep_comb shows both inferences on the same plot---only the mean
+of the posterior distribution is shown for visual clarity.
 
 ![**Posterior predictive checks for Kinsler et al., 2020 hierarchical model**.
 Examples of the posterior predictive checks for all neutral lineages (upper left
@@ -75,9 +106,55 @@ shown in @fig-SIX_kinsler_data. Shaded regions from light to dark represent the
 represent the 68\% credible
 region.](./figs/figSIX_kinsler_ppc_hier){#fig-SIX_kinsler_ppc_hier}
 
-
-![**Replicate-to-replicate correlation**. Comparison of inferred fitness values
-between experimental replicates when fitting a hierarchical model on the
-biological replicates for all environments shown in @fig-SIX_kinsler_data. Gray
-error bars show the 68\% credible region for this
+![**Replicate-to-replicate correlation for hierarchical model**. Comparison of
+inferred fitness values between experimental replicates when fitting a
+hierarchical model on the biological replicates for all environments shown in
+@fig-SIX_kinsler_data. Gray error bars show the 68\% credible region for this
 inference.](./figs/figSIX_kinsler_rep_hier){#fig-SIX_kinsler_rep_hier}
+
+![**Replicate-to-replicate correlation for both methods**. Comparison of
+**mean** inferred fitness values between experimental replicates when fitting a
+single-dataset model (blue points) vs. a hierarchical model on the biological
+replicates (orange points) for all environments shown in @fig-SIX_kinsler_data.
+Error bars are not included in the plot for visual
+clarity](./figs/figSIX_kinsler_rep_comb){#fig-SIX_kinsler_rep_comb}
+
+We can again compare the magnitude of the difference between replicates'
+inferred mean fitness with the size of the corresponding error bars, as we did
+with @fig-SIX_kinsler_meandiff_single. @fig-SIX_kinsler_meandiff_hier shows the
+ECDF for the resulting difference between replicates mean fitness in blue as
+well as the resulting standard deviation for the inferred hyper-fitness
+parameter that connects both replicates in orange (see @sec-replicates for
+description of this hyper-fitness parameter). Here, we see that the standard
+deviation ECDF (orange line) is shifted more to the right than the mean
+difference between replicates (blue line). 
+
+![**Comparing the replicate-to-replicate deviations with within-batch noise
+estimates for hierarchical model analysis**. Empirical cumulative distribution
+functions of the distance between the mean fitness estimate for each replicate
+(blue lines) and each replicate's posterior distribution standard deviation
+(orange and green
+line).](./figs/figSIX_kinsler_meandiff_hier){#fig-SIX_kinsler_meandiff_hier}
+
+Even though the difference between replicates is reduced when using a
+hierarchical model, this does not come at the expense of higher uncertainty in
+the estimate of the relative fitness. To show this is the case,
+@fig-SIX_kinsler_std_comp compares the reported posterior distribution standard
+deviations for the relative fitness when inferring each dataset individually
+($x$-axis) with the standard deviation of the hyper-fitness parameter
+($y$-axis). Most of the points fall below the identity line, demonstrating that
+the uncertainty in the hyper-fitness parameter obtained by utilizing information
+from both replicates is smaller than the equivalent uncertainty obtained with
+one replicate at a time. In conclusion, the hierarchical model not only can
+equally describe the data, as shown in @fig-SIX_kinsler_ppc_hier, but the
+difference between replicates is significantly decreased, as shown in
+@fig-SIX_kinsler_rep_comb, at the same time, the uncertainty in the parameters'
+estimate is decreased, as shown in @fig-SIX_kinsler_std_comp.
+
+![**Comparing estimates uncertainties between single-dataset and hierarchical
+model**. Comparison of the reported standard deviations for the mutants'
+relative fitness when inferring the relative fitness using one dataset at a time
+($x$-axis) and the corresponding standard deviation for the mutants'
+hyper-fitness parameter when utilizing both replicates simultaneously via a
+hierarchical model ($y$-axis). Dashed line shows identity
+line.](./figs/figSIX_kinsler_std_comp){#fig-SIX_kinsler_std_comp}
