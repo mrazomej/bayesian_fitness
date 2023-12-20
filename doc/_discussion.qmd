@@ -73,10 +73,24 @@ existence of a labeled sub-population of barcoded reference strains. These
 barcodes help determine the fitness baseline, as every fitness is quantified
 with respect to this reference genotype. This experimental design constraint
 facilitates the inference of the population mean fitness since most of the
-culture---the unlabeled reference genotype---is not tracked. Finally, the
-presented statistical model assumes that relative fitness is solely a constant
-of the environment and the genotype. Future directions of this work could extend
-the fitness model to properly analyze data with time-varying or
+culture---the unlabeled reference genotype---is not tracked. 
+<span style="color: #912E27;">
+Fourth, the fitness model in @eq-fitness does not assume any functional form for
+the cellular growth dynamics. This description of the changes in the relative
+frequency of the genotypes can approximate the dynamics for multiple growth
+forms. For example, in @sec-fitseq2, in the supplementary materials, we apply
+our inference pipeline to simulations like those presented in [@li2023] with
+non-logistic growth models. Moreover, @sec-kinsler, in the supplementary
+materials, reanalyzes experimental data from [@kinsler2020], where previous work
+showed that the fitness advantage from some of the mutants results from a
+shorter lag phase at the beginning of the growth cycle [@li2018]. Thus, our
+method's inferred relative fitness is a coarse-grained quantity that integrates
+the differences in fitness across the entire growth cycle as long as frequencies
+and frequency changes are small enough to be approximated by @eq-fitness.
+</span>
+Finally, the presented statistical model assumes that relative fitness is solely
+a constant of the environment and the genotype. Future directions of this work
+could extend the fitness model to properly analyze data with time-varying or
 frequency-dependent fitness values.
 
 In total, the statistical model presented in this work and the software package
