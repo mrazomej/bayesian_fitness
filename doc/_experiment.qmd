@@ -53,7 +53,12 @@ generate a library for amplicon sequencing. (B) Typical barcode trajectory
 dataset. From each time point, the relative frequency of each barcode is
 determined from the total number of reads. Shades of blue represent different
 relative fitness. Darker gray lines define the typical trajectory of neutral
-lineages.](./figs/fig01){#fig-01}
+lineages. 
+<span style="color: #912E27;">
+(C) Sources of uncertainty accounted for by our method. The Bayesian
+model fit to the data propagates uncertainties from the categories schematically
+depicted to all parameters in the inference.
+</span>](./figs/fig01){#fig-01}
   
 
   
