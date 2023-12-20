@@ -112,5 +112,11 @@ population mean fitness with their uncertainty that must be propagated to the
 value of the mutants' relative fitness.
 3. Uncertainty in each of the mutants' fitness values. 
 
+<span style="color: #912E27;">
+@fig-01(C) shows schematically the sources of uncertainty accounted for by our
+model. The first three sources---population composition, barcode read counts,
+and barcode frequencies---all contribute to uncertainty source 1. Uncertainty
+source 2 and 3 are depicted by the last two sources, respectively.
+</span>
 To account for all these sources of uncertainty in a principled way, in the next
 section, we develop a Bayesian inference pipeline.
