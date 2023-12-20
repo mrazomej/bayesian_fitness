@@ -79,7 +79,7 @@ $n_{\text{PCR},(a+1),c}^{(i)} \sim \text{Poisson}(2 n_{\text{PCR},(a),c}^{(i)})$
 **end for**,
 
 where $(a)$ indexes the amplification cycle, $A$ is the total number of cycles,
-and $c$ indexes the growth-dilution cycle. We use $A=25$ for our simulation.For
+and $c$ indexes the growth-dilution cycle. We use $A=25$ for our simulation. For
 $a = 1$, we use the number of cells sampled in @eq-fitseq_sample.
 
 7. To simulate the noise due to the sampling step involved during the sequencing
