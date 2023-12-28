@@ -1,8 +1,5 @@
 println("Loading packages...")
 
-# Load project package
-@load_pkg BayesFitUtils
-
 # Import project package
 import BayesFitUtils
 
@@ -15,12 +12,10 @@ import CSV
 
 # Import library to perform Bayesian inference
 import Turing
+import AdvancedVI
 
 # Import AutoDiff backend
 using ReverseDiff
-
-# Import Memoization
-using Memoization
 
 # Impor statistical libraries
 import Random
@@ -32,18 +27,13 @@ import Glob
 
 Random.seed!(42)
 
-# Set AutoDiff backend
-Turing.setadbackend(:reversediff)
-# Allow system to generate cache to speed up computation
-Turing.setrdcache(true)
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Define ADVI hyerparameters
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Define number of samples and steps
 n_samples = 1
-n_steps = 10_000
+n_steps = 7_500
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate output directories
@@ -69,7 +59,8 @@ times = Vector{Float64}(undef, length(fnames))
 n_bcs = Vector{Int64}(undef, length(fnames))
 
 # Loop through files
-Threads.@threads for i = 1:length(fnames)
+# Threads.@threads 
+for i = 1:length(fnames)
     # Extract file name
     fname = fnames[i]
 
@@ -120,9 +111,8 @@ Threads.@threads for i = 1:length(fnames)
             :s_bc_prior => [0.0, 1.0],
             :logλ_prior => logλ_prior,
         ),
-        :advi => Turing.ADVI(n_samples, n_steps),
+        :advi => Turing.ADVI{AdvancedVI.ReverseDiffAD{false}}(n_samples, n_steps),
         :opt => Turing.TruncatedADAGrad(),
-        :fullrank => false
     )
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
@@ -132,6 +122,7 @@ Threads.@threads for i = 1:length(fnames)
     # Run inference
     println("Running Variational Inference for $(n_bc)")
 
+    # try
     # Start timing
     start_time = time()
 
@@ -144,6 +135,15 @@ Threads.@threads for i = 1:length(fnames)
     times[i] = end_time - start_time
     # Store number of barcodes
     n_bcs[i] = n_bc
+
+    # Store resulting times as dataframe
+    df_times = DF.DataFrame(Dict(:n_bc => n_bcs[1:i], :time => times[1:i]))
+
+    # Write result as CSV
+    CSV.write("./output/times.csv", df_times)
+    # catch
+    #     continue
+    # end # try/catch
 end # for
 
 
@@ -151,4 +151,4 @@ end # for
 df_times = DF.DataFrame(Dict(:n_bc => n_bcs, :time => times))
 
 # Write result as CSV
-CSV.write("$./output/times.csv", df_times)
+CSV.write("./output/times.csv", df_times)

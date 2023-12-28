@@ -1,8 +1,5 @@
 ##
 println("Loading packages...")
-
-
-
 # Import project package
 import BayesFitUtils
 
@@ -22,18 +19,11 @@ import DynamicHMC
 
 # Import AutoDiff backend
 using ReverseDiff
-
-# Import Memoization
-using Memoization
-
 # Impor statistical libraries
 import Random
 import StatsBase
 
-# Set AutoDiff backend
-Turing.setadbackend(:reversediff)
-# Allow system to generate cache to speed up computation
-Turing.setrdcache(true)
+
 
 Random.seed!(42)
 

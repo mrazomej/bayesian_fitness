@@ -1,7 +1,5 @@
 println("Loading packages...")
 
-
-
 # Import project package
 import BayesFitUtils
 
@@ -30,7 +28,7 @@ Random.seed!(42)
 
 # Define number of samples and steps
 n_samples = 1
-n_steps = 10_000
+n_steps = 5_000
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Generate output directories
@@ -49,7 +47,7 @@ println("Loading data...")
 
 # Import data
 data = CSV.read(
-    "$(git_root())/data/logistic_growth/data_007/tidy_data.csv", DF.DataFrame
+    "$(git_root())/data/logistic_growth/data_015/tidy_data.csv", DF.DataFrame
 )
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #

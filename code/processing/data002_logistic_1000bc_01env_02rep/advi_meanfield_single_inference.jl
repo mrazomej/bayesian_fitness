@@ -17,21 +17,12 @@ import Turing
 
 # Import AutoDiff backend
 using ReverseDiff
-
-# Import Memoization
-using Memoization
-
 # Impor statistical libraries
 import Random
 import StatsBase
 import Distributions
 
 Random.seed!(42)
-
-# Set AutoDiff backend
-Turing.setadbackend(:reversediff)
-# Allow system to generate cache to speed up computation
-Turing.setrdcache(true)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 # Define ADVI hyerparameters
