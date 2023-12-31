@@ -1,0 +1,21 @@
+---
+editor:
+    render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
+---
+
+## Computation time scaling {#sec-scaling}
+
+The biggest advantage of the variational inference approach presented in this
+work is the computation speedup compared to MCMC-based Bayesian approaches. This
+allows for applying our principled Bayesian pipeline to datasets with many
+unique barcodes or multiple datasets analyzed hierarchically.
+@fig-SIX_bc_vs_time shows a linear scaling in the amount of time taken for the
+ADVI algorithm to take 7,500 steps for a varying number of unique barcodes. This
+figure shows that the time to fit larger models increases linearly with the
+number of barcodes.
+
+![**Scaling of computation time as a function of number of unique barcodes**.
+Fitting a single-dataset model for 500 to 100,000 unique barcodes by taking
+7,500 steps.](./figs/figSIX_bc_vs_time){#fig-SIX_bc_vs_time}

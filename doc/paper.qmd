@@ -65,4 +65,7 @@
 
 <!-- Kinsler et al. 2020 -->
 {{< include _kinsler.qmd >}}
+
+<!-- Scaling as a function of number of barcodes -->
+{{< include _time_scaling.qmd >}}
 :::
