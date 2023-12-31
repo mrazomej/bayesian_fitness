@@ -49,7 +49,7 @@ color_grad = cgrad(ColorSchemes.Blues, unique(data.fitness))
 color = [x for x in color_grad]
 
 # Initialize figure
-fig = Figure(resolution=(400, 250))
+fig = Figure(size=(400, 250))
 
 # Add axis
 ax = Axis(fig[1, 1], xlabel="time [dilution cycles]", ylabel="barcode frequency", yscale=log10)

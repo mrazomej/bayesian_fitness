@@ -62,7 +62,7 @@ f_output = hcat(vec([f̲(collect(x)) for x in Iterators.product(x1, x2)])...)
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Initialize figure
-fig = Figure(resolution=(400, 300))
+fig = Figure(size=(400, 300))
 
 # Add axis for latent space
 ax = Axis3(

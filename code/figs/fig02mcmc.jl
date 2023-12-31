@@ -160,7 +160,7 @@ DF.leftjoin!(
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Initialize figure
-fig = Figure(resolution=(1200, 600))
+fig = Figure(size=(1200, 600))
 
 # Add grid layout for datasets
 gl_data = fig[1, 1] = GridLayout()

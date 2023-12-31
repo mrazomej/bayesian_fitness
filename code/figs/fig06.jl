@@ -168,7 +168,7 @@ DF.leftjoin!(
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Initialize figure
-fig = Figure(resolution=(1200, 700))
+fig = Figure(size=(1200, 700))
 
 # Add grid layout for illustrator diagram
 gl_illustrator = fig[1, 1] = GridLayout()

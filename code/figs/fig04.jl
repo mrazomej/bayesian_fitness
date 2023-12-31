@@ -117,7 +117,7 @@ df_samples = DF.DataFrame(
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Initialize figure
-fig = Figure(resolution=(1200, 1000))
+fig = Figure(size=(1200, 1000))
 
 # Add global GridLayout
 gl_fig = fig[1, 1] = GridLayout()

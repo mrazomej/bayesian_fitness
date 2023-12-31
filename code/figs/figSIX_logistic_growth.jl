@@ -109,7 +109,7 @@ t = LinRange(t_span[1], t_span[2], n_points)
 n = hcat(map(sol, t)...)
 
 # Initialize figure
-fig = Figure(resolution=(350, 300))
+fig = Figure(size=(350, 300))
 
 # Get colors for plot
 colors = get(ColorSchemes.RdBu, λ[n_neutral+2:end] .- 1, :centered)
@@ -162,7 +162,7 @@ end # for
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Initialize figure
-fig = Figure(resolution=(350, 300))
+fig = Figure(size=(350, 300))
 
 # Add axis
 ax = Axis(fig[1, 1], xlabel="cycle number", ylabel="# cells", yscale=log10)
@@ -198,7 +198,7 @@ f_mat = n_mat[:, 2:end] ./ sum(n_mat[:, 2:end], dims=2)
 γ_mat = f_mat[2:end, :] ./ f_mat[1:end-1, :]
 
 # Initialize figure
-fig = Figure(resolution=(350, 300))
+fig = Figure(size=(350, 300))
 
 # Add axis
 ax = Axis(fig[1, 1], xlabel="time [dilution cycles]", ylabel="ln(fₜ₊₁/fₜ)")
@@ -318,7 +318,7 @@ f_mat_noise = (n_mat_noise[:, 2:end] ./ sum(n_mat_noise[:, 2:end], dims=2)) .+
 γ_mat_noise = f_mat_noise[2:end, :] ./ f_mat_noise[1:end-1, :]
 
 # Initialize figure
-fig = Figure(resolution=(350 * 2, 300 * 2))
+fig = Figure(size=(350 * 2, 300 * 2))
 
 
 # Add axis

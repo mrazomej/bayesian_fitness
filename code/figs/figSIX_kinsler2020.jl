@@ -62,7 +62,7 @@ df = df[[x ∈ envs for x in df.env], :]
 df_group = DF.groupby(df, :env)
 
 # Initialize figure
-fig = Figure(resolution=(300 * 4, 350 * 2))
+fig = Figure(size=(300 * 4, 350 * 2))
 
 # An array to store the GridLayout objects
 gls = []
@@ -180,7 +180,7 @@ df_fitness_single = df_advi[df_advi.vartype.=="bc_fitness", :]
 df_group = DF.groupby(df_fitness_single, :env)
 
 # Initialize figure
-fig = Figure(resolution=(300 * 2, 300 * 2))
+fig = Figure(size=(300 * 2, 300 * 2))
 
 # An array to store the GridLayout objects
 gls = []
@@ -295,7 +295,7 @@ colors = [
 ]
 
 # Initialize figure
-fig = Figure(resolution=(300 * 4, 350 * 3))
+fig = Figure(size=(300 * 4, 350 * 3))
 
 # An array to store the GridLayout objects
 gls = []
@@ -545,7 +545,7 @@ df_fitness_hier = df_advi[df_advi.vartype.=="bc_fitness", :]
 df_group = DF.groupby(df_fitness_hier, :env)
 
 # Initialize figure
-fig = Figure(resolution=(300 * 2, 300 * 2))
+fig = Figure(size=(300 * 2, 300 * 2))
 
 # An array to store the GridLayout objects
 gls = []
@@ -635,7 +635,7 @@ fig
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # Initialize figure
-fig = Figure(resolution=(300 * 4, 350 * 3))
+fig = Figure(size=(300 * 4, 350 * 3))
 
 # An array to store the GridLayout objects
 gls = []
