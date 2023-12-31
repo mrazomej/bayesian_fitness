@@ -1,8 +1,7 @@
 ##
 
 println("Loading packages...\n")
-# Load project package
-@load_pkg BayesFitUtils
+
 
 import Revise
 # Import project package
@@ -56,13 +55,14 @@ gen_plots = false
 n_gen = 8
 # Define number of neutral and mutants
 n_bcs = [
-    [50, 500],
-    [50, 1_000],
-    [50, 5_000],
-    [50, 10_000],
-    [50, 50_000],
-    [50, 100_000],
-    [50, 500_000],
+    [50, 500 - 50],
+    [50, 1_000 - 50],
+    [50, 5_000 - 50],
+    [50, 10_000 - 50],
+    [50, 25_000 - 50],
+    [50, 50_000 - 50],
+    [50, 75_000 - 50],
+    [50, 100_000 - 50],
 ]
 
 # Compute initial number of cells
