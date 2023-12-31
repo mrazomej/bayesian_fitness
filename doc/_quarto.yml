@@ -19,7 +19,7 @@ author:
     orcid: 0000-0002-5812-4167
     affiliations: 
       - ref: nwqbio
-      - ref: nwmbio
+      - ref: nweng
   - name: Dmitri Petrov
     orcid: 0000-0002-3664-9130
     affiliations:
@@ -47,9 +47,9 @@ affiliations:
     city: Chicago
     state: IL
     country: USA
-  - id: nwmbio
+  - id: nweng
     number: 3
-    name: Department of Molecular Biosciences, Northwestern University
+    name: Department of Engineering Sciences and Applied Mathematics, Northwestern University
     city: Chicago
     state: IL
     country: USA
@@ -109,6 +109,9 @@ format:
     theme: cosmo
     default-image-extension: png
     toc: true
+    filters:
+      - maintext-filter.lua
+      - sitext-filter.lua
   pdf: 
     documentclass: scrartcl
     numbersections: true
