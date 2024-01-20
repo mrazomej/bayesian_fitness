@@ -39,7 +39,7 @@
 \makeatother
 \usepackage{xcolor}
 \setlength{\emergencystretch}{3em} % prevent overfull lines
-\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\setcounter{secnumdepth}{5}
 % Make \paragraph and \subparagraph free-standing
 \ifx\paragraph\undefined\else
   \let\oldparagraph\paragraph
@@ -112,6 +112,9 @@
 
 % Add author affiliations
 \usepackage{authblk}
+
+% Allow to define personalized colors
+\usepackage{xcolor}
 \makeatletter
 \makeatother
 \makeatletter
@@ -217,11 +220,11 @@ competition assays}
 Medicine}
 \affil[3]{NSF-Simons Center for Quantitative Biology, Northwestern
 University}
-\affil[4]{Department of Molecular Biosciences, Northwestern University}
+\affil[4]{Department of Engineering Sciences and Applied Mathematics,
+Northwestern University}
 \affil[5]{Chan Zuckerberg Biohub}
 
 % Add corresponding author
-\affil[*]{Corresponding: mrazo@stanford.edu}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -236,7 +239,22 @@ University}
 
 \begin{document}
 \maketitle
-\begin{abstract}
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[sharp corners, boxrule=0pt, interior hidden, enhanced, borderline west={3pt}{0pt}{shadecolor}, frame hidden, breakable]}{\end{tcolorbox}}\fi
+
+% Remove main text from the table of contents by specifying not to include
+% any section or subsection
+\addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
+
+% Define reference segment for main text
+\begin{refsegment}
+% Generate filter to not include references from main text in the
+% supplemental references
+\defbibfilter{notother}{not segment=\therefsegment}
+
+\hypertarget{abstract}{%
+\section*{Abstract}\label{abstract}}
+\addcontentsline{toc}{section}{Abstract}
+
 The tracking of lineage frequencies via DNA barcode sequencing enables
 the quantification of microbial fitness. However, experimental noise
 coming from biotic and abiotic sources complicates the computation of a
@@ -253,21 +271,29 @@ posterior credible intervals. This work provides a generalizable
 Bayesian framework to analyze lineage tracking experiments. The
 accompanying open-source software library enables the adoption of
 principled statistical methods in experimental evolution.
-\end{abstract}
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, enhanced, breakable, sharp corners, borderline west={3pt}{0pt}{shadecolor}, frame hidden, interior hidden]}{\end{tcolorbox}}\fi
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Remove main text from the table of contents by specifying not to include
-% any section or subsection
-\addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
+\hypertarget{author-summary}{%
+\section*{Author Summary}\label{author-summary}}
+\addcontentsline{toc}{section}{Author Summary}
 
-
-% Define reference segment for main text
-\begin{refsegment}
-% Generate filter to not include references from main text in the
-% supplemental references
-\defbibfilter{notother}{not segment=\therefsegment}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+In this study, we present a novel Bayesian pipeline for analyzing DNA
+barcode tracking sequencing data, addressing the challenge of accurately
+quantifying competitive microbial fitness in the presence of
+experimental noise. Our method uniquely contributes to understanding
+microbial evolutionary dynamics by enabling reliable inference of the
+relative fitness of diverse microbial strains from high-throughput
+lineage tracking assays. Our approach is distinct in its ability to
+systematically account for and propagate uncertainties from various
+noise sources throughout all inferred parameters. Furthermore, the
+error-propagation quality of our Bayesian method allows us to extend the
+inference pipeline to common dataset structures, such as jointly
+analyzing multiple experimental replicates or accounting for multiple
+unique barcodes mapping the equivalent genotypes. This comprehensive
+treatment of uncertainties is crucial in experimental settings where
+noise can significantly influence the results. Furthermore, we have
+optimized our pipeline for scalability, allowing it to handle large
+numbers of unique barcodes effectively. This scalability is essential
+for analyzing complex datasets typical in microbial fitness studies.
 
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
@@ -352,7 +378,18 @@ Figure~\ref{fig-01}(A)). Furthermore, a fraction of labeled genotypes
 equivalent to the unlabeled reference strain---hereafter defined as
 \emph{neutral} lineages---are spiked in at a relatively high abundance
 (\(\approx 3-5\%\)). The rest of the culture is left for the ensemble of
-genotypes of interest.
+genotypes of interest. This experimental design in which the barcodes of
+interest represent a small fraction of the culture serves three main
+purposes: First, the model used to infer the relative fitness
+differences between genotypes is valid in the regime where the genotype
+frequency is significantly smaller than one (see
+Section~\ref{sec-fitness_model}). Second, potential problems with
+frequency-dependent selection are minimized as long as the frequency of
+each genotype remains small. Third, having a single genotype dominating
+the culture standardizes the environment experienced by all genotypes.
+This is because variations in the chemistry of the environment are
+effectively dictated by the dominating genotype, allowing for
+reproducible growth-dilution cycles.
 
 To determine the relative fitness of the ensemble of genotypes, a series
 of growth-dilution cycles are performed on either a single or multiple
@@ -387,7 +424,9 @@ amplicon sequencing. (B) Typical barcode trajectory dataset. From each
 time point, the relative frequency of each barcode is determined from
 the total number of reads. Shades of blue represent different relative
 fitness. Darker gray lines define the typical trajectory of neutral
-lineages.}
+lineages. (C) Sources of uncertainty accounted for by our method. The
+Bayesian model fit to the data propagates uncertainties from the
+categories schematically depicted to all parameters in the inference. }
 
 \end{figure}
 
@@ -508,8 +547,13 @@ account for the three primary sources of uncertainty in our model:
   Uncertainty in each of the mutants' fitness values.
 \end{enumerate}
 
-To account for all these sources of uncertainty in a principled way, in
-the next section, we develop a Bayesian inference pipeline.
+Figure~\ref{fig-01}(C) shows schematically the sources of uncertainty
+accounted for by our model. The first three sources---population
+composition, barcode read counts, and barcode frequencies---all
+contribute to uncertainty source 1. Uncertainty source 2 and 3 are
+depicted by the last two sources, respectively. To account for all these
+sources of uncertainty in a principled way, in the next section, we
+develop a Bayesian inference pipeline.
 
 \hypertarget{sec-bayesian_inference}{%
 \subsection{Bayesian inference}\label{sec-bayesian_inference}}
@@ -756,30 +800,13 @@ find the data with the corresponding probability---or in terms of our
 parameter, the \(X\%\) credible region is the interval where we expect
 the true parameter value to lie with \(X\%\) probability.
 
-The main advantage of our method is this natural interpretability of
+The main advantage of our method is the natural interpretability of
 these credible regions where an \(X\%\) credible region indeed captures
 the region of parameter space where we expect with \(X\%\) probability
 the actual value of the parameter lies given our statistical model, our
-prior information, and the observed experimental data. A common mistake
-in the literature is interpreting frequentist confidence intervals as
-Bayesian credible regions when they are not equivalent
-\autocite{morey2016}. Frequentist confidence intervals and Bayesian
-credible regions are based on fundamentally different philosophical
-approaches to statistics. Frequentist confidence intervals represent the
-range of values that would contain the true population parameter with a
-certain probability if the experiment was repeated many times. The
-confidence interval does not represent the probability that the interval
-contains the true value. According to a specific model and prior
-information, Bayesian credible regions represent the range of values
-that contain the parameter with a certain posterior probability. The
-credible region directly represents the probability that the region
-contains the true value. So, frequentist confidence intervals cannot be
-interpreted as Bayesian credible regions because they have fundamentally
-different meanings. Treating an \(X\%\) confidence interval like an
-\(X\%\) credible region is fallacious since confidence intervals do not
-represent probabilistic coverage of the true value like credible
-regions. The intervals are generated through entirely different
-procedures.
+prior information, and the observed experimental data. Bayesian methods
+avoid common misconceptions associated with the construction of
+frequentists confidence intervals \autocite{morey2016}.
 
 To capture the global performance of the model, Figure~\ref{fig-02}(D)
 compares the known ground truth with the inferred relative fitness value
@@ -912,9 +939,13 @@ replicate in question. However, this approach does not allow us to
 properly ``combine'' the uncertainties in both experiments when
 performing the inference. On the other hand, we can pool all data
 together and treat our different experiments as a single measurement
-with higher coverage. This loses the subtle differences due to biotic
-and abiotic batch effects, effectively halving the data that goes into
-our inference problem.
+with higher coverage. However, by doing so, we lose all information
+about experiment-to-experiment variability due to intrinsic biological
+variability and environmental fluctuations---such as small temperature
+fluctuations---that we cannot control. In this sense, combining the
+datasets defeats the purpose of performing multiple measurements to
+account for this variability when extracting the relevant information
+from the observations.
 
 Hierarchical models present a middle ground between these extremes.
 First, hierarchical models rely on the definition of so-called
@@ -1043,7 +1074,9 @@ genotype. As schematized in Figure~\ref{fig-06}(A), a small modification
 of the base model allows us to map the structure of our original model
 to that of a hierarchical model with a fitness hyperparameter vector
 \(\underline{\theta}^G\), where \(G\) is the number of genotypes in the
-dataset.
+dataset. This analysis pipeline assumes a known barcode-to-genotype
+mapping to assign each barcode to the corresponding hyper-fitness
+parameter uniquely.
 
 Figure~\ref{fig-06}(B) shows a single experimental replicate in which 90
 genotypes were assigned a random number of barcodes (a multinomial
@@ -1178,10 +1211,25 @@ reference strains. These barcodes help determine the fitness baseline,
 as every fitness is quantified with respect to this reference genotype.
 This experimental design constraint facilitates the inference of the
 population mean fitness since most of the culture---the unlabeled
-reference genotype---is not tracked. Finally, the presented statistical
-model assumes that relative fitness is solely a constant of the
-environment and the genotype. Future directions of this work could
-extend the fitness model to properly analyze data with time-varying or
+reference genotype---is not tracked. Fourth, the fitness model in
+Equation~\ref{eq-fitness} does not assume any functional form for the
+cellular growth dynamics. This description of the changes in the
+relative frequency of the genotypes can approximate the dynamics for
+multiple growth forms. For example, in Section~\ref{sec-fitseq2}, in the
+supplementary materials, we apply our inference pipeline to simulations
+like those presented in \autocite{li2023} with non-logistic growth
+models. Moreover, Section~\ref{sec-kinsler}, in the supplementary
+materials, reanalyzes experimental data from \autocite{kinsler2020},
+where previous work showed that the fitness advantage from some of the
+mutants results from a shorter lag phase at the beginning of the growth
+cycle \autocite{li2018}. Thus, our method's inferred relative fitness is
+a coarse-grained quantity that integrates the differences in fitness
+across the entire growth cycle as long as frequencies and frequency
+changes are small enough to be approximated by
+Equation~\ref{eq-fitness}. Finally, the presented statistical model
+assumes that relative fitness is solely a constant of the environment
+and the genotype. Future directions of this work could extend the
+fitness model to properly analyze data with time-varying or
 frequency-dependent fitness values.
 
 In total, the statistical model presented in this work and the software
@@ -1193,38 +1241,152 @@ differentiation approaches opens the gate to extend this type of formal
 analysis to the data-rich literature in experimental evolution and other
 high-throughput technologies applications.
 
+\hypertarget{materials-and-methods}{%
+\section*{Materials and Methods}\label{materials-and-methods}}
+\addcontentsline{toc}{section}{Materials and Methods}
+
+All synthetic data generation and custom scripts used in this work were
+stored using Git version control. Code for analysis and figure
+generation can be found on the GitHub repository
+(https://github.com/mrazomej/bayesian\_fitness). The accompanying
+software package \texttt{BarBay.jl} can be directly installed from the
+\texttt{Julia} package repository, or via cloning the corresponding
+GitHub repository (https://github.com/mrazomej/BarBay.jl)
+
 \hypertarget{acknowledgements}{%
-\section{Acknowledgements}\label{acknowledgements}}
+\section*{Acknowledgements}\label{acknowledgements}}
+\addcontentsline{toc}{section}{Acknowledgements}
 
 We would like to thank Griffin Chure and Michael Betancourt for their
 helpful advice and discussion. We would like to thank Karna Gowda,
 Spencer Farrell, and Shaili Mathur for critical observations on the
-manuscript. This work was supported by the NIH/NIGMS, Genomics of rapid
-adaptation in the lab and in the wild R35GM11816506 (MIRA grant), the
-NIH, Unravelling mechanisms of tumor suppression in lung cancer
-R01CA23434903, the NIH (PQ4), Quantitative and multiplexed analysis of
-gene function in cancer in vivo R01CA23125303, the NIH, Genetic
-Determinants of Tumor Growth and Drug Sensitivity in EGFR Mutant Lung
-Cancer R01CA263715, the NIH, Dissecting the interplay between aging,
-genotype, and the microenvironment in lung cancer U01AG077922, the NIH,
-Genetic dissection of oncogenic Kras signaling R01CA230025, and the CZ
-Biohub investigator program. MRM was supported by the Schmidt Science
-Fellowship. MM was supported by The National Science Foundation-Simons
-Center for Quantitative Biology at Northwestern University and the
-Simons Foundation grant 597491. MM is a Simons Investigator. DP is a CZ
-Biohub investigator.
+manuscript. We are especially thankful to Grant Kinsler for kindly
+providing raw experimental data as well as lengthy discussions about the
+state-of-the-art inference method. This work was supported by the
+NIH/NIGMS, Genomics of rapid adaptation in the lab and in the wild
+R35GM11816506 (MIRA grant), the NIH, Unravelling mechanisms of tumor
+suppression in lung cancer R01CA23434903, the NIH (PQ4), Quantitative
+and multiplexed analysis of gene function in cancer in vivo
+R01CA23125303, the NIH, Genetic Determinants of Tumor Growth and Drug
+Sensitivity in EGFR Mutant Lung Cancer R01CA263715, the NIH, Dissecting
+the interplay between aging, genotype, and the microenvironment in lung
+cancer U01AG077922, the NIH, Genetic dissection of oncogenic Kras
+signaling R01CA230025, and the CZ Biohub investigator program. MRM was
+supported by the Schmidt Science Fellowship. MM was supported by The
+National Science Foundation-Simons Center for Quantitative Biology at
+Northwestern University and the Simons Foundation grant 597491. MM is a
+Simons Investigator. DP is a CZ Biohub investigator.
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Print main text references
 \printbibliography[segment=\therefsegment]
 % Close reference segment
 \end{refsegment}
 
-\clearpage
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\hypertarget{supp_figs}{%
+\section*{Supplemental Materials}\label{supp_figs}}
+\addcontentsline{toc}{section}{Supplemental Materials}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\textbf{Figure S1. High-dimensional numerical quadrature does not scale with
+dimensionality.} Schematic depiction of the problem with naive numerical
+quadrature to integrate over an unknown density. While the density is
+concentrated on the dark peak, most of the evaluations over the \(x_1-x_2\) grid
+do not contribute to the value of the integral.
+
+\textbf{Figure S2. Logistic growth simulation over single growth cycle}. The
+dashed line represents the neutral lineages, with the upper curve being the
+unlabeled neutral strain. Color curves represent the genotypes of interest
+colored by growth rate relative to the neutral lineage.
+
+\textbf{Figure S3. Growth-dilution cycles for logistic growth simulation}. Each
+point represents the final number of cells after a growth cycle for each
+lineage. Colors are the same as in Figure~\ref{fig-SIX_logistic_growth_01}.
+
+\textbf{Figure S4. Log frequency ratio for logistic growth simulations}. The
+relative distance of the color curves from the black dashed line determines the
+relative fitness of each linage.
+
+\textbf{Figure S5. Logistic growth-dilution simulations with and without noise}
+
+\textbf{Figure S6. FitSeq2.0 simulation comparison}.(A) Frequency trajectories
+that represent the raw data going into the inference. (B) Log frequency ratio
+between two adjacent time points used by the inference pipeline. Darker lines
+represent the neutral barcodes. These transformed data are much more noisy than
+the seemingly smooth frequency trajectories. (C) Examples of the posterior
+predictive checks for all neutral lineages (upper left panel) and a subset of
+representative mutant lineages. Shaded regions represent the 95\%, 68\%, and 5\%
+credible regions for the data. The reported errors above the plot represent the
+68\% credible region on the mutant relative fitness marginal distribution. (D)
+Comparison between the ground truth fitness value from the logistic-growth
+simulation and the inferred fitness value. Gray error bars represent the 68\%
+posterior credible region for the relative fitness values. (E) Comparison
+between fitness inferences as obtained using \texttt{FitSeq2.0} from
+\textcite{li2023} and our Bayesian method. Vertical gray error bars represent
+the 68\% posterior credible region for the relative fitness values.
+
+\textbf{Figure S7. Kinsler et al., 2020 sample data}. Barcode frequency
+trajectories in four different environments for mutants evolved in minimal
+glucose media. Each environment was measured in two biological replicates (R1
+and R2 on each panel). For experimental details, see \autocite{kinsler2020}.
+
+\textbf{Figure S8. Posterior predictive checks for Kinsler et al., 2020
+independent replicates}. Examples of the posterior predictive checks for all
+neutral lineages (upper left panels) and a subset of representative mutant
+lineages for all four environments shown in Figure~\ref{fig-SIX_kinsler_data}.
+Shaded regions from light to dark represent the 95\%, 68\%, and 5\% credible
+regions. Listed fitness values for mutant lineages represent the 68\% credible
+region.
+
+\textbf{Figure S9. Replicate-to-replicate correlation for single-dataset model}.
+Comparison of inferred relative fitness values for mutant strains between
+experimental replicates when fitting each replicate individually for all
+environments shown in Figure~\ref{fig-SIX_kinsler_data}. Gray error bars show
+the 68\% credible region for this inference.
+
+\textbf{Figure S10. Comparing the replicate-to-replicate deviations with
+within-batch noise estimates for single dataset analysis}. Empirical cumulative
+distribution functions of the distance between the mean fitness estimate for
+each replicate (blue lines) and each replicate's posterior distribution standard
+deviation (orange and green line).
+
+\textbf{Figure S11. Posterior predictive checks for Kinsler et al., 2020
+hierarchical model}. Examples of the posterior predictive checks for all neutral
+lineages (upper left panels) and a subset of representative mutant lineages for
+all four environments shown in Figure~\ref{fig-SIX_kinsler_data}. Shaded regions
+from light to dark represent the 95\%, 68\%, and 5\% credible regions. Listed
+fitness values for mutant lineages represent the 68\% credible region.
+
+\textbf{Figure S12. Replicate-to-replicate correlation for hierarchical model}.
+Comparison of inferred fitness values between experimental replicates when
+fitting a hierarchical model on the biological replicates for all environments
+shown in Figure~\ref{fig-SIX_kinsler_data}. Gray error bars show the 68\%
+credible region for this inference.
+
+\textbf{Figure S13. Replicate-to-replicate correlation for both methods}.
+Comparison of \textbf{mean} inferred fitness values between experimental
+replicates when fitting a single-dataset model (blue points) vs.~a hierarchical
+model on the biological replicates (orange points) for all environments shown in
+Figure~\ref{fig-SIX_kinsler_data}. Error bars are not included in the plot for
+visual clarity.
+
+\textbf{Figure S14. Comparing the replicate-to-replicate deviations with
+within-batch noise estimates for hierarchical model analysis}. Empirical
+cumulative distribution functions of the distance between the mean fitness
+estimate for each replicate (blue lines) and each replicate's posterior
+distribution standard deviation (orange and green line).
+
+\textbf{Figure S15. Comparing estimates uncertainties between single-dataset and
+hierarchical model}. Comparison of the reported standard deviations for the
+mutants' relative fitness when inferring the relative fitness using one dataset
+at a time (\(x\)-axis) and the corresponding standard deviation for the mutants'
+hyper-fitness parameter when utilizing both replicates simultaneously via a
+hierarchical model (\(y\)-axis). Dashed line shows identity line.
+
+\textbf{Figure S16. Scaling of computation time as a function of number of
+unique barcodes}. Fitting a single-dataset model for 500 to 100,000 unique
+barcodes by taking 7,500 steps.
+
+\clearpage
+
 % SUPPLEMENTAL MATERIAL
 
 % Indicate that all sections and subsections should be included in the
@@ -1235,15 +1397,12 @@ Biohub investigator.
 \begin{refsegment}
 % Set equation, table, and figure counters to begin with "S"
 \beginsupplement
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Add table of contents
+\tableofcontents
 
 \hypertarget{supplementary-materials}{%
 \section{Supplementary Materials}\label{supplementary-materials}}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Add table of contents
-\tableofcontents
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \hypertarget{sec-vi_primer}{%
 \subsection{Primer on Variational Inference}\label{sec-vi_primer}}
@@ -1346,13 +1505,13 @@ distributions. Note that we use quotation marks because, formally, the
 KL divergence is not a distance metric since it is not symmetric.
 Nevertheless, the variational objective is set to find a distribution
 \(q_\phi^*\) such that
-\begin{equation}\protect\hypertarget{eq-vi_objective}{}{
+\begin{equation}\protect\hypertarget{eq-vi_objective_si}{}{
 q_\phi^*(\underline{\theta}) =
 \min_\phi D_{KL}\left(
     q_\phi(\underline{\theta}) \vert\vert 
     \pi(\underline{\theta} \mid \underline{x})
 \right),
-}\label{eq-vi_objective}\end{equation} where \(D_{KL}\) is the KL
+}\label{eq-vi_objective_si}\end{equation} where \(D_{KL}\) is the KL
 divergence. Furthermore, we highlight that the KL divergence is a
 strictly positive number, i.e.,
 \begin{equation}\protect\hypertarget{eq-vi_kl_pos}{}{
@@ -1363,7 +1522,7 @@ D_{KL}\left(
 }\label{eq-vi_kl_pos}\end{equation} as this property will become
 important later on.
 
-At first sight, Equation~\ref{eq-vi_objective} does not improve the
+At first sight, Equation~\ref{eq-vi_objective_si} does not improve the
 situation but only introduces further technical complications. After
 all, the definition of the KL divergence
 \begin{equation}\protect\hypertarget{eq-vi_kl_div}{}{
@@ -2349,7 +2508,7 @@ relative fitness values. Therefore, we can write
 between the hyper-fitness and the local fitness values allows us to
 write their joint distribution as a conditional distribution where local
 fitness values depend on the global hyper-fitness value, obtaining
-\begin{equation}\protect\hypertarget{eq-hier_bayes_exp_indep}{}{
+\begin{equation}\protect\hypertarget{eq-hier_bayes_exp_indep_02}{}{
 \pi(
     \underline{\theta}^M, 
     \{\underline{s}^M_{[j]}\} \mid
@@ -2370,15 +2529,15 @@ fitness values depend on the global hyper-fitness value, obtaining
 \pi(
     \underline{\theta}^M
 ).
-}\label{eq-hier_bayes_exp_indep}\end{equation} Notice we removed the
+}\label{eq-hier_bayes_exp_indep_02}\end{equation} Notice we removed the
 conditioning on the population mean fitness as our prior expectations of
 what the global hyper-fitness or local fitness value might be do not
 depend on these nuisance parameters.
 
 The first term on the right-hand side of
-Equation~\ref{eq-hier_bayes_exp_indep} takes the same functional form as
-the one derived in Section~\ref{sec-bayes_mutfit}. Therefore, all we are
-left with is to determine the functional forms for the hyper--prior
+Equation~\ref{eq-hier_bayes_exp_indep_02} takes the same functional form
+as the one derived in Section~\ref{sec-bayes_mutfit}. Therefore, all we
+are left with is to determine the functional forms for the hyper--prior
 \(\pi(\underline{\theta}^M)\), and the conditional probability
 \(\pi(\underline{s}^M_{[j]} \mid \underline{\theta}^M)\). In analogy to
 the assumptions used for the fitness values in
@@ -2773,12 +2932,732 @@ growth-dilution simulations with and without noise}}
 
 \end{figure}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% HERE IS WHERE THE SI TEXT GOES
+\hypertarget{simulation-details}{%
+\subsubsection{Simulation details}\label{simulation-details}}
+
+This section lists the parameters used to generate the synthetic data
+used throughout the main text. All the code to reproduce every
+simulation and figure in the paper can be found in
+\href{https://github.com/mrazomej/bayesian_fitness/tree/master}{the
+GitHub repository}. Unless stated otherwise, the simulations were
+initialized following these steps:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  The initial number of cells were defined as:
+\end{enumerate}
+
+\begin{itemize}
+\tightlist
+\item
+  Ancestor lineage: \texttt{n\_init} \(\times\) \texttt{frac\_anc}.
+\item
+  Neutral lineages:
+  \(n_0^{(n)} \sim \text{Poisson} \left(  \texttt{n\_init} \times \frac{\texttt{frac\_neutral}}{\texttt{n\_neutral}} \right)\)
+\item
+  Mutant lineages:
+  \(n_0^{(m)} \sim \text{LogNormal} \left(  \mu = \log(\texttt{n\_init} \times \frac{\texttt{frac\_mut}}{\texttt{n\_mut}}),  \sigma = 2 \right)\)
+\end{itemize}
+
+where
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{n\_init} is the initial number of cells.
+\item
+  \texttt{frac\_anc} \(\in [0, 1]\) is the initial fraction of the
+  culture that is ancestor.
+\item
+  \texttt{frac\_neutral} \(\in [0, 1]\) is the initial fraction of the
+  culture that is barcoded neutral lineages.
+\item
+  \texttt{frac\_mut} \(\in [0, 1]\) is the initial fraction of the
+  culture that is barcoded lineages whose relative fitness we want to
+  infer--hereafter ``mutat'' barcodes.
+\item
+  \texttt{frac\_anc} + \texttt{frac\_neutral} + \texttt{frac\_mut} = 1
+\item
+  \texttt{n\_neutral} is the number of unique neutral lineage barcodes.
+\item
+  \texttt{n\_mut} is the number of unique mutant barcodes.
+\end{itemize}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  The distribution of growth rates \(\lambda\) were defined as
+\end{enumerate}
+
+\begin{itemize}
+\tightlist
+\item
+  Ancestor lineage \& neutral lineages: \(\lambda_a =\) \texttt{λ\_a}.
+  See details below for specific values for each simulation.
+\item
+  Mutant lineages:
+  \(\lambda_m \sim \text{truncated}-\mathcal{N}(  \mu =\)
+  \texttt{λ\_mut\_mean}, \(\sigma =\) \texttt{λ\_bc\_std},
+  \(\text{truncation limits} =\) \texttt{λ\_trunc} \()\). See details
+  below for specific values for each simulation.
+\end{itemize}
+
+\hypertarget{fig-2.}{%
+\paragraph{Fig 2.}\label{fig-2.}}
+
+The following is a \texttt{README.md} file automatically generated when
+simulating the data for Fig. 2 in the main text:
+
+\begin{itemize}
+\tightlist
+\item
+  File location
+  \href{https://github.com/mrazomej/bayesian_fitness/blob/master/code/processing/data001_logistic_250bc_01env_01rep/sim_data001.jl}{\texttt{link\ to\ file}}
+\item
+  Number of mutant barcodes \texttt{n\_mut\ =\ 225}
+\item
+  Number of neutral barcodes \texttt{n\_neutral\ =\ 25}
+\item
+  Ancestral strain growth rate \texttt{λ\_a\ =\ 1.0}
+\item
+  Carrying capacity \texttt{κ\ =\ 1.0e10}
+\item
+  Number of generations \texttt{n\_gen\ =\ 8}
+\item
+  Initial number of cells
+  \texttt{n\_init\ =\ κ\ /\ (2\^{}(n\_gen))\ =\ 3.90625e7}
+\item
+  Initial fraction of culture that is ancestor
+  \texttt{frac\_anc\ =\ 0.93}
+\item
+  Initial fraction of culture that is neutrals
+  \texttt{frac\_neutral\ =\ 0.02}
+\item
+  Initial fraction of culture that is mutants
+  \texttt{frac\_mut\ =\ 0.04999999999999995}
+\item
+  Mutant fitness distribution mean
+  \texttt{λ\_mut\_mean\ =\ λ\_a\ *\ 1.005\ =\ 1.005}
+\item
+  Mutant fitness distribution standard deviation to sample growth rates
+  \texttt{λ\_mut\_std\ =\ 0.1}
+\item
+  Mutant fitness distribution truncation ranges for growth rates
+  \texttt{λ\_trunc\ =\ {[}λ\_a\ .*\ 0.9999,\ λ\_a\ *\ 1.5{]}\ =\ {[}0.9999,\ 1.5{]}}
+\item
+  Gaussian noise distribution standard deviation
+  \texttt{σ\_lognormal\ =\ 0.3}
+\end{itemize}
+
+\hypertarget{fig-3.}{%
+\paragraph{Fig 3.}\label{fig-3.}}
+
+The following is a \texttt{README.md} file automatically generated when
+simulating the data for Fig. 3 in the main text:
+
+\begin{itemize}
+\tightlist
+\item
+  File location
+  \href{https://github.com/mrazomej/bayesian_fitness/blob/master/code/processing/data003_logistic_1000bc_03env_01rep/sim_multienv_data003.jl}{\texttt{link\ to\ file}}
+\item
+  Number of environments \texttt{n\_env\ =\ 3}
+\item
+  Environment transitions
+  \texttt{env\_idx\ =\ {[}1,\ 2,\ 3,\ 1,\ 2,\ 3{]}}
+\item
+  Number of mutant barcodes \texttt{n\_mut\ =\ 900}
+\item
+  Number of neutral barcodes \texttt{n\_neutral\ =\ 100}
+\item
+  Ancestral strain growth rate on each environment
+  \texttt{λ\_a\ =\ {[}1.0,\ 2.0,\ 0.5{]}}
+\item
+  Carrying capacity \texttt{κ\ =\ 1.0e10}
+\item
+  Number of generations \texttt{n\_gen\ =\ 8}
+\item
+  Initial number of cells
+  \texttt{n\_init\ =\ κ\ /\ (2\^{}(n\_gen))\ =\ 3.90625e7}
+\item
+  Initial fraction of culture that is ancestor
+  \texttt{frac\_anc\ =\ 0.93}
+\item
+  Initial fraction of culture that is neutrals
+  \texttt{frac\_neutral\ =\ 0.02}
+\item
+  Initial fraction of culture that is mutants
+  \texttt{frac\_mut\ =\ 0.04999999999999995}
+\item
+  Mutant fitness distribution mean `λ\_mut\_mean = λ\_a * 1.005 =
+  {[}1.005, 2.01, 0.5025{]}
+\item
+  Mutant fitness distribution standard deviation to sample growth rates
+  \texttt{λ\_mut\_std\ =\ 0.1}
+\item
+  Mutant fitness distribution truncation ranges for growth rates
+  \texttt{λ\_trunc\ =\ {[}λ\_a\ .*\ 0.9995,\ λ\_a\ .*\ 1.5{]}\ =\ {[}{[}{[}0.995,\ 1.99,\ 0.4975{]}{]},\ {[}{[}1.5,\ 3.0,\ 0.75{]}{]}{]}}
+\item
+  Gaussian noise distribution standard deviation
+  \texttt{σ\_lognormal\ =\ 0.125}
+\end{itemize}
+
+The variable \texttt{env\_idx} lists the order of the environment cycles
+used in the simulation. In this case, transitions were of the form
+\texttt{1\ -\textgreater{}\ 2}, \texttt{2\ -\textgreater{}\ 3}, and
+\texttt{3\ -\textgreater{}\ 1}.
+
+\hypertarget{fig-4.}{%
+\paragraph{Fig 4.}\label{fig-4.}}
+
+The following is a \texttt{README.md} file automatically generated when
+simulating the data for Fig. 4 in the main text:
+
+\begin{itemize}
+\tightlist
+\item
+  File location
+  \href{https://github.com/mrazomej/bayesian_fitness/blob/master/code/processing/data002_logistic_1000bc_01env_02rep/sim_hierarchical_data002.jl}{\texttt{link\ to\ file}}
+\item
+  Number of experimental replicates \texttt{n\_data\ =\ 2}
+\item
+  Number of mutant barcodes \texttt{n\_mut\ =\ 900}
+\item
+  Number of neutral barcodes \texttt{n\_neutral\ =\ 100}
+\item
+  Ancestral strain growth rate \texttt{λ\_a\ =\ 1.0}
+\item
+  Carrying capacity \texttt{κ\ =\ 1.0e10}
+\item
+  Number of generations \texttt{n\_gen\ =\ 8}
+\item
+  Initial number of cells
+  \texttt{n\_init\ =\ κ\ /\ (2\^{}(n\_gen))\ =\ 3.90625e7}
+\item
+  Initial fraction of culture that is ancestor
+  \texttt{frac\_anc\ =\ 0.93}
+\item
+  Initial fraction of culture that is neutrals
+  \texttt{frac\_neutral\ =\ 0.02}
+\item
+  Initial fraction of culture that is mutants
+  \texttt{frac\_mut\ =\ 0.04999999999999995}
+\item
+  Mutant fitness distribution mean
+  \texttt{λ\_bc\_mean\ =\ λ\_a\ *\ 1.005\ =\ 1.005}
+\item
+  Mutant fitness distribution standard deviation to sample growth rates
+  \texttt{λ\_bc\_std\ =\ 0.1}
+\item
+  Mutant fitness distribution truncation ranges for growth rates
+  \texttt{λ\_trunc\ =\ {[}λ\_a\ .*\ 0.9999,\ λ\_a\ *\ 1.5{]}\ =\ {[}0.9999,\ 1.5{]}}
+\item
+  Gaussian noise distribution standard deviation
+  \texttt{σ\_lognormal\ =\ 0.3}
+\item
+  Standard deviation for between-experiment fitness distribution
+  variability \texttt{σ\_exp\ =\ 0.015}
+\end{itemize}
+
+The variable \texttt{σ\_exp} defines the variance used to sample the
+variability between simulated experimental replicates. In other words,
+given a ``hyper-fitness'' value \(\lambda\), for each experimental
+replicate, the growth rate was defined as
+\(\lambda_j \sim \mathcal{N}(\lambda,\) \texttt{σ\_exp} \()\).
+
+\hypertarget{fig-6.}{%
+\paragraph{Fig 6.}\label{fig-6.}}
+
+The following is a \texttt{README.md} file automatically generated when
+simulating the data for Fig. 6 in the main text:
+
+\begin{itemize}
+\tightlist
+\item
+  File location
+  \href{https://github.com/mrazomej/bayesian_fitness/blob/master/code/processing/data007_logistic_hierarchicalgenotype_1000bc_01env_01rep/sim_data007.jl}{\texttt{link\ to\ file}}
+\item
+  Number of mutant barcodes \texttt{n\_mut\ =\ 900}
+\item
+  Number of neutral barcodes \texttt{n\_neutral\ =\ 100}
+\item
+  Ancestral strain growth rate \texttt{λ\_a\ =\ 1.0}
+\item
+  Carrying capacity \texttt{κ\ =\ 1.0e10}
+\item
+  Number of generations \texttt{n\_gen\ =\ 8}
+\item
+  Initial number of cells
+  \texttt{n\_init\ =\ κ\ /\ (2\^{}(n\_gen))\ =\ 3.90625e7}
+\item
+  Initial fraction of culture that is ancestor
+  \texttt{frac\_anc\ =\ 0.93}
+\item
+  Initial fraction of culture that is neutrals
+  \texttt{frac\_neutral\ =\ 0.02}
+\item
+  Initial fraction of culture that is mutants
+  \texttt{frac\_mut\ =\ 0.04999999999999995}
+\item
+  Mutant fitness distribution mean
+  \texttt{λ\_bc\_mean\ =\ λ\_a\ *\ 1.005\ =\ 1.005}
+\item
+  Mutant fitness distribution standard deviation to sample growth rates
+  \texttt{λ\_bc\_std\ =\ 0.1}
+\item
+  Mutant fitness distribution truncation ranges for growth rates
+  \texttt{λ\_trunc\ =\ {[}λ\_a\ .*\ 0.9999,\ λ\_a\ *\ 1.5{]}\ =\ {[}0.9999,\ 1.5{]}}
+\item
+  Gaussian noise distribution standard deviation
+  \texttt{σ\_lognormal\ =\ 0.3}
+\item
+  Number of unique genotypes
+  \texttt{n\_geno\ =\ Int64(n\_mut\ /\ 10)\ =\ 90}
+\end{itemize}
+
+The variable \texttt{n\_geno} defines the number of unique genotypes in
+the simulation. In this simulation, we aimed to have ten unique barcodes
+on average for each genotype. The actual number of genotypes per barcode
+was sampled from a multinomial distribution with probability
+\texttt{1\ /\ n\_geno} for each genotype.
+
+\hypertarget{sec-fitseq2}{%
+\subsection{\texorpdfstring{Comparison with
+\texttt{FitSeq2.0}}{Comparison with FitSeq2.0}}\label{sec-fitseq2}}
+
+For a complete comparison, we apply our inference pipeline to a
+simulated dataset closely following the simulation pipeline from
+\textcite{li2023}. This simulation explicitly accounts for multiple
+noise sources captured in the added Gaussian noise in
+Section~\ref{sec-logistic}. Here, we list all the steps involved in this
+explicit simulation, highlighting that the overall results are
+qualitatively very similar to that of our simple logistic growth plus
+added Gaussian noise when computing the relevant quantity of the log
+frequency ratio.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  We initialized a population consisting of 1000 unique barcodes---50
+  neutral barcodes and 950 mutant barcodes---where the initial number of
+  cells with barcode \(i\) in the culture was sampled from a Gamma
+  distribution as
+  \begin{equation}\protect\hypertarget{eq-fitseq_gamma_pop}{}{
+  n_o^{(i)} \sim \text{Gamma}(20, 0.2)
+  }\label{eq-fitseq_gamma_pop}\end{equation}
+\item
+  The Malthusian fitness (related but not exactly the relative fitness
+  to be inferred from the data) for non-neutral barcodes was then
+  sampled from a skewed normal distribution of the form
+  \begin{equation}\protect\hypertarget{eq-fitseq_skewnormal}{}{
+  \lambda^{(j)} \sim \text{Skew}\mathcal{N}(0, 0.225, 3)
+  }\label{eq-fitseq_skewnormal}\end{equation}
+\item
+  To simulate the noisy growth, the number of cells underwent the
+  following steps:
+\end{enumerate}
+
+\textbf{for} \(t=2:T\) \textbf{do}
+
+~~~~
+\(n_{t,c}^{(i)} = \text{Poisson}(n_{t-1,c}^{(i)} e^{\lambda^{(i)}})\)
+
+\textbf{end for},
+
+where \(T\) is the number of generations, and \(c\) indexes the
+growth-dilution cycle. We use \(T=4\) for our simulation.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{3}
+\item
+  After the \(T\) generations, cells were stochastically diluted back
+  for the next growth-dilution cycle as
+  \begin{equation}\protect\hypertarget{eq-fitseq_dilution}{}{
+  n_{0,c+1}^{(i)} \sim \text{Poisson}
+  \left(\frac{n_{T,c}^{(i)}}{2^{T}}\right).
+  }\label{eq-fitseq_dilution}\end{equation} This process was repeated
+  \(C=4\) times for a total of four growth-dilution cycles.
+\item
+  To simulate the sampling noise when taking cells that will then be
+  subsequently processed to obtain barcode reads, we sampled
+  \(n_{\text{sample},c}^{(i)}\) cells with barcode \(i\) as
+  \begin{equation}\protect\hypertarget{eq-fitseq_sample}{}{
+  n_{\text{sample},c}^{(i)} \sim 
+  \text{Poisson}(L \times N \times f_{c}^{(i)}),
+  }\label{eq-fitseq_sample}\end{equation} where \(c\) indexes the growth
+  cycle, \(N\) is the total number of unique barcodes, \(f_{j}^{(i)}\)
+  is the fraction of cells in the culture with barcode \(i\) at the end
+  of cycle \(j\), i.e.,
+  \begin{equation}\protect\hypertarget{eq-fitseq_frac_cell}{}{
+  f_{c}^{(i)} = \frac{n_{c}^{(i)}}
+  {\sum_{j=1}^N n_{c}^{(j)}},
+  }\label{eq-fitseq_frac_cell}\end{equation} and \(L\) is the expected
+  average number of cells per lineage. We used \(L = 500\).
+\item
+  To simulate the noise due to PCR amplification, we iterate
+  \(c_{\text{PCR}} = 25\) times, stochastically doubling the number of
+  barcodes with a Poisson sample of the form
+\end{enumerate}
+
+\textbf{for} \(a=1:A\) \textbf{do}
+
+~~~~
+\(n_{\text{PCR},(a+1),c}^{(i)} \sim \text{Poisson}(2 n_{\text{PCR},(a),c}^{(i)})\)
+
+\textbf{end for},
+
+where \((a)\) indexes the amplification cycle, \(A\) is the total number
+of cycles, and \(c\) indexes the growth-dilution cycle. We use \(A=25\)
+for our simulation. For \(a = 1\), we use the number of cells sampled in
+Equation~\ref{eq-fitseq_sample}.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{6}
+\tightlist
+\item
+  To simulate the noise due to the sampling step involved during the
+  sequencing of the amplicon library, the number of reads mapping to
+  barcode \(i\) at the end of cycle \(c\) used in the inference was
+  sampled as \begin{equation}\protect\hypertarget{eq-fitseq_seq}{}{
+  n_{\text{seq},c}^{(i)} \sim 
+  \text{Poisson}(R \times N \times f_{\text{PCR},c}^{(i)}),
+  }\label{eq-fitseq_seq}\end{equation} where \(R\) is the expected
+  number of reads per barcode (R=100 for our simulation), \(N\) is the
+  number of total barcodes, and \(f_{\text{PCR},c}^{(i)}\) is the
+  fraction of barcodes of type \(i\) in the final amplification cycle
+  from step 4.
+\end{enumerate}
+
+Figure~\ref{fig-SIX_fitseq2}(A) and (B) show the simulation's frequency
+and log frequency ratio trajectories, respectively. Qualitatively, these
+results are very similar to those shown in Fig. 1 of \textcite{li2023}.
+As done throughout the main text, Figure~\ref{fig-SIX_fitseq2}(C) shows
+examples of the posterior predictive checks for the neutral lineages and
+a few of the mutant lineages. We can see that our inference pipeline can
+fit this simulated data for the examples shown. Furthermore,
+Figure~\ref{fig-SIX_fitseq2}(D) compares the ground truth fitness values
+and the inferred parameters for all mutant lineages.
+Figure~\ref{fig-SIX_fitseq2} shows the comparison between the inference
+with the software provided in \autocite{li2023} and our inference
+pipeline. We note that although the values are highly correlated, the
+scale of the axis is very different. This scale difference comes from
+the differences in models used to infer the relative fitness value.
+While our model assumes an exponential change in the relative frequency
+of the barcode, \textcite{li2023} works directly with the number of
+cells rather than the relative frequency, assuming a Malthusian fitness
+form. In other words, while our model is agnostic to the underlying type
+of growth mechanism, as long as the condition of exponential change in
+relative frequency is satisfied, \textcite{li2023} assumes exponential
+growth of the number of cells, resulting in a discrepancy between the
+obtained numbers.
+
+\begin{figure}
+
+{\centering \includegraphics{./figs/figSIX_fitseq2.pdf}
+
+}
+
+\caption{\label{fig-SIX_fitseq2}\textbf{FitSeq2.0 simulation
+comparison}.(A) Frequency trajectories that represent the raw data going
+into the inference. (B) Log frequency ratio between two adjacent time
+points used by the inference pipeline. Darker lines represent the
+neutral barcodes. These transformed data are much more noisy than the
+seemingly smooth frequency trajectories. (C) Examples of the posterior
+predictive checks for all neutral lineages (upper left panel) and a
+subset of representative mutant lineages. Shaded regions represent the
+95\%, 68\%, and 5\% credible regions for the data. The reported errors
+above the plot represent the 68\% credible region on the mutant relative
+fitness marginal distribution. (D) Comparison between the ground truth
+fitness value from the logistic-growth simulation and the inferred
+fitness value. Gray error bars represent the 68\% posterior credible
+region for the relative fitness values. (E) Comparison between fitness
+inferences as obtained using \texttt{FitSeq2.0} from \textcite{li2023}
+and our Bayesian method. Vertical gray error bars represent the 68\%
+posterior credible region for the relative fitness values.}
+
+\end{figure}
+
+\hypertarget{sec-kinsler}{%
+\subsection{Reanalyzing Kinsler et al., 2020}\label{sec-kinsler}}
+
+The main text of this paper focuses only on simulation-based assessments
+of the performance of our inference algorithm. This supplementary
+section shows how the model performs on experimental data. In
+particular, we focus on a subset of the data generated for
+\autocite{kinsler2020}. In this paper, the fitness of a set of mutants
+originally evolved in minimal glucose media was determined in multiple
+environments using an experimental design described in
+Section~\ref{sec-experiment}. Figure~\ref{fig-SIX_kinsler_data} shows
+the raw barcode frequency trajectories for four of such environments
+measured in two biological replicates.
+
+\begin{figure}
+
+{\centering \includegraphics{./figs/figSIX_kinsler_data.pdf}
+
+}
+
+\caption{\label{fig-SIX_kinsler_data}\textbf{Kinsler et al., 2020 sample
+data}. Barcode frequency trajectories in four different environments for
+mutants evolved in minimal glucose media. Each environment was measured
+in two biological replicates (R1 and R2 on each panel). For experimental
+details, see \autocite{kinsler2020}.}
+
+\end{figure}
+
+\hypertarget{analysis-of-individual-replicates}{%
+\subsubsection{Analysis of individual
+replicates}\label{analysis-of-individual-replicates}}
+
+As a first analysis, we perform inference assuming all replicates are
+independent. Figure~\ref{fig-SIX_kinsler_ppc_single} shows the posterior
+predictive checks for the neutral lineages (upper left plot on each
+panel) and some sample mutants for both replicates. We can see that the
+inference works exceptionally well with the data, capturing the
+variability. Although the main text inferences were made on logistic
+growth simulations, as described in Section~\ref{sec-logistic}, the
+results in Section~\ref{sec-fitseq2} and this section show that our
+model does not depend on the assumptions underlying such simulations.
+The only assumption that must be valid is that the changes in the
+relative frequencies of each lineage follow an exponential function.
+
+\begin{figure}
+
+{\centering \includegraphics{./figs/figSIX_kinsler_ppc_single.pdf}
+
+}
+
+\caption{\label{fig-SIX_kinsler_ppc_single}\textbf{Posterior predictive
+checks for Kinsler et al., 2020 independent replicates}. Examples of the
+posterior predictive checks for all neutral lineages (upper left panels)
+and a subset of representative mutant lineages for all four environments
+shown in Figure~\ref{fig-SIX_kinsler_data}. Shaded regions from light to
+dark represent the 95\%, 68\%, and 5\% credible regions. Listed fitness
+values for mutant lineages represent the 68\% credible region.}
+
+\end{figure}
+
+Furthermore, we can compare the replicate-to-replicate correlation for
+these four environments with two biological replicates. The result of
+this comparison is shown in Figure~\ref{fig-SIX_kinsler_rep_single}. We
+can see that there is a good degree of correlation between replicates.
+
+\begin{figure}
+
+{\centering \includegraphics{./figs/figSIX_kinsler_rep_single.pdf}
+
+}
+
+\caption{\label{fig-SIX_kinsler_rep_single}\textbf{Replicate-to-replicate
+correlation for single-dataset model}. Comparison of inferred relative
+fitness values for mutant strains between experimental replicates when
+fitting each replicate individually for all environments shown in
+Figure~\ref{fig-SIX_kinsler_data}. Gray error bars show the 68\%
+credible region for this inference.}
+
+\end{figure}
+
+Given that we have two biological replicates of the same experiment, we
+can ask how the difference between each replicate's inferred fitness
+values compares with the individual estimates' uncertainty. In other
+words, we want to compare how different the \(x\)- and \(y\)-axis values
+in Figure~\ref{fig-SIX_kinsler_rep_single} are with the size of the
+shown error bars. Figure~\ref{fig-SIX_kinsler_meandiff_single} compares
+the distribution of these magnitudes for all four environments. In each
+plot, the blue line shows the empirical cumulative distribution function
+(ECDF) of the distance between the mean fitness estimate for each
+replicate---computed as
+\(\sqrt{\left( \left\langle s_1^{(m)}\right\rangle - \left\langle s_2^{(m)}\right\rangle \right)^2}\),
+where \(\langle s_i^{(m)}\rangle\) is the mean fitness estimate of
+mutant \(m\) in replicate \(i\)---meaning the difference between \(x\)-
+and \(y\)-axis in Figure~\ref{fig-SIX_kinsler_rep_single}. The orange
+and green lines represent the ECDF for each replicate's posterior
+distribution standard deviation, i.e., the ECDF of the size of the error
+bars in Figure~\ref{fig-SIX_kinsler_rep_single}. From these plots, we
+can see that the distribution of standard deviations is shifted to the
+left compared to the difference between replicates. This implies that
+the uncertainty in the estimate is generally larger than the difference
+between replicates one would obtain with a naive point estimate.
+
+\begin{figure}
+
+{\centering \includegraphics{./figs/figSIX_kinsler_meandiff_single.pdf}
+
+}
+
+\caption{\label{fig-SIX_kinsler_meandiff_single}\textbf{Comparing the
+replicate-to-replicate deviations with within-batch noise estimates for
+single dataset analysis}. Empirical cumulative distribution functions of
+the distance between the mean fitness estimate for each replicate (blue
+lines) and each replicate's posterior distribution standard deviation
+(orange and green line).}
+
+\end{figure}
+
+\hypertarget{hierarchical-analysis-of-multiple-replicates}{%
+\subsubsection{Hierarchical analysis of multiple
+replicates}\label{hierarchical-analysis-of-multiple-replicates}}
+
+As discussed in Section~\ref{sec-replicates}, most experimental
+designs---including that of \textcite{kinsler2020}---include two or more
+biological replicate measurements. Therefore, a natural way to analyze
+the data is by jointly inferring the fitness value using a hierarchical
+model. Figure~\ref{fig-SIX_kinsler_ppc_hier} shows the posterior
+predictive checks when fitting a hierarchical model to each of the four
+environments shown in Figure~\ref{fig-SIX_kinsler_data}. Comparing this
+figure with Figure~\ref{fig-SIX_kinsler_ppc_single} shows that the
+hierarchical model does not lose the ability to capture the variability
+in the data compared to fitting each replicate individually. However, as
+shown in Figure~\ref{fig-SIX_kinsler_rep_hier}, the hierarchical model
+does a better job when comparing the replicate-to-replicate correlation,
+as expected. To emphasize this last point,
+Figure~\ref{fig-SIX_kinsler_rep_comb} shows both inferences on the same
+plot---only the mean of the posterior distribution is shown for visual
+clarity.
+
+\begin{figure}
+
+{\centering \includegraphics{./figs/figSIX_kinsler_ppc_hier.pdf}
+
+}
+
+\caption{\label{fig-SIX_kinsler_ppc_hier}\textbf{Posterior predictive
+checks for Kinsler et al., 2020 hierarchical model}. Examples of the
+posterior predictive checks for all neutral lineages (upper left panels)
+and a subset of representative mutant lineages for all four environments
+shown in Figure~\ref{fig-SIX_kinsler_data}. Shaded regions from light to
+dark represent the 95\%, 68\%, and 5\% credible regions. Listed fitness
+values for mutant lineages represent the 68\% credible region.}
+
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics{./figs/figSIX_kinsler_rep_hier.pdf}
+
+}
+
+\caption{\label{fig-SIX_kinsler_rep_hier}\textbf{Replicate-to-replicate
+correlation for hierarchical model}. Comparison of inferred fitness
+values between experimental replicates when fitting a hierarchical model
+on the biological replicates for all environments shown in
+Figure~\ref{fig-SIX_kinsler_data}. Gray error bars show the 68\%
+credible region for this inference.}
+
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics{./figs/figSIX_kinsler_rep_comb.pdf}
+
+}
+
+\caption{\label{fig-SIX_kinsler_rep_comb}\textbf{Replicate-to-replicate
+correlation for both methods}. Comparison of \textbf{mean} inferred
+fitness values between experimental replicates when fitting a
+single-dataset model (blue points) vs.~a hierarchical model on the
+biological replicates (orange points) for all environments shown in
+Figure~\ref{fig-SIX_kinsler_data}. Error bars are not included in the
+plot for visual clarity}
+
+\end{figure}
+
+We can again compare the magnitude of the difference between replicates'
+inferred mean fitness with the size of the corresponding error bars, as
+we did with Figure~\ref{fig-SIX_kinsler_meandiff_single}.
+Figure~\ref{fig-SIX_kinsler_meandiff_hier} shows the ECDF for the
+resulting difference between replicates mean fitness in blue as well as
+the resulting standard deviation for the inferred hyper-fitness
+parameter that connects both replicates in orange (see
+Section~\ref{sec-replicates} for description of this hyper-fitness
+parameter). Here, we see that the standard deviation ECDF (orange line)
+is shifted more to the right than the mean difference between replicates
+(blue line).
+
+\begin{figure}
+
+{\centering \includegraphics{./figs/figSIX_kinsler_meandiff_hier.pdf}
+
+}
+
+\caption{\label{fig-SIX_kinsler_meandiff_hier}\textbf{Comparing the
+replicate-to-replicate deviations with within-batch noise estimates for
+hierarchical model analysis}. Empirical cumulative distribution
+functions of the distance between the mean fitness estimate for each
+replicate (blue lines) and each replicate's posterior distribution
+standard deviation (orange and green line).}
+
+\end{figure}
+
+Even though the difference between replicates is reduced when using a
+hierarchical model, this does not come at the expense of higher
+uncertainty in the estimate of the relative fitness. To show this is the
+case, Figure~\ref{fig-SIX_kinsler_std_comp} compares the reported
+posterior distribution standard deviations for the relative fitness when
+inferring each dataset individually (\(x\)-axis) with the standard
+deviation of the hyper-fitness parameter (\(y\)-axis). Most of the
+points fall below the identity line, demonstrating that the uncertainty
+in the hyper-fitness parameter obtained by utilizing information from
+both replicates is smaller than the equivalent uncertainty obtained with
+one replicate at a time. In conclusion, the hierarchical model not only
+can equally describe the data, as shown in
+Figure~\ref{fig-SIX_kinsler_ppc_hier}, but the difference between
+replicates is significantly decreased, as shown in
+Figure~\ref{fig-SIX_kinsler_rep_comb}, at the same time, the uncertainty
+in the parameters' estimate is decreased, as shown in
+Figure~\ref{fig-SIX_kinsler_std_comp}.
+
+\begin{figure}
+
+{\centering \includegraphics{./figs/figSIX_kinsler_std_comp.pdf}
+
+}
+
+\caption{\label{fig-SIX_kinsler_std_comp}\textbf{Comparing estimates
+uncertainties between single-dataset and hierarchical model}. Comparison
+of the reported standard deviations for the mutants' relative fitness
+when inferring the relative fitness using one dataset at a time
+(\(x\)-axis) and the corresponding standard deviation for the mutants'
+hyper-fitness parameter when utilizing both replicates simultaneously
+via a hierarchical model (\(y\)-axis). Dashed line shows identity line.}
+
+\end{figure}
+
+\hypertarget{sec-scaling}{%
+\subsection{Computation time scaling}\label{sec-scaling}}
+
+The biggest advantage of the variational inference approach presented in
+this work is the computation speedup compared to MCMC-based Bayesian
+approaches. This allows for applying our principled Bayesian pipeline to
+datasets with many unique barcodes or multiple datasets analyzed
+hierarchically. Figure~\ref{fig-SIX_bc_vs_time} shows a linear scaling
+in the amount of time taken for the ADVI algorithm to take 7,500 steps
+for a varying number of unique barcodes. This figure shows that the time
+to fit larger models increases linearly with the number of barcodes.
+
+\begin{figure}
+
+{\centering \includegraphics{./figs/figSIX_bc_vs_time.pdf}
+
+}
+
+\caption{\label{fig-SIX_bc_vs_time}\textbf{Scaling of computation time
+as a function of number of unique barcodes}. Fitting a single-dataset
+model for 500 to 100,000 unique barcodes by taking 7,500 steps.}
+
+\end{figure}
+
 % Print supplemental references changing the title
 \printbibliography[title={Supplemental References},
 segment=\therefsegment, filter=notother]
 \end{refsegment}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 
 \end{document}
