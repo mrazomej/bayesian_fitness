@@ -1,8 +1,6 @@
 ##
 println("Loading packages...")
 
-
-
 # Import project package
 import BayesFitUtils
 
