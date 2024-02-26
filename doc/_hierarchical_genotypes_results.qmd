@@ -15,6 +15,10 @@ all barcodes mapping to a single genotype. As schematized in @fig-06(A), a small
 modification of the base model allows us to map the structure of our original
 model to that of a hierarchical model with a fitness hyperparameter vector
 $\underline{\theta}^G$, where $G$ is the number of genotypes in the dataset.
+<span style="color: #912E27;"> 
+This analysis pipeline assumes a known barcode-to-genotype mapping to assign
+each barcode to the corresponding hyper-fitness parameter uniquely. 
+</span>
 
 @fig-06(B) shows a single experimental replicate in which 90 genotypes were
 assigned a random number of barcodes (a multinomial distribution with a mean of

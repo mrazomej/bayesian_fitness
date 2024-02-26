@@ -1,0 +1,23 @@
+---
+editor:
+    render-on-save: true
+bibliography: references.bib
+csl: ieee.csl
+---
+
+In this study, we present a novel Bayesian pipeline for analyzing DNA barcode
+tracking sequencing data, addressing the challenge of accurately quantifying
+competitive microbial fitness in the presence of experimental noise. Our method
+uniquely contributes to understanding microbial evolutionary dynamics by
+enabling reliable inference of the relative fitness of diverse microbial strains
+from high-throughput lineage tracking assays. Our approach is distinct in its
+ability to systematically account for and propagate uncertainties from various
+noise sources throughout all inferred parameters. Furthermore, the
+error-propagation quality of our Bayesian method allows us to extend the
+inference pipeline to common dataset structures, such as jointly analyzing
+multiple experimental replicates or accounting for multiple unique barcodes
+mapping the equivalent genotypes. This comprehensive treatment of uncertainties
+is crucial in experimental settings where noise can significantly influence the
+results. Furthermore, we have optimized our pipeline for scalability, allowing
+it to handle large numbers of unique barcodes effectively. This scalability is
+essential for analyzing complex datasets typical in microbial fitness studies.

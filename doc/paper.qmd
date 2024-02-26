@@ -1,4 +1,26 @@
 ::: {.maintext}
+
+# Abstract {.unnumbered}
+
+The tracking of lineage frequencies via DNA barcode sequencing enables the
+quantification of microbial fitness. However, experimental noise coming from
+biotic and abiotic sources complicates the computation of a reliable inference.
+We present a Bayesian pipeline to infer relative microbial fitness from
+high-throughput lineage tracking assays. Our model accounts for multiple sources
+of noise and propagates uncertainties throughout all parameters in a systematic
+way. Furthermore, using modern variational inference methods based on automatic
+differentiation, we are able to scale the inference to a large number of unique
+barcodes. We extend this core model to analyze multi-environment assays,
+replicate experiments, and barcodes linked to genotypes. On simulations, our
+method recovers known parameters within posterior credible intervals. This work
+provides a generalizable Bayesian framework to analyze lineage tracking
+experiments. The accompanying open-source software library enables the adoption
+of principled statistical methods in experimental evolution.
+
+# Author Summary {.unnumbered}
+
+{{< include _author_summary.qmd >}}
+
 # Introduction
 
 {{< include _intro.qmd >}}
@@ -30,7 +52,16 @@
 
 {{< include _discussion.qmd >}}
 
-# Acknowledgements
+# Materials and Methods {.unnumbered}
+
+All synthetic data generation and custom scripts used in this work were stored
+using Git version control. Code for analysis and figure generation can be found
+on the GitHub repository (https://github.com/mrazomej/bayesian_fitness). The
+accompanying software package `BarBay.jl` can be directly installed from the
+`Julia` package repository, or via cloning the corresponding GitHub repository
+(https://github.com/mrazomej/BarBay.jl)
+
+# Acknowledgements {.unnumbered}
 
 {{< include _acknowledgements.qmd >}}
 :::
