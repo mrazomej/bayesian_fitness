@@ -41,7 +41,7 @@ data = CSV.read(
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Initialize figure
-fig = Figure(resolution=(350, 300))
+fig = Figure(size=(350, 300))
 
 # Add axis
 ax = Axis(fig[1, 1], xlabel="time [dilution cycles]", ylabel="ln(fₜ₊₁/fₜ)")

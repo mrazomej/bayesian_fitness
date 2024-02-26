@@ -87,7 +87,7 @@ df_samples = DF.DataFrame(
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
 # Initialize figure
-fig = Figure(resolution=(600, 600))
+fig = Figure(size=(600, 600))
 
 # Add grid layout for posterior predictive checks
 gl_ppc = fig[1, 1] = GridLayout()
